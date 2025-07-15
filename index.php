@@ -121,7 +121,7 @@
         } else {
             $.ajax({    
                 type: 'POST',
-                url: 'login',
+                url: 'login.php',
                 data: {
                     InputEmail: usuario,
                     InputPassword: password,
