@@ -138,7 +138,8 @@
                         document.cookie = "id_usuario=" + encodeURIComponent(data.id) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
                         document.cookie = "nombredelusuario=" + encodeURIComponent(data.nombre) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
                         document.cookie = "noEmpleado=" + encodeURIComponent(data.noEmpleado) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
-                        document.cookie = "rol=" + encodeURIComponent(data.rol) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;"; 
+                        document.cookie = "rol=" + encodeURIComponent(data.rol) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
+                        document.cookie = "correo=" + encodeURIComponent(data.usuario) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
                     });                                
                     
                     window.location.href = 'inicio';
