@@ -164,7 +164,7 @@
 
         var calendar = new FullCalendar.Calendar(calendarEl, {        
             initialView: 'listWeek', // Cambiar a vista diaria
-            events: '../Incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login', // Aquí llamas a tu PHP que devuelve las vacaciones en JSON
+            events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login', // Aquí llamas a tu PHP que devuelve las vacaciones en JSON
             editable: false,
             locale: 'es',
             eventContent: function(info) {

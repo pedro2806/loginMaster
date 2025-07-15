@@ -249,7 +249,7 @@
 
         function infoEmpleado(){
             $.ajax({
-                url: '../Incidencias/getInfoLoginMaster.php',
+                url: '../incidencias/getInfoLoginMaster.php',
                 type: 'POST',
                 data: {                    
                     noEmpleado: getCookie('noEmpleado'),                    
@@ -274,7 +274,7 @@
         function irIncidencias() {        
             
             $.ajax({
-                url: '../Incidencias/validaLoginMaster.php',
+                url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
                     id_usuario: getCookie('id_usuario'),
@@ -284,7 +284,7 @@
                     correo: getCookie('correo')
                 },
                 success: function() {
-                    window.location.href = '../Incidencias/inicio';
+                    window.location.href = '../incidencias/inicio';
                 }
             });
         }
@@ -292,7 +292,7 @@
         function irSalaJuntas() {        
             
             $.ajax({
-                url: '../Incidencias/validaLoginMaster.php',
+                url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
                     id_usuario: getCookie('id_usuario'),
@@ -302,7 +302,7 @@
                     correo: getCookie('correo')
                 },
                 success: function() {
-                    window.location.href = '../Incidencias/SalaDeJuntas';
+                    window.location.href = '../incidencias/SalaDeJuntas';
                 }
             });
         }
@@ -311,7 +311,7 @@
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'listWeek',
-                events: '../Incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
+                events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
                 editable: false,
                 locale: 'es',
                 eventContent: function(info) {
