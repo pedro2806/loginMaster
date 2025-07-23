@@ -247,6 +247,7 @@
             validaOpciones();
         });
 
+    // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
         function infoEmpleado(){
             $.ajax({
                 url: '../incidencias/getInfoLoginMaster.php',
@@ -271,6 +272,7 @@
             });
             
         }
+    //PARA VALIDAR QUE SISTEMAS SE MUESTRAN EN EL PANEL DE USUARIO
         function validaOpciones() {
             $.ajax({
                 url: '../incidencias/getInfoLoginMaster.php',
@@ -294,7 +296,7 @@
             });
         }
         
-
+    //FUNCION PARA REDIRIGIR AL SISTEMA DE INCIDENCIAS
         function irIncidencias() {        
             
             $.ajax({
@@ -312,7 +314,7 @@
                 }
             });
         }
-
+    //FUNCION PARA REDIRIGIR AL SISTEMA DE SALA DE JUNTAS
         function irSalaJuntas() {        
             
             $.ajax({
@@ -331,6 +333,7 @@
             });
         }
 
+    //FUNCION PARA CARGAR EL CALENDARIO DE LA SALA DE JUNTAS
         function verCalendarioLogin() {
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -347,6 +350,7 @@
             });
             calendar.render();
         }
+    //FUNCION PARA OBTENER COOKIES
         function getCookie(name) {
             let matches = document.cookie.match(new RegExp(
                 "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
