@@ -2,7 +2,7 @@
     session_start();
     include '../ControlVehicular/conn.php';
     if(empty($_COOKIE['noEmpleado'])){
-        echo '<script>window.location.assign("index")</script>';
+        echo '<script>window.location.assign("index.php")</script>';
         exit;
     }
 ?>
@@ -13,9 +13,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>MESS - Panel de Usuario</title>
-    <link href="../ControlVehicular/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">    
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">    
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
-    <link href="../ControlVehicular/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
     <style>
         body { background: #f8f9fc; }
         .profile-card {
@@ -38,9 +38,9 @@
             margin-bottom: 1rem;
         }
         .stat-box {
-            border-radius: 0.5rem;
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
+            border-radius: 0.2rem;
+            padding: 0.2rem;
+            margin-bottom: 0.2rem;
             background: #f4f6fb;
             text-align: center;
         }
@@ -72,9 +72,9 @@
                                 </div>
                                 <h5 class="mb-1"><?php echo isset($_COOKIE['nombredelusuario']) ? htmlspecialchars($_COOKIE['nombredelusuario']) : 'Usuario'; ?></h5>
                                 <small class="text-muted d-block mb-2">No. Empleado: <b><?php echo isset($_COOKIE['noEmpleado']) ? htmlspecialchars($_COOKIE['noEmpleado']) : '0000'; ?></b></small>
-                                <ul class="list-group list-group-flush mb-3">
-                                    <li class="list-group-item px-0 py-1 border-0"><strong>Área:</strong><p id="lblArea"></p></li>
-                                    <li class="list-group-item px-0 py-1 border-0"><strong>Jefe Directo:</strong><p id="lblJefe"></p></li>
+                                <ul class="list-group list-group-flush mb-1">
+                                    <li class="list-group-item px-0 py-0 border-0"><strong>Área:</strong><p id="lblArea"></p></li>
+                                    <li class="list-group-item px-0 py-0 border-0"><strong>Jefe Directo:</strong><p id="lblJefe"></p></li>
                                 </ul>
                                 <div class="row">                        
                                     <div class="col-xl-6 col-md-6">
@@ -115,21 +115,25 @@
                                 <button class="btn btn-outline-primary btn-block mt-3" data-toggle="modal" data-target="#modalCambiarContrasena">
                                     <i class="fas fa-key"></i> Cambiar Contraseña
                                 </button>
+                                <a class = "btn btn-outline-danger btn-block mt-3" href = "#" data-toggle = "modal" data-target = "#logoutModalN">
+                                    <i class = "fas fa-sign-out-alt fa-sm fa-fw mr-2 text-red-400"></i>
+                                    Salir
+                                </a>
                             </div>
                         </div>
                         <!-- Accesos rápidos y tablero -->
                         <div class="col-xl-9 col-md-8">
                             <div class="row">
-                                <div class="col-md-3 mb-4">
+                                <div class="col-md-3 mb-4" id="divIncidencias">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irSalaJuntas()" class="btn btn-outline-warning btn-block">
+                                            <a onclick="irIncidencias()" class="btn btn-outline-warning btn-block">
                                                 <i class="far fa-check-square fa-lg"></i><br>Incidencias
                                             </a>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-4">
+                                <div class="col-md-3 mb-4" id="divControlVehicular">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
                                             <a href="../ControlVehicular/" class="btn btn-outline-danger btn-block">
@@ -137,21 +141,21 @@
                                             </a>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-md-3 mb-4">
-                                    <div class="card card-action border-left-info shadow h-100">
-                                        <div class="card-body text-center">
-                                            <a href="../ControlVehicular/" class="btn btn-outline-info btn-block">
-                                                <i class="fas fa-clock fa-lg"></i><br>Horas Extra
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-4">
+                                </div>                                
+                                <div class="col-md-3 mb-4" id="divTI">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <a href="../ControlVehicular/" class="btn btn-outline-primary btn-block">
                                                 <i class="fas fa-laptop fa-lg"></i><br>TI (Mtto y tickets)
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4" id="divHorasExtra">
+                                    <div class="card card-action border-left-info shadow h-100">
+                                        <div class="card-body text-center">
+                                            <a href="../ControlVehicular/" class="btn btn-outline-info btn-block">
+                                                <i class="fas fa-clock fa-lg"></i><br>Horas Extra
                                             </a>
                                         </div>
                                     </div>
@@ -162,7 +166,7 @@
                                 <div class="col-md-6 mb-4">
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-primary text-white py-2">
-                                            <h6 class="m-0 font-weight-bold">Tablero de Avisos</h6>
+                                            <h6 class="m-2 font-weight-bold">Tablero de Avisos</h6>
                                         </div>
                                         <div class="card-body">
                                             <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/03/Marzo-2024.pdf#zoom=60' type="application/pdf" width="100%" height="400px" />
@@ -174,7 +178,7 @@
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-success text-white py-2 d-flex justify-content-between align-items-center">
                                             <span class="font-weight-bold">Agenda Sala de Juntas</span>
-                                            <button onclick="irIncidencias()" class="btn btn-outline-light btn-sm">Ir a Sala de Juntas</button>
+                                            <button onclick="irSalaJuntas()" class="btn btn-outline-light btn-sm">Ir a Sala de Juntas</button>
                                         </div>
                                         <div class="card-body">
                                             <div id="calendar"></div>
@@ -231,26 +235,23 @@
     </div>
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-    <script src="../ControlVehicular/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script>
-    <script src="../ControlVehicular/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="../ControlVehicular/js/sb-admin-2.min.js"></script>
-    <?php
-        /*if (in_array($_COOKIE['noEmpleado'], ['276','215','183','523','19'])) {
-            echo '<script src="//code.tidio.co/7gdtsrztipqfhk4odfaiekkqicwhsvxb.js"></script>';
-            echo '<script src="//code.tidio.co/ehwk9fqjsinnpptkgnupmphatkinnmwi.js"></script>';
-        }*/
-    ?>
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="js/sb-admin-2.min.js"></script>
+    
     <script>
-        $(document).ready(function () {
+        $(document).ready(function () {            
             verCalendarioLogin();
             infoEmpleado();
+            validaOpciones();
         });
 
         function infoEmpleado(){
             $.ajax({
                 url: '../incidencias/getInfoLoginMaster.php',
                 type: 'POST',
+                dataType: 'json',
                 data: {                    
                     noEmpleado: getCookie('noEmpleado'),                    
                     correo: getCookie('correo'),
@@ -268,8 +269,31 @@
                     
                 }
             });
-
+            
         }
+        function validaOpciones() {
+            $.ajax({
+                url: '../incidencias/getInfoLoginMaster.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {                    
+                    noEmpleado: getCookie('noEmpleado'),                                        
+                    accion: 'ValidarOpciones'
+                },
+                success: function(info) {
+                    $.each(info, function (index, infoAccesos) {                  
+                        $('#antig').text(infoAccesos.antiguedad);
+                        if (infoAccesos.estatus == '1') {
+                            $('#' + infoAccesos.sistema).show();
+                        } else {
+                            $('#' + infoAccesos.sistema).hide();
+                        }
+                    });
+                    
+                }
+            });
+        }
+        
 
         function irIncidencias() {        
             

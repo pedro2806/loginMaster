@@ -30,19 +30,19 @@
                             <div class = "col-sm-1"></div>
                             <div class = "col-sm-10">
                                 <div class = "text-center">
-                                    
-                                    <b class = "h2 text-gray-900 mb-4">Sistemas MESS</b>                                    
+                                                                        
                                     <br>
-                                    <b class = "h4 text-gray-900 mb-4">Bienvenido</b>
+                                    <b class = "h5 text-gray-900 mb-4">Bienvenido</b>
                                 </div>
                             </div>
                         </div>
                         <div class = "row">
                             <!--LOGIN-->                            
                             <div class = "col-sm-6 d-flex flex-column align-items-center">
-                                <div class = "p-0 w-100">
+                                <div class = "card p-5 w-100">
                                     <center> Login sistemas MESS</center>
-                                    <br>                                    
+                                    <br>
+                                    <form onsubmit="validaSesion(); return false;">
                                         <div class = "form-group">
                                             <input type = "text" class = "form-control form-control-user" id = "InputEmail" name = "InputEmail" aria-describedby = "emailHelp" placeholder = "Usuario">
                                             <span>@mess.com.mx</span>
@@ -57,13 +57,9 @@
                                             </div>
                                         </div>
                                         <div class="text-center">
-                                            <input class = "btn btn-primary btn-md" type = "button" name = "btningresar" onclick="validaSesion()" value = "   Acceder   "/>
+                                            <input class = "btn btn-primary btn-md" type = "submit" name = "btningresar" value = "   Acceder   "/>
                                         </div>
-                                        <!--<a class = "small" href = "forgot-password">Olvide mi contraseña</a>-->
-                                        <br>
-                                        <br>
-                                        <br>                                    
-                                </div>
+                                    </form>    </div>
                             </div>
                             <!--LOGIN-->
                             <!--IMAGEN-->
@@ -73,19 +69,20 @@
                                 </div>    
                             </div>
                         </div>
-                        <br>
-                        <center><b>Login centralizado para todos los sistemas de MESS, permitiendo acceso unificado y gestión de credenciales desde un solo punto.</b></center>
-                        <br>
+                        <br>                        
                         <!--BARRA DE SOPORTE-->
                         <div class="row">  
-                            <div class = "col-lg-12 mx-auto">
+                            <div class = "col-lg-6 mx-auto">
+                                <center><b style="font-size: 0.9em;">Login centralizado para todos los sistemas de MESS, permitiendo acceso unificado y gestión de credenciales desde un solo punto.</b></center>                            
+                            </div>          
+                            <div class = "col-lg-6 mx-auto">
                                 <center>
                                     <p class="alert alert-info" style="font-size: 0.9em;">
                                         Soporte del sistema:                                        
                                         <a href="mailto:pedro.martinez@mess.com.mx">pedro.martinez@mess.com.mx</a>
                                     </p>
                                 </center>
-                            </div>          
+                            </div>
                         </div>
                     </div>
                 </div>
