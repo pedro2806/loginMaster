@@ -234,17 +234,22 @@
         </div>
     </div>
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script>
-    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="js/sb-admin-2.min.js"></script>
+    <!-- Bootstrap core JavaScript-->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src = "vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Core plugin JavaScript-->
+    <script src = "vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- Custom scripts for all pages-->
+    <script src = "js/sb-admin-2.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src = "https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script> 
     
     <script>
-        $(document).ready(function () {            
+        $(document).ready(function () {           
             verCalendarioLogin();
-            infoEmpleado();
             validaOpciones();
+            infoEmpleado();            
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
@@ -279,7 +284,8 @@
                 type: 'POST',
                 dataType: 'json',
                 data: {                    
-                    noEmpleado: getCookie('noEmpleado'),                                        
+                    noEmpleado: getCookie('noEmpleado'),                    
+                    correo: getCookie('correo'),
                     accion: 'ValidarOpciones'
                 },
                 success: function(info) {

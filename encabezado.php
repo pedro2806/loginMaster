@@ -1,16 +1,6 @@
 <!-- Topbar -->
 <nav class = "navbar navbar-expand navbar-light bg-white topbar mb-2 static-top shadow">
-<!-- Enlace a Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<!-- Enlace a Bootstrap JS (necesario para el funcionamiento del modal) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Enlace a FontAwesome para los íconos (si usas íconos) -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-
-<!-- SweetAlert2 CDN -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <!-- Sidebar Toggle (Topbar) -->
@@ -90,48 +80,7 @@
     
     <script>
 
-        $(document).ready(function () {
-            verCalendarioLogin();
-        });
-
-        function verCalendarioLogin() {
-            var calendarEl = document.getElementById('calendar');
-
-            var calendar = new FullCalendar.Calendar(calendarEl, {        
-                initialView: 'listWeek', // Cambiar a vista diaria
-                events: '../ControlVehicular/SalaDeJuntas/acciones_calendarioGral.php?opcion=login', // Aquí llamas a tu PHP que devuelve las vacaciones en JSON
-                editable: false,
-                locale: 'es',
-                eventContent: function(info) {
-                    // Personalizar el contenido del evento
-                    var nombreEmpleado = info.event.title;
-                    var fechaInicio = info.event.start;
-                    var fechaFin = info.event.end;
-                    var descripcion = info.event.extendedProps.descripcion || 'Sin descripción'; // Obtener la descripción del evento
-                    var displayText = nombreEmpleado + '<br>' + descripcion;
-
-                    return { html: displayText };
-                }
-            });
-            calendar.render();
-        } 
-    
-    //Funcion para leer cookies
-    function getCookie(name) {
-        let value = "; " + document.cookie;
-        let parts = value.split("; " + name + "=");
-        if (parts.length === 2) return parts.pop().split(";").shift();
-        return null; // Si no encuentra la cookie, retorna null
-    }
-    // Asignar el valor de la cookie al input
-    window.onload = function() {
-        var cookieValue = getCookie("noEmpleado"); // Aquí "noEmpleadoCookie" es el nombre de la cookie
-    
-        // Verificar si la cookie existe y asignar el valor al input
-        if (cookieValue) {
-            document.getElementById("noEmpleado").value = cookieValue;
-        }
-    };
+  
     </script>
 </nav>
 <!-- End of Topbar -->
