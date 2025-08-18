@@ -104,7 +104,7 @@
         verCalendarioLogin();
     });
     function validaSesion() {
-        var usuario = $('#InputEmail').val();
+        var usuario = $('#InputEmail').val(); 
         var password = $('#InputPassword').val();
         if (usuario === '' || password === '') {
             // Mostrar alerta de campos vacíos

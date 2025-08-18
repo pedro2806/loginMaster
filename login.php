@@ -2,6 +2,9 @@
 include '../ControlVehicular/conn.php';
 
 $email = $_POST['InputEmail'];
+//validar variable email
+$emailValido = str_replace('@mess.com.mx', '', $email); 
+
 $password = $_POST['InputPassword'];
 $accion = $_POST['btningresar'];
 

@@ -136,7 +136,7 @@
                                 <div class="col-md-3 mb-4" id="divControlVehicular">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
-                                            <a href="../ControlVehicular/" class="btn btn-outline-danger btn-block">
+                                            <a onclick="irControlVehicular()" class="btn btn-outline-danger btn-block">
                                                 <i class="fas fa-car fa-lg"></i><br>Control Vehicular
                                             </a>
                                         </div>
@@ -145,7 +145,7 @@
                                 <div class="col-md-3 mb-4" id="divTI">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <a href="../ControlVehicular/" class="btn btn-outline-primary btn-block">
+                                            <a onclick="irControlVehicular()" class="btn btn-outline-primary btn-block">
                                                 <i class="fas fa-laptop fa-lg"></i><br>TI (Mtto y tickets)
                                             </a>
                                         </div>
@@ -154,7 +154,7 @@
                                 <div class="col-md-3 mb-4" id="divHorasExtra">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <a href="../ControlVehicular/" class="btn btn-outline-info btn-block">
+                                            <a onclick="irHrsExtra()" class="btn btn-outline-info btn-block">
                                                 <i class="fas fa-clock fa-lg"></i><br>Horas Extra
                                             </a>
                                         </div>
@@ -335,6 +335,44 @@
                 },
                 success: function() {
                     window.location.href = '../incidencias/SalaDeJuntas';
+                }
+            });
+        }
+    
+    //FUNCION PARA REDIRIGIR AL CONTROL VEHICULAR
+        function irControlVehicular() {        
+            
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                data: {
+                    id_usuario: getCookie('id_usuario'),
+                    nombredelusuario: getCookie('nombredelusuario'),
+                    noEmpleado: getCookie('noEmpleado'),
+                    rol: getCookie('rol'),
+                    correo: getCookie('correo')
+                },
+                success: function() {
+                    window.location.href = '../ControlVehicular/inicio';
+                }
+            });
+        }
+
+    //FUNCION PARA REDIRIGIR A HORAS EXTRAS
+        function irHrsExtra() {        
+            
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                data: {
+                    id_usuario: getCookie('id_usuario'),
+                    nombredelusuario: getCookie('nombredelusuario'),
+                    noEmpleado: getCookie('noEmpleado'),
+                    rol: getCookie('rol'),
+                    correo: getCookie('correo')
+                },
+                success: function() {
+                    window.location.href = '../horasextra/inicio';
                 }
             });
         }
