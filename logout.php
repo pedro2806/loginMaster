@@ -27,7 +27,7 @@ $(document).ready(function() {
     document.cookie = "nombredelusuario =00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
     document.cookie = "rol =00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
 
-    window.location.assign("index.php")        
+    window.location.assign("../loginMaster/index")        
 } );
 
 	</script>

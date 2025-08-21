@@ -105,11 +105,11 @@
                                     </div>
                                 </div>
                                 <div class="stat-box mb-1" style="background: #e6f0ff;">
-                                    <h5></h5>
+                                    <h5 id ="vehiculoAsignado" name="vehiculoAsignado"></h5>
                                     <p>Vehículo asignado</p>
                                 </div>
-                                <div class="stat-box" style="background: #e6fff5;">
-                                    <h5></h5>
+                                <div class="stat-box" style="background: #e6fff5; display:none">
+                                    <h5 id ="equipoComputo" name="equipoComputo"></h5>
                                     <p>Equipo de cómputo</p>
                                 </div>
                                 <button class="btn btn-outline-primary btn-block mt-3" data-toggle="modal" data-target="#modalCambiarContrasena">
@@ -124,38 +124,65 @@
                         <!-- Accesos rápidos y tablero -->
                         <div class="col-xl-9 col-md-8">
                             <div class="row">
-                                <div class="col-md-3 mb-4" id="divIncidencias">
+                                <div class="col-md-3 mb-4" id="divVacaciones" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irIncidencias()" class="btn btn-outline-warning btn-block">
-                                                <i class="far fa-check-square fa-lg"></i><br>Incidencias
+                                            <a onclick="irVacaciones()" class="btn btn-outline-warning btn-block">
+                                                <i class="far fa-check-square fa-lg"></i><br>Vac
                                             </a>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-4" id="divControlVehicular">
+                                <div class="col-md-3 mb-4" id="divControlVehicular" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
                                             <a onclick="irControlVehicular()" class="btn btn-outline-danger btn-block">
-                                                <i class="fas fa-car fa-lg"></i><br>Control Vehicular
+                                                <i class="fas fa-car fa-lg"></i><br>Ctrl Veh
                                             </a>
                                         </div>
                                     </div>
                                 </div>                                
-                                <div class="col-md-3 mb-4" id="divTI">
+                                <div class="col-md-3 mb-4" id="divTI" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <a onclick="irControlVehicular()" class="btn btn-outline-primary btn-block">
-                                                <i class="fas fa-laptop fa-lg"></i><br>TI (Mtto y tickets)
+                                                <i class="fas fa-laptop fa-lg"></i><br>TI 
                                             </a>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-4" id="divHorasExtra">
+                                <div class="col-md-3 mb-4" id="divHorasExtra" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
                                             <a onclick="irHrsExtra()" class="btn btn-outline-info btn-block">
-                                                <i class="fas fa-clock fa-lg"></i><br>Horas Extra
+                                                <i class="fas fa-clock fa-lg"></i><br>Hrs Extra
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
+                                    <div class="card card-action border-left-success shadow h-100">
+                                        <div class="card-body text-center">
+                                            <a onclick="irIncidencias()" class="btn btn-outline-success btn-block">
+                                                <i class="fas fa-list fa-lg"></i><br>Inci
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
+                                    <div class="card card-action border-left-success shadow h-100">
+                                        <div class="card-body text-center">
+                                            <a onclick="irCapacitacion()" class="btn btn-outline-success btn-block">
+                                                <i class="fas fa-list fa-lg"></i><br>Capacitacion
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4" id="divKPI" style="display:none">
+                                    <div class="card card-action border-left-success shadow h-100">
+                                        <div class="card-body text-center">
+                                            <a onclick="irKpis()" class="btn btn-outline-success btn-block">
+                                                <i class="fas fa-list fa-lg"></i><br>KPI's
                                             </a>
                                         </div>
                                     </div>
@@ -203,7 +230,7 @@
     <!-- Modal Cambiar Contraseña -->
     <div class="modal fade" id="modalCambiarContrasena" tabindex="-1" role="dialog" aria-labelledby="modalCambiarContrasenaLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form id="formCambiarContrasena" method="POST" action="#">
+            <form id="formCambiarContrasena" method="POST" action="cambiar_contrasena.php">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalCambiarContrasenaLabel">Cambiar Contraseña</h5>
@@ -249,7 +276,14 @@
         $(document).ready(function () {           
             verCalendarioLogin();
             validaOpciones();
-            infoEmpleado();            
+            infoEmpleado();   
+            obtenerPlaca();
+
+             document.cookie = "antiguedad =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "diasD =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "noEmpleado =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "nombredelusuario =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "rol =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
@@ -263,16 +297,19 @@
                     correo: getCookie('correo'),
                     accion: 'getInfo'
                 },
-                success: function(info) {
-                    $.each(info, function (index, infoUsr) {                  
-                        $('#antig').text(infoUsr.antiguedad);
-                        $('#diasDisp').text(infoUsr.diasdisponibles - infoUsr.diasSol);
-                        $('#lblArea').text(infoUsr.departamento);
-                        $('#lblJefe').text(infoUsr.jefe);
-                        $('#fechaIngreso').text(infoUsr.fechaIngreso);
-                        $('#diasSol').text(infoUsr.diasSol);
-                    });
-                    
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $.each(response.info, function (index, infoUsr) {
+                            $('#antig').text(infoUsr.antiguedad);
+                            $('#diasDisp').text(infoUsr.diasdisponibles - infoUsr.diasSol);
+                            $('#lblArea').text(infoUsr.departamento);
+                            $('#lblJefe').text(infoUsr.jefe);
+                            $('#fechaIngreso').text(infoUsr.fechaIngreso);
+                            $('#diasSol').text(infoUsr.diasSol);
+                        });
+                    } else {
+                        console.log(response.message); // Muestra error si aplica
+                    }
                 }
             });
             
@@ -302,9 +339,42 @@
             });
         }
         
-    //FUNCION PARA REDIRIGIR AL SISTEMA DE INCIDENCIAS
-        function irIncidencias() {        
-            
+    //FUNCION PARA OTENER ID_USUARIO Y PLACA
+        function obtenerPlaca() {
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'getPlaca',
+                    noEmpleado: getCookie('noEmpleado')
+                },
+                success: function(response) {
+                    if (response.success && response.vehiculos && response.vehiculos.length > 0) {
+                        let html = '';
+                        if (response.vehiculos.length === 1) {
+                            html = response.vehiculos[0];
+                        } else {
+                            html = '<ul style="list-style:none;padding-left:0;margin-bottom:0;">';
+                            response.vehiculos.forEach(function(vehiculo) {
+                                html += '<li>' + vehiculo + '</li>';
+                            });
+                            html += '</ul>';
+                        }
+                        $('#vehiculoAsignado').html(html);
+                    } else {
+                        $('#vehiculoAsignado').text('Sin vehículo asignado');
+                    }
+                },
+                error: function() {
+                    $('#vehiculoAsignado').text('Error al obtener vehículo');
+                }
+            });
+        }
+
+    //FUNCION PARA REDIRIGIR AL SISTEMA DE VACACIONES
+        function irVacaciones() {
+
             $.ajax({
                 url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
@@ -343,7 +413,7 @@
         function irControlVehicular() {        
             
             $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
+                url: '../ControlVehicular/validaLoginMaster.php',
                 type: 'POST',
                 data: {
                     id_usuario: getCookie('id_usuario'),
@@ -362,7 +432,7 @@
         function irHrsExtra() {        
             
             $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
+                url: '../horasextra/validaLoginMaster.php',
                 type: 'POST',
                 data: {
                     id_usuario: getCookie('id_usuario'),
@@ -373,6 +443,63 @@
                 },
                 success: function() {
                     window.location.href = '../horasextra/inicio';
+                }
+            });
+        }
+
+    //FUNCION PARA REDIRIGIR AL SISTEMA DE INCIDENCIAS
+        function irIncidencias() {        
+            
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                data: {
+                    id_usuario: getCookie('id_usuario'),
+                    nombredelusuario: getCookie('nombredelusuario'),
+                    noEmpleado: getCookie('noEmpleado'),
+                    rol: getCookie('rol'),
+                    correo: getCookie('correo')
+                },
+                success: function() {
+                    window.location.href = '../incidencias/inicio';
+                }
+            });
+        }
+    
+    //FUNCION PARA REDIRIGIR A CAPACITACION
+        function irCapacitacion() {
+
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                data: {
+                    id_usuario: getCookie('id_usuario'),
+                    nombredelusuario: getCookie('nombredelusuario'),
+                    noEmpleado: getCookie('noEmpleado'),
+                    rol: getCookie('rol'),
+                    correo: getCookie('correo')
+                },
+                success: function() {
+                    window.location.href = '../incidencias/inicio';
+                }
+            });
+        }
+
+    //FUNCION PARA REDIRIGIR A KPI'S
+        function irKpis() {
+
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                data: {
+                    id_usuario: getCookie('id_usuario'),
+                    nombredelusuario: getCookie('nombredelusuario'),
+                    noEmpleado: getCookie('noEmpleado'),
+                    rol: getCookie('rol'),
+                    correo: getCookie('correo')
+                },
+                success: function() {
+                    window.location.href = '../incidencias/inicio';
                 }
             });
         }
