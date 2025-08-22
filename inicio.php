@@ -145,7 +145,7 @@
                                 <div class="col-md-3 mb-4" id="divTI" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irControlVehicular()" class="btn btn-outline-primary btn-block">
+                                            <a onclick="" class="btn btn-outline-primary btn-block">
                                                 <i class="fas fa-laptop fa-lg"></i><br>TI 
                                             </a>
                                         </div>
@@ -163,7 +163,7 @@
                                 <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
                                     <div class="card card-action border-left-success shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irIncidencias()" class="btn btn-outline-success btn-block">
+                                            <a onclick="" class="btn btn-outline-success btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>Inci
                                             </a>
                                         </div>
@@ -172,7 +172,7 @@
                                 <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
                                     <div class="card card-action border-left-success shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irCapacitacion()" class="btn btn-outline-success btn-block">
+                                            <a onclick="" class="btn btn-outline-success btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>Capacitacion
                                             </a>
                                         </div>
@@ -181,7 +181,7 @@
                                 <div class="col-md-3 mb-4" id="divKPI" style="display:none">
                                     <div class="card card-action border-left-success shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irKpis()" class="btn btn-outline-success btn-block">
+                                            <a onclick="" class="btn btn-outline-success btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>KPI's
                                             </a>
                                         </div>
@@ -278,13 +278,37 @@
             validaOpciones();
             infoEmpleado();   
             obtenerPlaca();
-
-             document.cookie = "antiguedad =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "diasD =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "noEmpleado =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "nombredelusuario =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "rol =00; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            readAndDisplayAllCookies();
         });
+
+        function readAndDisplayAllCookies() {
+            const allCookies = document.cookie;
+
+            // Si no hay cookies, muestra un mensaje
+            if (allCookies === "") {
+                console.log("No se encontraron cookies.");
+                return;
+            }
+
+            // Divide el string de cookies en un array
+            const cookieArray = allCookies.split(';');
+
+            console.log("Cookies encontradas:");
+            console.log("--------------------");
+
+            // Itera sobre el array y muestra cada cookie
+            cookieArray.forEach(cookie => {
+                // Elimina los espacios en blanco del inicio y del final
+                const trimmedCookie = cookie.trim();
+                
+                // Divide el nombre y el valor
+                const [name, value] = trimmedCookie.split('=');
+
+                // Muestra la cookie formateada en la consola
+                console.log(`- Nombre: ${name} | Valor: ${value}`);
+            });
+        }        
+
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
         function infoEmpleado(){
