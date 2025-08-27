@@ -116,7 +116,7 @@
             });
             return false;
         } else {
-            $.ajax({    
+            $.ajax({
                 type: 'POST',
                 url: 'login.php',
                 data: {
@@ -131,27 +131,31 @@
                     } catch (e) {
                         dataArray = [];
                     }
-                    dataArray.forEach(function (data) {
-                        document.cookie = "id_usuario=" + encodeURIComponent(data.id) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
-                        document.cookie = "nombredelusuario=" + encodeURIComponent(data.nombre) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
-                        document.cookie = "noEmpleado=" + encodeURIComponent(data.noEmpleado) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
-                        document.cookie = "rol=" + encodeURIComponent(data.rol) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
-                        document.cookie = "correo=" + encodeURIComponent(data.usuario) + ";expires=" + new Date(Date.now() + 99900000).toUTCString() + ";SameSite=Lax;";
-                    });                                
                     
-                    window.location.href = 'inicio';
+                    dataArray.forEach(function (data) {
+                        const expires = new Date(Date.now() + 99900000).toUTCString();
                         
+                        // Cada cookie ahora se establece con el path global "/"
+                        document.cookie = `id_usuarioL=${encodeURIComponent(data.id)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `nombredelusuarioL=${encodeURIComponent(data.nombre)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `noEmpleadoL=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `rolL=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `correoL=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `SesionLogin=LoginMaster; expires=${expires}; SameSite=Lax; path=/;`;
+                        
+                    });
+                    
+                    // La redirección se hace después de que todas las cookies se han establecido
+                    window.location.href = 'inicio';
                 },
                 error: function (xhr, status, error) {
-                    // Manejar errores de la solicitud AJAX
-                    //console.error("Error en la solicitud AJAX:", error);
+                    // ... (tu código de manejo de errores)
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
                         text: 'Ocurrió un error al procesar tu solicitud. Inténtalo de nuevo más tarde.',
                         confirmButtonText: 'Aceptar'
                     });
-                    
                 }
             });
         }
