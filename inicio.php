@@ -1,7 +1,7 @@
 <?php
     session_start();
     include '../ControlVehicular/conn.php';
-    if(empty($_COOKIE['noEmpleado'])){
+    if(empty($_COOKIE['noEmpleadoL'])){
         echo '<script>window.location.assign("index.php")</script>';
         exit;
     }
@@ -128,7 +128,7 @@
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
                                             <a onclick="irVacaciones()" class="btn btn-outline-warning btn-block">
-                                                <i class="far fa-check-square fa-lg"></i><br>Vac
+                                                <i class="far fa-check-square fa-lg"></i><br>Vacaciones
                                             </a>
                                         </div>
                                     </div>
@@ -161,27 +161,27 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
-                                    <div class="card card-action border-left-success shadow h-100">
+                                    <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-success btn-block">
-                                                <i class="fas fa-list fa-lg"></i><br>Inci
+                                            <a onclick="" class="btn btn-outline-info btn-block">
+                                                <i class="fas fa-list fa-lg"></i><br>Incidencias
                                             </a>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
-                                    <div class="card card-action border-left-success shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-success btn-block">
-                                                <i class="fas fa-list fa-lg"></i><br>Capacitacion
+                                            <a onclick="" class="btn btn-outline-primary btn-block">
+                                                <i class="fas fa-list fa-lg"></i><br>Capacitación
                                             </a>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-4" id="divKPI" style="display:none">
-                                    <div class="card card-action border-left-success shadow h-100">
+                                <div class="col-md-3 mb-4" id="divKPIs" style="display:none">
+                                    <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-success btn-block">
+                                            <a onclick="" class="btn btn-outline-danger btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>KPI's
                                             </a>
                                         </div>
@@ -205,7 +205,7 @@
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-success text-white py-2 d-flex justify-content-between align-items-center">
                                             <span class="font-weight-bold">Agenda Sala de Juntas</span>
-                                            <button onclick="irSalaJuntas()" class="btn btn-outline-light btn-sm">Ir a Sala de Juntas</button>
+                                            <button onclick="irSalaJuntas()" class="btn btn-light btn-sm">Ir a Sala de Juntas</button>
                                         </div>
                                         <div class="card-body">
                                             <div id="calendar"></div>
@@ -278,37 +278,8 @@
             validaOpciones();
             infoEmpleado();   
             obtenerPlaca();
-            readAndDisplayAllCookies();
+            
         });
-
-        function readAndDisplayAllCookies() {
-            const allCookies = document.cookie;
-
-            // Si no hay cookies, muestra un mensaje
-            if (allCookies === "") {
-                console.log("No se encontraron cookies.");
-                return;
-            }
-
-            // Divide el string de cookies en un array
-            const cookieArray = allCookies.split(';');
-
-            console.log("Cookies encontradas:");
-            console.log("--------------------");
-
-            // Itera sobre el array y muestra cada cookie
-            cookieArray.forEach(cookie => {
-                // Elimina los espacios en blanco del inicio y del final
-                const trimmedCookie = cookie.trim();
-                
-                // Divide el nombre y el valor
-                const [name, value] = trimmedCookie.split('=');
-
-                // Muestra la cookie formateada en la consola
-                console.log(`- Nombre: ${name} | Valor: ${value}`);
-            });
-        }        
-
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
         function infoEmpleado(){
@@ -317,8 +288,8 @@
                 type: 'POST',
                 dataType: 'json',
                 data: {                    
-                    noEmpleado: getCookie('noEmpleado'),                    
-                    correo: getCookie('correo'),
+                    noEmpleado: getCookie('noEmpleadoL'),                    
+                    correo: getCookie('correoL'),
                     accion: 'getInfo'
                 },
                 success: function(response) {
@@ -345,8 +316,8 @@
                 type: 'POST',
                 dataType: 'json',
                 data: {                    
-                    noEmpleado: getCookie('noEmpleado'),                    
-                    correo: getCookie('correo'),
+                    noEmpleado: getCookie('noEmpleadoL'),                    
+                    correo: getCookie('correoL'),
                     accion: 'ValidarOpciones'
                 },
                 success: function(info) {
@@ -371,7 +342,7 @@
                 dataType: 'json',
                 data: {
                     accion: 'getPlaca',
-                    noEmpleado: getCookie('noEmpleado')
+                    noEmpleado: getCookie('noEmpleadoL')
                 },
                 success: function(response) {
                     if (response.success && response.vehiculos && response.vehiculos.length > 0) {
@@ -403,11 +374,11 @@
                 url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
+                    id_usuario: getCookie('id_usuarioL'),
+                    nombredelusuario: getCookie('nombredelusuarioL'),
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    rol: getCookie('rolL'),
+                    correo: getCookie('correoL')
                 },
                 success: function() {
                     window.location.href = '../incidencias/inicio';
@@ -421,11 +392,11 @@
                 url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
+                    id_usuario: getCookie('id_usuarioL'),
+                    nombredelusuario: getCookie('nombredelusuarioL'),
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    rol: getCookie('rolL'),
+                    correo: getCookie('correoL')
                 },
                 success: function() {
                     window.location.href = '../incidencias/SalaDeJuntas';
@@ -459,11 +430,11 @@
                 url: '../horasextra/validaLoginMaster.php',
                 type: 'POST',
                 data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
+                    id_usuario: getCookie('id_usuarioL'),
+                    nombredelusuario: getCookie('nombredelusuarioL'),
+                    noEmpleado: getCookie('noEmpleadoLL'),
+                    rol: getCookie('rolL'),
+                    correo: getCookie('correoL')
                 },
                 success: function() {
                     window.location.href = '../horasextra/inicio';
@@ -478,11 +449,11 @@
                 url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
+                    id_usuario: getCookie('id_usuarioL'),
+                    nombredelusuario: getCookie('nombredelusuarioL'),
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    rol: getCookie('rolL'),
+                    correo: getCookie('correoL')
                 },
                 success: function() {
                     window.location.href = '../incidencias/inicio';
@@ -497,11 +468,11 @@
                 url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
+                    id_usuario: getCookie('id_usuarioL'),
+                    nombredelusuario: getCookie('nombredelusuarioL'),
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    rol: getCookie('rolL'),
+                    correo: getCookie('correoL')
                 },
                 success: function() {
                     window.location.href = '../incidencias/inicio';
@@ -516,11 +487,11 @@
                 url: '../incidencias/validaLoginMaster.php',
                 type: 'POST',
                 data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
+                    id_usuario: getCookie('id_usuarioL'),
+                    nombredelusuario: getCookie('nombredelusuarioL'),
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    rol: getCookie('rolL'),
+                    correo: getCookie('correoL')
                 },
                 success: function() {
                     window.location.href = '../incidencias/inicio';
