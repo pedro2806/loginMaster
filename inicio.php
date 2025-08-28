@@ -127,9 +127,15 @@
                                 <div class="col-md-3 mb-4" id="divVacaciones" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irVacaciones()" class="btn btn-outline-warning btn-block">
-                                                <i class="far fa-check-square fa-lg"></i><br>Vacaciones
-                                            </a>
+                                            <form method="POST" action="../incidencias/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuario" id="id_usuario" value="">
+                                                <input type="hidden" name="nombredelusuario" id="nombredelusuario" value="">
+                                                <input type="hidden" name="noEmpleado" id="noEmpleado" value="">
+                                                <input type="hidden" name="correo" id="correo" value="">
+                                                <button type="submit" class="btn btn-outline-warning btn-block">
+                                                    <i class="far fa-check-square fa-lg"></i><br>Vacaciones
+                                                </button>
+                                            </form>                                            
                                         </div>
                                     </div>
                                 </div>
@@ -279,6 +285,11 @@
             infoEmpleado();   
             obtenerPlaca();
             
+            // Asigna los valores de las cookies a los campos del formulario
+            document.getElementById('id_usuario').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuario').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleado').value = getCookie('noEmpleadoL');
+            document.getElementById('correo').value = getCookie('correoL');
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
