@@ -141,7 +141,7 @@
                         document.cookie = `noEmpleadoL=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `rolL=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `correoL=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `SesionLogin=LoginMaster; expires=${expires}; SameSite=Lax; path=/;`;
+                        //document.cookie = `SesionLogin=LoginMaster; expires=${expires}; SameSite=Lax; path=/;`;
                         
                     });
                     
