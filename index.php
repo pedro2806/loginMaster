@@ -30,8 +30,7 @@
                             <div class = "col-sm-1"></div>
                             <div class = "col-sm-10">
                                 <div class = "text-center">
-                                                                        
-                                    <br>
+                                    <b class = "h5 text-gray-900 mb-4">Sistemas MESS</b>
                                     <b class = "h5 text-gray-900 mb-4">Bienvenido</b>
                                 </div>
                             </div>
