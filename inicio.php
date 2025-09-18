@@ -66,59 +66,63 @@
                     <div class="row">
                         <!-- Perfil de Usuario -->
                         <div class="col-xl-3 col-md-4">
-                            <div class="profile-card text-center">
+                            <div class="profile-card text-center shadow">
                                 <div class="profile-avatar mx-auto mb-1">
                                     <i class="fas fa-user-circle"></i>
                                 </div>
-                                <h5 class="mb-1"><?php echo isset($_COOKIE['nombredelusuario']) ? htmlspecialchars($_COOKIE['nombredelusuario']) : 'Usuario'; ?></h5>
-                                <small class="text-muted d-block mb-2">No. Empleado: <b><?php echo isset($_COOKIE['noEmpleado']) ? htmlspecialchars($_COOKIE['noEmpleado']) : '0000'; ?></b></small>
+                                <h3 class="mb-1 px-0 py-0 b" style="color: #1c83f1b9;"><strong><?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL']) : 'Usuario'; ?></strong></h3>
                                 <ul class="list-group list-group-flush mb-1">
-                                    <li class="list-group-item px-0 py-0 border-0"><strong>Área:</strong><p id="lblArea"></p></li>
-                                    <li class="list-group-item px-0 py-0 border-0"><strong>Jefe Directo:</strong><p id="lblJefe"></p></li>
+                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">No. Empleado:</strong><p style="font-size:1.4rem;"><?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?></p></li>
+                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">Área:</strong><p style="font-size:1.4rem;" id="lblArea"></p></li>
+                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">Jefe Directo:</strong><p style="font-size:1.4rem;" id="lblJefe"></p></li>
                                 </ul>
+                                <br>
                                 <div class="row">                        
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #f6f0ffff;">
-                                            <h5 id ="antig" name="antig"></h5>
-                                            <p>Antigüedad</p>
+                                        <div class="stat-box mb-1" style="background: #484cacff;">
+                                            <h5 id="antig" name="antig" style="color:#fff;"></h5>
+                                            <p style="color:#fff;">Antigüedad</p>
                                         </div>
                                     </div>
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #fffbe6;">
-                                            <h5 id="fechaIngreso" name="fechaIngreso"></h5>
-                                            <p>Fecha de ingreso</p>
+                                        <div class="stat-box mb-1" style="background: #0fa083ff; ">
+                                            <h5 id="fechaIngreso" name="fechaIngreso" style="color:#fff;"></h5>
+                                            <p style="color:#fff;">Fecha de ingreso</p>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">                        
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #f6f0ffff;">
-                                            <h5 id ="diasSol" name="diasSol"></h5>
-                                            <p>Dias Solicitados</p>
+                                        <div class="stat-box mb-1" style="background: #484cacff;">
+                                            <h5 id ="diasSol" name="diasSol" style="color:#fff;"></h5>
+                                            <p style="color:#fff;">Dias Solicitados</p>
                                         </div>
                                     </div>
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #fffbe6;">
-                                            <h5 id="diasDisp" name="diasDisp"></h5>
-                                            <p>Días Disponibles</p>
+                                        <div class="stat-box mb-1" style="background: #0fa083ff;">
+                                            <h5 id="diasDisp" name="diasDisp" style="color:#fff;"></h5>
+                                            <p style="color:#fff;">Días Disponibles</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="stat-box mb-1" style="background: #e6f0ff;">
-                                    <h5 id ="vehiculoAsignado" name="vehiculoAsignado"></h5>
-                                    <p>Vehículo asignado</p>
+                                <br>
+                                <div class="stat-box mb-1" style="background: #164a98ff;">
+                                    <h5 id ="vehiculoAsignado" name="vehiculoAsignado" style="color:#fff;"></h5>
+                                    <p style="color:#fff;">Vehículo asignado</p>
                                 </div>
                                 <div class="stat-box" style="background: #e6fff5; display:none">
                                     <h5 id ="equipoComputo" name="equipoComputo"></h5>
                                     <p>Equipo de cómputo</p>
                                 </div>
-                                <button class="btn btn-outline-primary btn-block mt-3" data-toggle="modal" data-target="#modalCambiarContrasena">
+                                <br>
+                                <button class="btn btn-outline-warning btn-block mt-3" data-toggle="modal" data-target="#modalCambiarContrasena">
                                     <i class="fas fa-key"></i> Cambiar Contraseña
                                 </button>
                                 <a class = "btn btn-outline-danger btn-block mt-3" href = "#" data-toggle = "modal" data-target = "#logoutModalN">
                                     <i class = "fas fa-sign-out-alt fa-sm fa-fw mr-2 text-red-400"></i>
                                     Salir
                                 </a>
+                                <br>
                             </div>
                         </div>
                         <!-- Accesos rápidos y tablero -->
@@ -132,6 +136,7 @@
                                                 <input type="hidden" name="nombredelusuario" id="nombredelusuario" value="">
                                                 <input type="hidden" name="noEmpleado" id="noEmpleado" value="">
                                                 <input type="hidden" name="correo" id="correo" value="">
+                                                <input type="hidden" name="sistema" id="sistema" value="vacaciones">
                                                 <button type="submit" class="btn btn-outline-warning btn-block">
                                                     <i class="far fa-check-square fa-lg"></i><br>Vacaciones
                                                 </button>
@@ -139,51 +144,82 @@
                                         </div>
                                     </div>
                                 </div>
+                                
                                 <div class="col-md-3 mb-4" id="divControlVehicular" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irControlVehicular()" class="btn btn-outline-danger btn-block">
-                                                <i class="fas fa-car fa-lg"></i><br>Ctrl Veh
-                                            </a>
+                                            <form method="POST" action="../ControlVehicular/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
+                                                <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
+                                                <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
+                                                <input type="hidden" name="correoCV" id="correoCV" value="">                                                
+                                                <button type="submit" class="btn btn-outline-danger btn-block">
+                                                    <i class="fas fa-car fa-lg"></i><br>Ctrl Vehicular
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
-                                </div>                                
+                                </div>
+
                                 <div class="col-md-3 mb-4" id="divTI" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-primary btn-block">
-                                                <i class="fas fa-laptop fa-lg"></i><br>TI 
-                                            </a>
+                                            <form method="POST" action="inicio">
+                                                <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
+                                                <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
+                                                <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
+                                                <input type="hidden" name="correoCV" id="correoCV" value="">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
+                                                    <i class="fas fa-laptop fa-lg"></i><br>TI 
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
+                                
                                 <div class="col-md-3 mb-4" id="divHorasExtra" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="irHrsExtra()" class="btn btn-outline-info btn-block">
-                                                <i class="fas fa-clock fa-lg"></i><br>Hrs Extra
-                                            </a>
+                                            <form method="POST" action="../horasextra/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioHR" id="id_usuarioHR" value="">
+                                                <input type="hidden" name="nombredelusuarioHR" id="nombredelusuarioHR" value="">
+                                                <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
+                                                <input type="hidden" name="correoHR" id="correoHR" value="">
+                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                    <i class="fas fa-clock fa-lg"></i><br>Hrs Extra
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-info btn-block">
-                                                <i class="fas fa-list fa-lg"></i><br>Incidencias
-                                            </a>
+                                            <form method="POST" action="../incidencias/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioI" id="id_usuario" value="">
+                                                <input type="hidden" name="nombredelusuarioI" id="nombredelusuario" value="">
+                                                <input type="hidden" name="noEmpleadoI" id="noEmpleado" value="">
+                                                <input type="hidden" name="correoI" id="correo" value="">
+                                                <input type="hidden" name="sistema" id="sistema" value="incidencias">
+                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                    <i class="fas fa-list fa-lg"></i><br>Incidencias
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-primary btn-block">
+                                            <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>Capacitación
                                             </a>
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="col-md-3 mb-4" id="divKPIs" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
@@ -193,25 +229,26 @@
                                         </div>
                                     </div>
                                 </div>
+
                             </div>
                             <div class="row">
                                 <!-- Tablero de avisos -->
                                 <div class="col-md-6 mb-4">
                                     <div class="card shadow h-100">
-                                        <div class="card-header bg-primary text-white py-2">
+                                        <div class="card-header bg-light text-black py-2">
                                             <h6 class="m-2 font-weight-bold">Tablero de Avisos</h6>
                                         </div>
                                         <div class="card-body">
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/03/Marzo-2024.pdf#zoom=60' type="application/pdf" width="100%" height="400px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/03/Marzo-2024.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Agenda Sala de Juntas -->
                                 <div class="col-md-6 mb-4">
                                     <div class="card shadow h-100">
-                                        <div class="card-header bg-success text-white py-2 d-flex justify-content-between align-items-center">
+                                        <div class="card-header bg-light text-black py-2 d-flex justify-content-between align-items-center">
                                             <span class="font-weight-bold">Agenda Sala de Juntas</span>
-                                            <button onclick="irSalaJuntas()" class="btn btn-light btn-sm">Ir a Sala de Juntas</button>
+                                            <button onclick="irSalaJuntas()" class="btn btn-success btn-sm">Ir a Sala de Juntas</button>
                                         </div>
                                         <div class="card-body">
                                             <div id="calendar"></div>
@@ -290,6 +327,22 @@
             document.getElementById('nombredelusuario').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleado').value = getCookie('noEmpleadoL');
             document.getElementById('correo').value = getCookie('correoL');
+            
+            document.getElementById('id_usuarioCV').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioCV').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoCV').value = getCookie('noEmpleadoL');
+            document.getElementById('correoCV').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioHR').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioHR').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoHR').value = getCookie('noEmpleadoL');
+            document.getElementById('correoHR').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioI').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioI').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoI').value = getCookie('noEmpleadoL');
+            document.getElementById('correoI').value = getCookie('correoL');
+
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
@@ -378,138 +431,6 @@
             });
         }
 
-    //FUNCION PARA REDIRIGIR AL SISTEMA DE VACACIONES
-        function irVacaciones() {
-
-            $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuarioL'),
-                    nombredelusuario: getCookie('nombredelusuarioL'),
-                    noEmpleado: getCookie('noEmpleadoL'),
-                    rol: getCookie('rolL'),
-                    correo: getCookie('correoL')
-                },
-                success: function() {
-                    window.location.href = '../incidencias/inicio';
-                }
-            });
-        }
-    //FUNCION PARA REDIRIGIR AL SISTEMA DE SALA DE JUNTAS
-        function irSalaJuntas() {        
-            
-            $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuarioL'),
-                    nombredelusuario: getCookie('nombredelusuarioL'),
-                    noEmpleado: getCookie('noEmpleadoL'),
-                    rol: getCookie('rolL'),
-                    correo: getCookie('correoL')
-                },
-                success: function() {
-                    window.location.href = '../incidencias/SalaDeJuntas';
-                }
-            });
-        }
-    
-    //FUNCION PARA REDIRIGIR AL CONTROL VEHICULAR
-        function irControlVehicular() {        
-            
-            $.ajax({
-                url: '../ControlVehicular/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuario'),
-                    nombredelusuario: getCookie('nombredelusuario'),
-                    noEmpleado: getCookie('noEmpleado'),
-                    rol: getCookie('rol'),
-                    correo: getCookie('correo')
-                },
-                success: function() {
-                    window.location.href = '../ControlVehicular/inicio';
-                }
-            });
-        }
-
-    //FUNCION PARA REDIRIGIR A HORAS EXTRAS
-        function irHrsExtra() {        
-            
-            $.ajax({
-                url: '../horasextra/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuarioL'),
-                    nombredelusuario: getCookie('nombredelusuarioL'),
-                    noEmpleado: getCookie('noEmpleadoLL'),
-                    rol: getCookie('rolL'),
-                    correo: getCookie('correoL')
-                },
-                success: function() {
-                    window.location.href = '../horasextra/inicio';
-                }
-            });
-        }
-
-    //FUNCION PARA REDIRIGIR AL SISTEMA DE INCIDENCIAS
-        function irIncidencias() {        
-            
-            $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuarioL'),
-                    nombredelusuario: getCookie('nombredelusuarioL'),
-                    noEmpleado: getCookie('noEmpleadoL'),
-                    rol: getCookie('rolL'),
-                    correo: getCookie('correoL')
-                },
-                success: function() {
-                    window.location.href = '../incidencias/inicio';
-                }
-            });
-        }
-    
-    //FUNCION PARA REDIRIGIR A CAPACITACION
-        function irCapacitacion() {
-
-            $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuarioL'),
-                    nombredelusuario: getCookie('nombredelusuarioL'),
-                    noEmpleado: getCookie('noEmpleadoL'),
-                    rol: getCookie('rolL'),
-                    correo: getCookie('correoL')
-                },
-                success: function() {
-                    window.location.href = '../incidencias/inicio';
-                }
-            });
-        }
-
-    //FUNCION PARA REDIRIGIR A KPI'S
-        function irKpis() {
-
-            $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
-                type: 'POST',
-                data: {
-                    id_usuario: getCookie('id_usuarioL'),
-                    nombredelusuario: getCookie('nombredelusuarioL'),
-                    noEmpleado: getCookie('noEmpleadoL'),
-                    rol: getCookie('rolL'),
-                    correo: getCookie('correoL')
-                },
-                success: function() {
-                    window.location.href = '../incidencias/inicio';
-                }
-            });
-        }
-
     //FUNCION PARA CARGAR EL CALENDARIO DE LA SALA DE JUNTAS
         function verCalendarioLogin() {
             var calendarEl = document.getElementById('calendar');
@@ -518,6 +439,9 @@
                 events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
                 editable: false,
                 locale: 'es',
+                height: 500, // Altura fija en px
+                contentHeight: 400, // Altura del contenido
+                aspectRatio: 2, // Relación de aspecto (ancho/alto)
                 eventContent: function(info) {
                     var nombreEmpleado = info.event.title;
                     var descripcion = info.event.extendedProps.descripcion || 'Sin descripción';
