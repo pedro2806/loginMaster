@@ -128,6 +128,7 @@
                         <!-- Accesos rápidos y tablero -->
                         <div class="col-xl-9 col-md-8">
                             <div class="row">
+                                <!-- VACACIONES WARNIGN -->
                                 <div class="col-md-3 mb-4" id="divVacaciones" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
@@ -144,7 +145,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
+                                <!-- CONTROL VEHICULAR DANGER -->
                                 <div class="col-md-3 mb-4" id="divControlVehicular" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
@@ -161,22 +163,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3 mb-4" id="divTI" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form method="POST" action="inicio">
-                                                <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
-                                                <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
-                                                <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
-                                                <input type="hidden" name="correoCV" id="correoCV" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-laptop fa-lg"></i><br>TI 
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                
+                                <!-- HORAS EXTRA INFO -->
                                 <div class="col-md-3 mb-4" id="divHorasExtra" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
@@ -193,16 +180,17 @@
                                     </div>
                                 </div>
 
+                                <!-- INCIDENCIAS PRIMARY -->
                                 <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
-                                    <div class="card card-action border-left-info shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="../incidencias/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioI" id="id_usuario" value="">
-                                                <input type="hidden" name="nombredelusuarioI" id="nombredelusuario" value="">
-                                                <input type="hidden" name="noEmpleadoI" id="noEmpleado" value="">
-                                                <input type="hidden" name="correoI" id="correo" value="">
+                                                <input type="hidden" name="id_usuarioI" id="id_usuarioI" value="">
+                                                <input type="hidden" name="nombredelusuarioI" id="nombredelusuarioI" value="">
+                                                <input type="hidden" name="noEmpleadoI" id="noEmpleadoI" value="">
+                                                <input type="hidden" name="correoI" id="correoI" value="">
                                                 <input type="hidden" name="sistema" id="sistema" value="incidencias">
-                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-list fa-lg"></i><br>Incidencias
                                                 </button>
                                             </form>
@@ -210,22 +198,58 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
+                                <!-- PLANEACION DARK -->
+                                <div class="col-md-3 mb-4" id="divPlaneacion" style="display:none">
+                                    <div class="card card-action border-left-dark shadow h-100">
                                         <div class="card-body text-center">
-                                            <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary btn-block">
+                                            <form method="POST" action="../planeacion/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioPla" id="id_usuarioPla" value="">
+                                                <input type="hidden" name="nombredelusuarioPla" id="nombredelusuarioPla" value="">
+                                                <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
+                                                <input type="hidden" name="correoPla" id="correoPla" value="">
+                                                <button type="submit" class="btn btn-outline-dark btn-block">
+                                                    <i class="fas fa-calendar fa-lg"></i><br>Planeación
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CAPACITACION WARNING -->
+                                <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
+                                    <div class="card card-action border-left-warning shadow h-100">
+                                        <div class="card-body text-center">
+                                            <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>Capacitación
                                             </a>
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- KPI'S DANGER -->
                                 <div class="col-md-3 mb-4" id="divKPIs" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
                                             <a onclick="" class="btn btn-outline-danger btn-block">
                                                 <i class="fas fa-list fa-lg"></i><br>KPI's
                                             </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- KPI'S INFO -->
+                                <div class="col-md-3 mb-4" id="divTI" style="display:none">
+                                    <div class="card card-action border-left-info shadow h-100">
+                                        <div class="card-body text-center">
+                                            <form method="POST" action="inicio">
+                                                <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
+                                                <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
+                                                <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
+                                                <input type="hidden" name="correoCV" id="correoCV" value="">
+                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                    <i class="fas fa-laptop fa-lg"></i><br>TI 
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -342,6 +366,11 @@
             document.getElementById('nombredelusuarioI').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleadoI').value = getCookie('noEmpleadoL');
             document.getElementById('correoI').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioPla').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioPla').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoPla').value = getCookie('noEmpleadoL');
+            document.getElementById('correoPla').value = getCookie('correoL');
 
         });
 
