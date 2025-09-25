@@ -184,7 +184,7 @@
                                 <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../incidencias/validaLoginMaster.php">
+                                            <form method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioI" id="id_usuarioI" value="">
                                                 <input type="hidden" name="nombredelusuarioI" id="nombredelusuarioI" value="">
                                                 <input type="hidden" name="noEmpleadoI" id="noEmpleadoI" value="">
