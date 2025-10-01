@@ -263,7 +263,7 @@
                                             <h6 class="m-2 font-weight-bold">Tablero de Avisos</h6>
                                         </div>
                                         <div class="card-body">
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/03/Marzo-2024.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/10/Mural-Octubre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
                                         </div>
                                     </div>
                                 </div>
