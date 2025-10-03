@@ -219,9 +219,14 @@
                                 <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
-                                            <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning btn-block">
-                                                <i class="fas fa-list fa-lg"></i><br>Capacitación
-                                            </a>
+                                            <div class=" class="btn-group" role="group"">
+                                                <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning">
+                                                    <i class="fas fa-list fa-lg"></i><br>Capacitación
+                                                </a>
+                                                <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning">
+                                                    <i class="fas fa-file fa-lg"></i><br>Manual
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
