@@ -223,7 +223,7 @@
                                                 <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning">
                                                     <i class="fas fa-list fa-lg"></i><br>Capacitación
                                                 </a>
-                                                <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning">
+                                                <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-warning">
                                                     <i class="fas fa-file fa-lg"></i><br>Manual
                                                 </a>
                                             </div>
