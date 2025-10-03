@@ -272,7 +272,15 @@
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-light text-black py-2 d-flex justify-content-between align-items-center">
                                             <span class="font-weight-bold">Agenda Sala de Juntas</span>
-                                            <button onclick="irSalaJuntas()" class="btn btn-success btn-sm">Ir a Sala de Juntas</button>
+                                            <form method="POST" action="../incidencias/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioSJ" id="id_usuarioSJ" value="">
+                                                <input type="hidden" name="nombredelusuarioSJ" id="nombredelusuarioSJ" value="">
+                                                <input type="hidden" name="noEmpleadoSJ" id="noEmpleadoSJ" value="">
+                                                <input type="hidden" name="correoSJ" id="correoSJ" value="">
+                                                <input type="hidden" name="sistema" id="sistema" value="saladeJuntas">
+                                                <button type="submit" class="btn btn-success btn-sm">Ir a Sala de Juntas</button>
+                                            </form> 
+                                            
                                         </div>
                                         <div class="card-body">
                                             <div id="calendar"></div>
@@ -371,6 +379,11 @@
             document.getElementById('nombredelusuarioPla').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleadoPla').value = getCookie('noEmpleadoL');
             document.getElementById('correoPla').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioSJ').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioSJ').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoSJ').value = getCookie('noEmpleadoL');
+            document.getElementById('correoSJ').value = getCookie('correoL');
 
         });
 
