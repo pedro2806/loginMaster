@@ -235,9 +235,12 @@
                                 <div class="col-md-3 mb-4" id="divKPIs" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
-                                            <a onclick="" class="btn btn-outline-danger btn-block">
-                                                <i class="fas fa-list fa-lg"></i><br>KPI's
-                                            </a>
+                                            <form action="../kpis_pbi/indexK.php" method="post">
+                                                <input type="hidden" name="pass" id="pass" value="">
+                                                <button type="submit" class="btn btn-outline-danger btn-block">
+                                                    <i class="fas fa-chart-line fa-lg"></i><br>KPI's
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -389,6 +392,8 @@
             document.getElementById('nombredelusuarioSJ').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleadoSJ').value = getCookie('noEmpleadoL');
             document.getElementById('correoSJ').value = getCookie('correoL');
+
+            document.getElementById('pass').value = getCookie('UsrKpis');
 
         });
 

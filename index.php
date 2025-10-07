@@ -129,25 +129,36 @@
                         dataArray = typeof response === "string" ? JSON.parse(response) : response;
                     } catch (e) {
                         dataArray = [];
+                        Swal.fire({
+                            title: "Error",
+                            text: "Respuesta inválida del servidor.",
+                            icon: "error"
+                        });
+                        return;
                     }
-                    
+
+                    if (!dataArray || dataArray.length === 0) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Credenciales incorrectas',
+                            text: 'Usuario o contraseña inválidos.',
+                            confirmButtonText: 'Aceptar'
+                        });
+                        return;
+                    }
+
                     dataArray.forEach(function (data) {
                         const expires = new Date(Date.now() + 99900000).toUTCString();
-                        
-                        // Cada cookie ahora se establece con el path global "/"
                         document.cookie = `id_usuarioL=${encodeURIComponent(data.id)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `nombredelusuarioL=${encodeURIComponent(data.nombre)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `noEmpleadoL=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `rolL=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `correoL=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        //document.cookie = `SesionLogin=LoginMaster; expires=${expires}; SameSite=Lax; path=/;`;
-                        
+                        document.cookie = `UsrKpis=${encodeURIComponent(data.kpis)}; expires=${expires}; SameSite=Lax; path=/;`;
                     });
-                    
-                    // La redirección se hace después de que todas las cookies se han establecido
+
                     window.location.href = 'inicio';
-                },
-                error: function (xhr, status, error) {
+                },    error: function (xhr, status, error) {
                     // ... (tu código de manejo de errores)
                     Swal.fire({
                         icon: 'error',
