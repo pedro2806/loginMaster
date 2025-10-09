@@ -44,7 +44,7 @@ if($emailValido == 'fernanda.rodriguez') { $varKPIS = 'MESS_C0524SF'; }
 if($emailValido == 'francisco.martinez') { $varKPIS = 'MESS_0306FM'; }
 if($emailValido == 'julian.martinez') { $varKPIS = 'M3SS_0306JM'; }
 if($emailValido == 'osiel.pardo') { $varKPIS = 'ME55_0306OP'; }
-if($emailValido == 'jefes y gerente laboratorios') { $varKPIS = 'M3SS_Labs0525'; }
+
 if($emailValido == 'cuentasporcobrar') { $varKPIS = 'PorCobrar_1124'; }
 if($emailValido == 'leticia.vazquez') { $varKPIS = 'M3SS_0506LV'; }
 if($emailValido == 'victor.acosta') { $varKPIS = 'M3SS_0610VA'; }
@@ -78,7 +78,7 @@ if($emailValido == 'alfredo.robles') { $varKPIS = 'FPT1108LR'; }
 if($emailValido == 'patricio.espino') { $varKPIS = 'FPT1108PE'; }
 if($emailValido == 'hugo.soria') { $varKPIS = 'Mess@servicios25'; }
 
-
+if($emailValido == 'jefes y gerente laboratorios') { $varKPIS = 'M3SS_Labs0525'; }
 
 if ($accion == 'Ingresar') {
     $datosUsr = [];        

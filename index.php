@@ -15,7 +15,7 @@
     <link href = "../ControlVehicular/css/sb-admin-2.min.css" rel = "stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css">
 </head>
-<body class = "bg-gradient-primary">
+<body style="background-image:url(fondo.png); background-size: cover; background-repeat: no-repeat; background-attachment: fixed;">
     <div class = "container">
         <div class = "row justify-content-center">
             <div class = "col-xl-10 col-lg-12 col-md-9">
