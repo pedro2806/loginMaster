@@ -7,6 +7,7 @@ $emailValido = str_replace('', '', $email);
 $password = $_POST['InputPassword'];
 $accion = $_POST['btningresar'];
 $varKPIS = '';
+$accionT = $_POST['accion'] ?? '';
 
 if($emailValido == 'silvia') { $varKPIS = 'RENI_2024'; }
 if($emailValido == 'martin.becerra') { $varKPIS = 'bajio23_AL8A'; }
@@ -111,3 +112,84 @@ if ($accion == 'Ingresar') {
     exit;
     
 }
+
+//FUNCIONALIDAD PARA REGISTRAR TALLAS
+if ($accionT == 'registraTallas') {
+    include '../incidencias/conn.php';
+
+    $noEmpleado = isset($_POST['noEmpleado']) ? $_POST['noEmpleado'] : '';
+    $talla = isset($_POST['talla']) ? $_POST['talla'] : '';
+
+    // Verificar si ya existe una talla para ese empleado
+    $sqlExiste = "SELECT COUNT(*) FROM tallas WHERE noEmpleado = ?";
+    $stmtExiste = $conn->prepare($sqlExiste);
+    $stmtExiste->bind_param("i", $noEmpleado);
+    $stmtExiste->execute();
+    $stmtExiste->bind_result($existe);
+    $stmtExiste->fetch();
+    $stmtExiste->close();
+
+    if ($existe > 0) {
+        // Ya existe: hacer UPDATE
+        $sqlUpdate = "UPDATE tallas SET talla = ?, fecha_captura = NOW() WHERE noEmpleado = ?";
+        $stmtUpdate = $conn->prepare($sqlUpdate);
+        $stmtUpdate->bind_param("si", $talla, $noEmpleado);
+        $success = $stmtUpdate->execute();
+        $stmtUpdate->close();
+    } else {
+        // No existe: hacer INSERT
+        $sqlInsert = "INSERT INTO tallas (talla, prenda, fecha_captura, noEmpleado) VALUES (?, 'Playera', NOW(), ?)";
+        $stmtInsert = $conn->prepare($sqlInsert);
+        $stmtInsert->bind_param("si", $talla, $noEmpleado);
+        $success = $stmtInsert->execute();
+        $stmtInsert->close();
+    }
+
+    echo json_encode(['success' => $success]);
+    $conn->close();
+    exit;
+}
+
+
+//VALIDAR TALLA 
+if ($accionT == 'validaTalla') {
+    include '../incidencias/conn.php';
+    $noEmpleado = isset($_POST['noEmpleado']) ? $_POST['noEmpleado'] : '';
+
+    $sqlValidaTalla = "SELECT talla FROM tallas WHERE noEmpleado = ?";
+    $stmt = $conn->prepare($sqlValidaTalla);
+    $stmt->bind_param("i", $noEmpleado); // "i" porque es entero
+    $stmt->execute();
+    $stmt->bind_result($talla);
+    
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => true, 'exists' => true, 'talla' => $talla]);
+    } else {
+        echo json_encode(['success' => false]);
+    }
+
+    $stmt->close();
+    $conn->close();
+    exit;
+}
+
+//BUZON DE SUGERENCIAS
+if ($accionT == 'buzon') {
+    include '../incidencias/conn.php';
+
+    $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : '';
+    $comentario = isset($_POST['comentario']) ? $_POST['comentario'] : '';
+    $noEmpleado = isset($_POST['noEmpleado']) ? $_POST['noEmpleado'] : '';
+
+    $sqlInsert = "INSERT INTO buzon (noEmpleado, tipo, comentario, fecha_registro) VALUES (?, ?, ?, NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    $stmtInsert->bind_param("iss", $noEmpleado, $tipo, $comentario);
+    $success = $stmtInsert->execute();
+    $stmtInsert->close();
+
+    echo json_encode(['success' => $success]);
+    $conn->close();
+    exit;
+}
+
+?>
