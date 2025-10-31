@@ -390,6 +390,9 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
+                    <div id="alertTalla" class="alert alert-primary" role="alert">
+                        <strong>Aviso:</strong> Buzon de sugerencias para RRHH
+                    </div>
                     <div class="modal-body">
                         <div class="form-group">
                             <select class="form-control" id="tipo" name="tipo" required>
