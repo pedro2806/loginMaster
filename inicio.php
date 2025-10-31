@@ -115,6 +115,10 @@
                                     <p>Equipo de cómputo</p>
                                 </div>
                                 <br>
+                                <button class="btn btn-outline-primary btn-block mt-3" data-toggle="modal" data-target="#modalbuzon">
+                                    <i class="fas fa-envelope-open-text"></i> Buzón de Sugerencias
+                                </button>
+                                
                                 <button class="btn btn-outline-warning btn-block mt-3" data-toggle="modal" data-target="#modalCambiarContrasena">
                                     <i class="fas fa-key"></i> Cambiar Contraseña
                                 </button>
@@ -264,7 +268,39 @@
 
                             </div>
                             <div class="row">
-                                <!-- Tablero de avisos -->
+                                <!-- Formulario para Tallas -->
+                                <div class="col-md-6 mb-4">
+                                    <div class="card shadow h-100">
+                                        <div class="card-header bg-primary text-white py-2">
+                                            <h6 class="m-2 font-weight-bold">Registro de Tallas</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <form method="post">
+                                                <div class="form-group">
+                                                    <div id="alertTalla" class="alert alert-danger" role="alert">
+                                                        <strong>Importante:</strong> Por favor, registra tu talla de uniforme.
+                                                    </div>
+                                                    <label for="talla">Talla:</label>
+                                                    <select class="form-control" id="talla" name="talla" required>
+                                                        <option value="">Seleccione una talla</option>  
+                                                        <option value="XS">XS</option>
+                                                        <option value="S">S</option>
+                                                        <option value="M">M</option>
+                                                        <option value="L">L</option>
+                                                        <option value="XL">XL</option>
+                                                    </select>
+                                                    <input type="hidden" name="noEmpleadoT" id="noEmpleadoT" value="">
+                                                </div>
+                                                <center>
+                                                    <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar Talla</button>
+                                                </center>
+                                            </form>
+                                            <br><hr>
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/10/Mural-Octubre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tablero de avisos 
                                 <div class="col-md-6 mb-4">
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-light text-black py-2">
@@ -274,7 +310,7 @@
                                             <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/10/Mural-Octubre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                                 <!-- Agenda Sala de Juntas -->
                                 <div class="col-md-6 mb-4">
                                     <div class="card shadow h-100">
@@ -343,6 +379,38 @@
             </form>
         </div>
     </div>
+    <!-- Modal Buzon de Sugerencias -->
+    <div class="modal fade" id="modalbuzon" tabindex="-1" role="dialog" aria-labelledby="modalbuzonLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="formbuzon" method="POST">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalbuzonLabel">Buzón de Sugerencias</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <select class="form-control" id="tipo" name="tipo" required>
+                                <option value="">Seleccione el tipo de comentario</option>
+                                <option value="Felicitacion">Felicitación</option>
+                                <option value="Sugerencia">Sugerencia</option>
+                                <option value="Queja">Queja</option>
+                            </select>
+                            <br>
+                            <label for="comentario">Escribe tu comentario:</label>
+                            <textarea class="form-control" id="comentario" name="comentario" rows="4" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success" onClick="BuzonSugerencias()">Enviar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- Scripts -->
     <!-- Bootstrap core JavaScript-->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
@@ -361,6 +429,7 @@
             validaOpciones();
             infoEmpleado();   
             obtenerPlaca();
+            cargarTalla(getCookie('noEmpleadoL'));
             
             // Asigna los valores de las cookies a los campos del formulario
             document.getElementById('id_usuario').value = getCookie('id_usuarioL');
@@ -394,7 +463,6 @@
             document.getElementById('correoSJ').value = getCookie('correoL');
 
             document.getElementById('pass').value = getCookie('UsrKpis');
-
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
@@ -509,6 +577,116 @@
                 "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
             ));
             return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
+    //FUNCION ENVIAR TALLAS
+        function registraTallas(){
+            var accion = 'registraTallas';
+            var talla = document.getElementById('talla').value;
+            var noEmpleado = getCookie('noEmpleadoL');
+
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion : accion,
+                    talla: talla,
+                    noEmpleado: noEmpleado,
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: 'Talla actualizada correctamente.'
+                        });
+                        cargarTalla(noEmpleado); // Recarga la talla después de registrar
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo registrar la talla.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+
+    //FUNCION PARA CARGAR TALLA SI YA ESTA REGISTRADA
+        function cargarTalla(noEmpleadoL) {
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'validaTalla',
+                    noEmpleado: noEmpleadoL
+                },
+                success: function(response) {
+                    if (response.success && response.exists && response.talla) {
+                        $('#alertTalla').hide(); // Oculta la alerta si la talla ya está registrada
+                        $('#talla').val(response.talla); // Asigna la talla al select
+                    } else {
+                        $('#alertTalla').show(); // Muestra la alerta si no hay talla registrada
+                    }
+                },
+                error: function() {
+                console.error('Error al consultar la talla.');
+                }
+            });
+        }
+
+    //BUZON DE SUGERENCIAS
+        function BuzonSugerencias() {
+            var accion = 'buzon';
+            var tipo = document.getElementById('tipo').value;   
+            var comentario = document.getElementById('comentario').value;
+            var noEmpleado = getCookie('noEmpleadoL');
+
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion : accion,
+                    tipo: tipo,
+                    comentario: comentario,
+                    noEmpleado: noEmpleado,
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: 'Comentario enviado correctamente.'
+                        });
+                        // Limpiar el formulario después de enviar
+                        $('#formbuzon')[0].reset();
+                        $('#modalbuzon').modal('hide'); // Cerrar el modal
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo enviar el comentario.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+            
         }
     </script>
 </body>
