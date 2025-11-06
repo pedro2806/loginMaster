@@ -8,6 +8,7 @@ $password = $_POST['InputPassword'];
 $accion = $_POST['btningresar'];
 $varKPIS = '';
 $accionT = $_POST['accion'] ?? '';
+$accionV = $_POST['accionV'] ?? '';
 
 if($emailValido == 'silvia') { $varKPIS = 'RENI_2024'; }
 if($emailValido == 'martin.becerra') { $varKPIS = 'bajio23_AL8A'; }
@@ -150,7 +151,6 @@ if ($accionT == 'registraTallas') {
     exit;
 }
 
-
 //VALIDAR TALLA 
 if ($accionT == 'validaTalla') {
     include '../incidencias/conn.php';
@@ -192,4 +192,36 @@ if ($accionT == 'buzon') {
     exit;
 }
 
+//REGISTRAR VOTACION hallowen 2025
+if ($accionV == 'votacion') {
+    include '../incidencias/conn.php';
+
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    $id_foto = $_POST['id_foto'] ?? '';
+
+    //VALIDAR SI YA VOTO
+    $sqlCheck = "SELECT COUNT(*) FROM votos_fotos WHERE id_usuario = ? AND encuesta = 'Hallowen2025'";
+    $stmtCheck = $conn->prepare($sqlCheck);
+    $stmtCheck->bind_param("i", $noEmpleado);
+    $stmtCheck->execute();
+    $stmtCheck->bind_result($yaVoto);
+    $stmtCheck->fetch();
+    $stmtCheck->close();
+
+    if ($yaVoto > 0) {
+        echo json_encode(['success' => false]);
+        exit;
+    }
+
+    //REGISTRAR VOTO
+    $sqlInsert = "INSERT INTO votos_fotos (id_usuario, id_foto, encuesta, fecha) VALUES (?, ?, 'Hallowen2025', NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    $stmtInsert->bind_param("ii", $noEmpleado, $id_foto);
+    $success = $stmtInsert->execute();
+    $stmtInsert->close();
+
+    echo json_encode(['success' => $success]);
+    $conn->close();
+    exit;
+}
 ?>

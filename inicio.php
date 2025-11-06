@@ -254,10 +254,10 @@
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="inicio">
-                                                <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
-                                                <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
-                                                <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
-                                                <input type="hidden" name="correoCV" id="correoCV" value="">
+                                                <input type="hidden" name="id_usuarioTI" id="id_usuarioTI" value="">
+                                                <input type="hidden" name="nombredelusuarioTI" id="nombredelusuarioTI" value="">
+                                                <input type="hidden" name="noEmpleadoTI" id="noEmpleadoTI" value="">
+                                                <input type="hidden" name="correoTI" id="correoTI" value="">
                                                 <button type="submit" class="btn btn-outline-info btn-block">
                                                     <i class="fas fa-laptop fa-lg"></i><br>TI 
                                                 </button>
@@ -295,8 +295,13 @@
                                                     <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar Talla</button>
                                                 </center>
                                             </form>
-                                            <br><hr>
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/10/Mural-Octubre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
+                                            <br>
+                                            <!-- Botón para abrir el modal -->
+                                            <center>
+                                                <button class="btn btn-primary" data-toggle="modal" data-target="#modalCarrusel">Ver Fotos y Votar</button>
+                                            </center>
+                                            <hr>
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/11/Mural-Noviembre-2025.-.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
                                         </div>
                                     </div>
                                 </div>
@@ -414,6 +419,110 @@
             </form>
         </div>
     </div>
+    <!-- Modal Carrusel -->
+    <div class="modal fade" id="modalCarrusel" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vota por tu foto favorita</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Carrusel -->
+                    <div id="carouselFotos" class="carousel slide" data-ride="carousel">
+                        <div class="carousel-inner">
+                            <!-- Foto 1 -->
+                            <div class="carousel-item active">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="1">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/1.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 1">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 2 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="2">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/2.jpg" width="100%" height="800" class="d-block w-100" alt="Foto 2">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 3 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="3">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/3.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 3">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 4 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="4">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/4.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 4">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 5 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="5">Votar por esta foto</button>
+                                </center><br>  
+                                <img src="concursoHallowen2025/5.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 5">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 6 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="6">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/6.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 6">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 7 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="7">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/7.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 7">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 8 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="8">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/8.jpg" width="100%" height="800" class="d-block w-100" alt="Foto 8">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 9 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="9">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/9.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 9">
+                                <div class="carousel-caption"></div>
+                            </div>
+                            <!-- Foto 10 -->
+                            <div class="carousel-item">
+                                <center>    
+                                    <button class="btn btn-success votar-btn" data-foto="10">Votar por esta foto</button>
+                                </center><br>
+                                <img src="concursoHallowen2025/10.jpg" width="100%" height="800"class="d-block w-100" alt="Foto 10">
+                                <div class="carousel-caption"></div>
+                            </div>
+                        </div>
+                        <a class="carousel-control-prev" href="#carouselFotos" role="button" data-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </a>
+                        <a class="carousel-control-next" href="#carouselFotos" role="button" data-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Scripts -->
     <!-- Bootstrap core JavaScript-->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
@@ -496,6 +605,7 @@
             });
             
         }
+
     //PARA VALIDAR QUE SISTEMAS SE MUESTRAN EN EL PANEL DE USUARIO
         function validaOpciones() {
             $.ajax({
@@ -574,6 +684,7 @@
             });
             calendar.render();
         }
+
     //FUNCION PARA OBTENER COOKIES
         function getCookie(name) {
             let matches = document.cookie.match(new RegExp(
@@ -581,6 +692,7 @@
             ));
             return matches ? decodeURIComponent(matches[1]) : undefined;
         }
+
     //FUNCION ENVIAR TALLAS
         function registraTallas(){
             var accion = 'registraTallas';
@@ -691,6 +803,46 @@
             });
             
         }
+
+    //VOTAR POR FOTO
+        $(document).on('click', '.votar-btn', function() {
+            var id_foto = $(this).data('foto');
+            var noEmpleado = getCookie('noEmpleadoL');
+
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accionV: 'votacion',
+                    id_foto: id_foto,
+                    noEmpleado: noEmpleado
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Gracias por tu voto',
+                            text: 'Has votado por la foto ' + id_foto 
+                        });
+                        $('#modalCarrusel').modal('hide'); // Cerrar el modal después de votar
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Atención',
+                            text: response.message || 'Solo se permite un voto por foto.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>
