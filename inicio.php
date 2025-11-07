@@ -265,7 +265,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                             <div class="row">
                                 <!-- Formulario para Tallas -->
@@ -293,6 +292,13 @@
                                                 </div>
                                                 <center>
                                                     <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar Talla</button>
+                                                    
+                                                    <?php
+                                                        $usuariosRegistran = array(183, 276, 523, 403);
+                                                        if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                                                            echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
+                                                        }
+                                                    ?>
                                                 </center>
                                             </form>
                                             <br>
@@ -425,6 +431,13 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Vota por tu foto favorita</h5>
+                    <hr>
+                    <?php
+                        $usuariosRegistran = array(183, 276, 523, 403);
+                        if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                            echo '<button onClick="verVotos()" type="button" class="btn btn-primary" id="btnVerVotos">Ver Votos</button>';
+                        }
+                    ?>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -523,6 +536,120 @@
             </div>
         </div>
     </div>
+    <!-- MODAL TABLA RESULTADOS TALLAS -->
+    <div class="modal fade" id="modalResultadosTallas" tabindex="-1" role="dialog" aria-labelledby="modalResultadosTallasLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalResultadosTallasLabel">Resultados de Tallas</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active btn-outline-info" type="button" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Tallas Registradas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn-outline-success" onClick="TotalTallas()" id="TotalTallasR-tab" data-toggle="tab" href="#TotalTallasR" role="tab" aria-controls="TotalTallasR" aria-selected="false">Total de Tallas</a>
+                        </li>
+                    </ul><br>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active in" id="home" role="tabpanel" aria-labelledby="home-tab">
+                            <!-- Tabla de Tallas Registradas-->
+                            <table id="TotalTallas" class="table table-striped">
+                                <button id="descargarExcelT" class="btn btn-success">Descargar Excel</button>
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Talla</th>
+                                        <th>Sexo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los resultados se llenarán aquí mediante AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="TotalTallasR" role="tabpanel" aria-labelledby="TotalTallasR-tab">
+                            <button id="descargarExcelR" class="btn btn-success">Descargar Excel</button>
+                            <!-- Tabla de Total de Tallas -->
+                            <table id="TotalTallasRegistradas" class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Talla</th>
+                                        <th>Sexo</th>
+                                        <th>Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los resultados se llenarán aquí mediante AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--MODAL RESULTADOS VOTOS -->
+    <div class="modal fade" id="modalResultadosVotos" tabindex="-1" role="dialog" aria-labelledby="modalResultadosVotosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalResultadosVotosLabel">Resultados de Votos</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tabla de Resultados de Votos -->
+                    <table id="ResultadosVotos" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Votos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Los resultados se llenarán aquí mediante AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--MODAL VER SUGERENCIAS -->
+    <div class="modal fade" id="modalVerSugerencias" tabindex="-1" role="dialog" aria-labelledby="modalVerSugerenciasLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalVerSugerenciasLabel">Sugerencias Recibidas</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tabla de Sugerencias -->
+                    <table id="TablaSugerencias" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Tipo</th>
+                                <th>Comentario</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Los resultados se llenarán aquí mediante AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <!-- Bootstrap core JavaScript-->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
@@ -534,7 +661,9 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src = "https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script> 
-    
+    <!-- Descargar Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <script>
         $(document).ready(function () {           
             verCalendarioLogin();
@@ -830,7 +959,7 @@
                         Swal.fire({
                             icon: 'info',
                             title: 'Atención',
-                            text: response.message || 'Solo se permite un voto por foto.'
+                            text: response.message || 'Solo se permite un voto por usuario.'
                         });
                     }
                 },
@@ -843,6 +972,227 @@
                 }
             });
         });
-    </script>
+
+    //FUNCION PARA VER TODAS LAS TALLAS REGISTRADAS
+        function VerTallas() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_tallas'
+                },
+                success: function(response) {
+                    if (response.success && response.tallas) {
+                        var tablaBody = $('#TotalTallas tbody');
+                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
+
+                        response.tallas.forEach(function(talla) {
+                            var fila = '<tr>' +
+                                '<td>' + talla.noEmpleado +  '-' + talla.nombre + '</td>' +
+                                '<td>' + talla.talla + '</td>' +
+                                '<td>' + talla.sexo + '</td>' +
+                                '</tr>';
+                            tablaBody.append(fila);
+                        });
+
+                        // Mostrar el modal después de llenar la tabla
+                        $('#modalResultadosTallas').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'No hay tallas registradas',
+                            text: 'No se encontraron tallas en el sistema.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+
+    //VER TOTAL DE TALLAS
+    function TotalTallas() {
+        $.ajax({
+            url: 'acciones_inicio.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                accion: 'conteo_tallas'
+            },
+            success: function(response) {
+                if (response.success && response.tallas) {
+                    var tablaBody = $('#TotalTallasRegistradas tbody');
+                    tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
+
+                    response.tallas.forEach(function(talla) {
+                        var fila = '<tr>' +
+                            '<td>' + talla.talla + '</td>' +
+                            '<td>' + talla.sexo + '</td>' +
+                            '<td>' + talla.cantidad + '</td>' +
+                            '</tr>';
+                        tablaBody.append(fila);
+                    });
+
+                    // Mostrar el modal después de llenar la tabla
+                    $('#modalResultadosTallas').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No hay tallas registradas',
+                        text: 'No se encontraron tallas en el sistema.'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error en la solicitud.'
+                });
+            }
+        });
+    }
+
+    //FUNCION PARA DESCARGAR EXCEL 
+    $(document).ready(function() {
+        $('#descargarExcelT').click(function() {
+            var tabla = document.getElementById('TotalTallas');
+            var filaInicio = 0; // Iniciar desde la primera fila (índice 0)
+            var filaFin = tabla.rows.length - 1; // Hasta la última fila
+
+            var wb = XLSX.utils.book_new();
+            var ws_data = [];
+
+            for (var i = filaInicio; i <= filaFin; i++) {
+                var row = [];
+                for (var j = 0; j < tabla.rows[i].cells.length; j++) {
+                    row.push(tabla.rows[i].cells[j].innerText);
+                }
+                ws_data.push(row);
+            }
+
+            var ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, "Tallas Registradas");
+            XLSX.writeFile(wb, "Tallas_Registradas.xlsx");
+        });
+
+        $('#descargarExcelR').click(function() {
+            var tabla = document.getElementById('TotalTallasRegistradas');
+            var filaInicio = 0; // Iniciar desde la primera fila (índice 0)
+            var filaFin = tabla.rows.length - 1; // Hasta la última fila
+
+            var wb = XLSX.utils.book_new();
+            var ws_data = [];
+
+            for (var i = filaInicio; i <= filaFin; i++) {
+                var row = [];
+                for (var j = 0; j < tabla.rows[i].cells.length; j++) {
+                    row.push(tabla.rows[i].cells[j].innerText);
+                }
+                ws_data.push(row);
+            }
+
+            var ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, "Total de Tallas");
+            XLSX.writeFile(wb, "Total_de_Tallas.xlsx");
+        });
+    });
+
+    //VER VOTOS DEL CARRUSEL
+    function verVotos() {
+        $.ajax({
+            url: 'acciones_inicio.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                accion: 'conteo_votos'
+            },
+            success: function(response) {
+                if (response.success && response.votos) {
+                    var tablaBody = $('#ResultadosVotos tbody');
+                    tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
+
+                    response.votos.forEach(function(voto) {
+                        var imagenRuta = 'concursoHallowen2025/' + voto.id_foto + '.jpg'; // Ajusta según tu estructura
+                        var fila = '<tr>' +
+                            '<td>' +
+                                voto.id_foto + '<br>' +
+                                '<img src="' + imagenRuta + '" alt="Foto ' + voto.id_foto + '" style="width:70px; height:auto; border-radius:4px;">' +
+                            '</td>' +
+                            '<td>' + voto.cantidad + '</td>' +
+                            '</tr>';
+                        tablaBody.append(fila);
+                    });
+
+                    // Mostrar el modal después de llenar la tabla
+                    $('#modalCarrusel').modal('hide');
+                    $('#modalResultadosVotos').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No hay votos registrados',
+                        text: 'No se encontraron votos en el sistema.'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error en la solicitud.'
+                });
+            }
+        });
+    }
+
+    //VER BUZON DE SUGERENCIAS
+        function verBuzon() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_buzon'
+                },
+                success: function(response) {
+                    if (response.success && response.votos) {
+                        var tablaBody = $('#ResultadosVotos tbody');
+                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
+
+                        response.votos.forEach(function(voto) {
+                            var fila = '<tr>' +
+                                '<td>' + voto.id_foto + '</td>' +
+                                '<td>' + voto.cantidad + '</td>' +
+                                '</tr>';
+                            tablaBody.append(fila);
+                        });
+
+                        // Mostrar el modal después de llenar la tabla
+                        $('#modalCarrusel').modal('hide');
+                        $('#modalResultadosVotos').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'No hay votos registrados',
+                            text: 'No se encontraron votos en el sistema.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+</script>
 </body>
 </html>
