@@ -70,7 +70,7 @@
                                 <div class="profile-avatar mx-auto mb-1">
                                     <i class="fas fa-user-circle"></i>
                                 </div>
-                                <h3 class="mb-1 px-0 py-0 b" style="color: #1c83f1b9;"><strong><?php echo isset($_COOKIE['nombredelusuarioL']) ? utf8_decode($_COOKIE['nombredelusuarioL']) : 'Usuario'; ?></strong></h3>
+                                <h3 class="mb-1 px-0 py-0 b" style="color: #1c83f1b9;"><strong><?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : ''; ?></strong></h3>
                                 <ul class="list-group list-group-flush mb-1">
                                     <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">No. Empleado:</strong><p style="font-size:1.4rem;"><?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?></p></li>
                                     <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">Área:</strong><p style="font-size:1.4rem;" id="lblArea"></p></li>
