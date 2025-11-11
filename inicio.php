@@ -418,6 +418,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal" onClick="verBuzon()">Ver Buzón</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-success" onClick="BuzonSugerencias()">Enviar</button>
                     </div>
@@ -552,14 +553,14 @@
                             <a class="nav-link active btn-outline-info" type="button" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Tallas Registradas</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn-outline-success" onClick="TotalTallas()" id="TotalTallasR-tab" data-toggle="tab" href="#TotalTallasR" role="tab" aria-controls="TotalTallasR" aria-selected="false">Total de Tallas</a>
+                            <a class="nav-link btn-outline-info" onClick="TotalTallas()" id="TotalTallasR-tab" data-toggle="tab" href="#TotalTallasR" role="tab" aria-controls="TotalTallasR" aria-selected="false">Total de Tallas</a>
                         </li>
                     </ul><br>
                     <div class="tab-content" id="myTabContent">
                         <div class="tab-pane fade show active in" id="home" role="tabpanel" aria-labelledby="home-tab">
                             <!-- Tabla de Tallas Registradas-->
                             <table id="TotalTallas" class="table table-striped">
-                                <button id="descargarExcelT" class="btn btn-success">Descargar Excel</button>
+                                <button id="descargarExcelT" class="btn btn-success" onClick="descargarExcel('TotalTallas')">Descargar Excel</button>
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
@@ -573,7 +574,7 @@
                             </table>
                         </div>
                         <div class="tab-pane fade" id="TotalTallasR" role="tabpanel" aria-labelledby="TotalTallasR-tab">
-                            <button id="descargarExcelR" class="btn btn-success">Descargar Excel</button>
+                            <button id="descargarExcelR" class="btn btn-success" onClick="descargarExcel('TotalTallasRegistradas')">Descargar Excel</button>
                             <!-- Tabla de Total de Tallas -->
                             <table id="TotalTallasRegistradas" class="table table-striped">
                                 <thead>
@@ -622,7 +623,7 @@
     </div>
     <!--MODAL VER SUGERENCIAS -->
     <div class="modal fade" id="modalVerSugerencias" tabindex="-1" role="dialog" aria-labelledby="modalVerSugerenciasLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalVerSugerenciasLabel">Sugerencias Recibidas</h5>
@@ -633,6 +634,7 @@
                 <div class="modal-body">
                     <!-- Tabla de Sugerencias -->
                     <table id="TablaSugerencias" class="table table-striped">
+                        <button id="descargarExcelT" class="btn btn-success" onClick="descargarExcel('TablaSugerencias')">Descargar Excel</button>
                         <thead>
                             <tr>
                                 <th>Empleado</th>
@@ -1017,148 +1019,78 @@
         }
 
     //VER TOTAL DE TALLAS
-    function TotalTallas() {
-        $.ajax({
-            url: 'acciones_inicio.php',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                accion: 'conteo_tallas'
-            },
-            success: function(response) {
-                if (response.success && response.tallas) {
-                    var tablaBody = $('#TotalTallasRegistradas tbody');
-                    tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
-
-                    response.tallas.forEach(function(talla) {
-                        var fila = '<tr>' +
-                            '<td>' + talla.talla + '</td>' +
-                            '<td>' + talla.sexo + '</td>' +
-                            '<td>' + talla.cantidad + '</td>' +
-                            '</tr>';
-                        tablaBody.append(fila);
-                    });
-
-                    // Mostrar el modal después de llenar la tabla
-                    $('#modalResultadosTallas').modal('show');
-                } else {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'No hay tallas registradas',
-                        text: 'No se encontraron tallas en el sistema.'
-                    });
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Ocurrió un error en la solicitud.'
-                });
-            }
-        });
-    }
-
-    //FUNCION PARA DESCARGAR EXCEL 
-    $(document).ready(function() {
-        $('#descargarExcelT').click(function() {
-            var tabla = document.getElementById('TotalTallas');
-            var filaInicio = 0; // Iniciar desde la primera fila (índice 0)
-            var filaFin = tabla.rows.length - 1; // Hasta la última fila
-
-            var wb = XLSX.utils.book_new();
-            var ws_data = [];
-
-            for (var i = filaInicio; i <= filaFin; i++) {
-                var row = [];
-                for (var j = 0; j < tabla.rows[i].cells.length; j++) {
-                    row.push(tabla.rows[i].cells[j].innerText);
-                }
-                ws_data.push(row);
-            }
-
-            var ws = XLSX.utils.aoa_to_sheet(ws_data);
-            XLSX.utils.book_append_sheet(wb, ws, "Tallas Registradas");
-            XLSX.writeFile(wb, "Tallas_Registradas.xlsx");
-        });
-
-        $('#descargarExcelR').click(function() {
-            var tabla = document.getElementById('TotalTallasRegistradas');
-            var filaInicio = 0; // Iniciar desde la primera fila (índice 0)
-            var filaFin = tabla.rows.length - 1; // Hasta la última fila
-
-            var wb = XLSX.utils.book_new();
-            var ws_data = [];
-
-            for (var i = filaInicio; i <= filaFin; i++) {
-                var row = [];
-                for (var j = 0; j < tabla.rows[i].cells.length; j++) {
-                    row.push(tabla.rows[i].cells[j].innerText);
-                }
-                ws_data.push(row);
-            }
-
-            var ws = XLSX.utils.aoa_to_sheet(ws_data);
-            XLSX.utils.book_append_sheet(wb, ws, "Total de Tallas");
-            XLSX.writeFile(wb, "Total_de_Tallas.xlsx");
-        });
-    });
-
-    //VER VOTOS DEL CARRUSEL
-    function verVotos() {
-        $.ajax({
-            url: 'acciones_inicio.php',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                accion: 'conteo_votos'
-            },
-            success: function(response) {
-                if (response.success && response.votos) {
-                    var tablaBody = $('#ResultadosVotos tbody');
-                    tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
-
-                    response.votos.forEach(function(voto) {
-                        var imagenRuta = 'concursoHallowen2025/' + voto.id_foto + '.jpg'; // Ajusta según tu estructura
-                        var fila = '<tr>' +
-                            '<td>' +
-                                voto.id_foto + '<br>' +
-                                '<img src="' + imagenRuta + '" alt="Foto ' + voto.id_foto + '" style="width:70px; height:auto; border-radius:4px;">' +
-                            '</td>' +
-                            '<td>' + voto.cantidad + '</td>' +
-                            '</tr>';
-                        tablaBody.append(fila);
-                    });
-
-                    // Mostrar el modal después de llenar la tabla
-                    $('#modalCarrusel').modal('hide');
-                    $('#modalResultadosVotos').modal('show');
-                } else {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'No hay votos registrados',
-                        text: 'No se encontraron votos en el sistema.'
-                    });
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Ocurrió un error en la solicitud.'
-                });
-            }
-        });
-    }
-
-    //VER BUZON DE SUGERENCIAS
-        function verBuzon() {
+        function TotalTallas() {
             $.ajax({
                 url: 'acciones_inicio.php',
                 type: 'POST',
                 dataType: 'json',
                 data: {
-                    accion: 'ver_buzon'
+                    accion: 'conteo_tallas'
+                },
+                success: function(response) {
+                    if (response.success && response.tallas) {
+                        var tablaBody = $('#TotalTallasRegistradas tbody');
+                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
+
+                        response.tallas.forEach(function(talla) {
+                            var fila = '<tr>' +
+                                '<td>' + talla.talla + '</td>' +
+                                '<td>' + talla.sexo + '</td>' +
+                                '<td>' + talla.cantidad + '</td>' +
+                                '</tr>';
+                            tablaBody.append(fila);
+                        });
+
+                        // Mostrar el modal después de llenar la tabla
+                        $('#modalResultadosTallas').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'No hay tallas registradas',
+                            text: 'No se encontraron tallas en el sistema.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+
+    //FUNCION PARA DESCARGAR EXCEL 
+        function descargarExcel(tablaId) {
+            var tabla = document.getElementById(tablaId);
+            var filaInicio = 0; // Iniciar desde la primera fila (índice 0)
+            var filaFin = tabla.rows.length - 1; // Hasta la última fila
+
+            var wb = XLSX.utils.book_new();
+            var ws_data = [];
+
+            for (var i = filaInicio; i <= filaFin; i++) {
+                var row = [];
+                for (var j = 0; j < tabla.rows[i].cells.length; j++) {
+                    row.push(tabla.rows[i].cells[j].innerText);
+                }
+                ws_data.push(row);
+            }
+
+            var ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, tablaId);
+            XLSX.writeFile(wb, tablaId + '.xlsx');
+        }
+
+    //VER VOTOS DEL CARRUSEL
+        function verVotos() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'conteo_votos'
                 },
                 success: function(response) {
                     if (response.success && response.votos) {
@@ -1166,8 +1098,12 @@
                         tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
 
                         response.votos.forEach(function(voto) {
+                            var imagenRuta = 'concursoHallowen2025/' + voto.id_foto + '.jpg'; // Ajusta según tu estructura
                             var fila = '<tr>' +
-                                '<td>' + voto.id_foto + '</td>' +
+                                '<td>' +
+                                    voto.id_foto + '<br>' +
+                                    '<img src="' + imagenRuta + '" alt="Foto ' + voto.id_foto + '" style="width:70px; height:auto; border-radius:4px;">' +
+                                '</td>' +
                                 '<td>' + voto.cantidad + '</td>' +
                                 '</tr>';
                             tablaBody.append(fila);
@@ -1181,6 +1117,51 @@
                             icon: 'info',
                             title: 'No hay votos registrados',
                             text: 'No se encontraron votos en el sistema.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+
+    //VER BUZON DE SUGERENCIAS
+        function verBuzon() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_buzon'
+                },
+                success: function(response) {
+                    if (response.success && response.buzon) {
+                        var tablaBody = $('#TablaSugerencias tbody');
+                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
+
+                        response.buzon.forEach(function(buzon) {
+                            var fila = '<tr>' +
+                                '<td>' + buzon.noEmpleado + '-' + buzon.nombre + '</td>' +
+                                '<td>' + buzon.tipo + '</td>' +
+                                '<td>' + buzon.comentario + '</td>' +
+                                '<td>' + buzon.fecha_registro + '</td>' +
+                                '</tr>';
+                            tablaBody.append(fila);
+                        });
+
+                        // Mostrar el modal después de llenar la tabla
+                        $('#modalbuzon').modal('hide');
+                        $('#modalVerSugerencias').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'No hay comentarios registrados',
+                            text: 'No se encontraron comentarios en el sistema.'
                         });
                     }
                 },

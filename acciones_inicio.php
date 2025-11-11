@@ -68,9 +68,10 @@ if ($accion == 'conteo_votos') {
 //VER BUZON DE SUGERENCIAS
 if ($accion == 'ver_buzon') {
 
-    $sqlBuzon ="  SELECT noEmpleado, nombre, departamento, mensaje, fecha_captura
-                    FROM buzonsugerencias
-                    ORDER BY fecha_captura DESC";
+    $sqlBuzon = "  SELECT b.noEmpleado, us.nombre, b.tipo , b.comentario, b.fecha_registro
+                    FROM buzon b
+                    INNER JOIN usuarios us ON b.noEmpleado = us.noEmpleado
+                    ORDER BY fecha_registro DESC";
     $result = $conn->query($sqlBuzon);
 
     $buzonData = [];
