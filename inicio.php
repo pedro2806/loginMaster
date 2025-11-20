@@ -65,16 +65,16 @@
                 <div class="container-fluid">
                     <div class="row">
                         <!-- Perfil de Usuario -->
-                        <div class="col-xl-3 col-md-4">
+                        <div class="col-xl-3 col-md-3">
                             <div class="profile-card text-center shadow">
                                 <div class="profile-avatar mx-auto mb-1">
                                     <i class="fas fa-user-circle"></i>
                                 </div>
                                 <h3 class="mb-1 px-0 py-0 b" style="color: #1c83f1b9;"><strong><?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : ''; ?></strong></h3>
                                 <ul class="list-group list-group-flush mb-1">
-                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">No. Empleado:</strong><p style="font-size:1.4rem;"><?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?></p></li>
-                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">Área:</strong><p style="font-size:1.4rem;" id="lblArea"></p></li>
-                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.4rem;">Jefe Directo:</strong><p style="font-size:1.4rem;" id="lblJefe"></p></li>
+                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.2rem;">No. Empleado:</strong><p style="font-size:1.2rem;"><?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?></p></li>
+                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.2rem;">Área:</strong><p style="font-size:1.2rem;" id="lblArea"></p></li>
+                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.2rem;">Jefe Directo:</strong><p style="font-size:1.2rem;" id="lblJefe"></p></li>
                                 </ul>
                                 <br>
                                 <div class="row">                        
@@ -130,10 +130,10 @@
                             </div>
                         </div>
                         <!-- Accesos rápidos y tablero -->
-                        <div class="col-xl-9 col-md-8">
+                        <div class="col-xl-9 col-md-9">
                             <div class="row">
                                 <!-- VACACIONES WARNIGN -->
-                                <div class="col-md-3 mb-4" id="divVacaciones" style="display:none">
+                                <div class="col-md-3 mb-2" id="divVacaciones" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="../incidencias/validaLoginMaster.php">
@@ -151,7 +151,7 @@
                                 </div>
 
                                 <!-- CONTROL VEHICULAR DANGER -->
-                                <div class="col-md-3 mb-4" id="divControlVehicular" style="display:none">
+                                <div class="col-md-3 mb-2" id="divControlVehicular" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="../ControlVehicular/validaLoginMaster.php">
@@ -168,7 +168,7 @@
                                 </div>
 
                                 <!-- HORAS EXTRA INFO -->
-                                <div class="col-md-3 mb-4" id="divHorasExtra" style="display:none">
+                                <div class="col-md-3 mb-2" id="divHorasExtra" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="../horasextra/validaLoginMaster.php">
@@ -185,7 +185,7 @@
                                 </div>
 
                                 <!-- INCIDENCIAS PRIMARY -->
-                                <div class="col-md-3 mb-4" id="divIncidencias" style="display:none">
+                                <div class="col-md-3 mb-2" id="divIncidencias" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
@@ -203,7 +203,7 @@
                                 </div>
 
                                 <!-- PLANEACION DARK -->
-                                <div class="col-md-3 mb-4" id="divPlaneacion" style="display:none">
+                                <div class="col-md-3 mb-2" id="divPlaneacion" style="display:none">
                                     <div class="card card-action border-left-dark shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="../planeacion/validaLoginMaster.php">
@@ -220,7 +220,7 @@
                                 </div>
 
                                 <!-- CAPACITACION WARNING -->
-                                <div class="col-md-3 mb-4" id="divCapacitacion" style="display:none">
+                                <div class="col-md-3 mb-2" id="divCapacitacion" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
                                             <div class=" class="btn-group" role="group"">
@@ -236,7 +236,7 @@
                                 </div>
 
                                 <!-- KPI'S DANGER -->
-                                <div class="col-md-3 mb-4" id="divKPIs" style="display:none">
+                                <div class="col-md-3 mb-2" id="divKPIs" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
                                             <form action="../kpis_pbi/indexK.php" method="post">
@@ -250,7 +250,7 @@
                                 </div>
 
                                 <!-- KPI'S INFO -->
-                                <div class="col-md-3 mb-4" id="divTI" style="display:none">
+                                <div class="col-md-3 mb-2" id="divTI" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
                                             <form method="POST" action="inicio">
@@ -268,10 +268,10 @@
                             </div>
                             <div class="row">
                                 <!-- Formulario para Tallas -->
-                                <div class="col-md-6 mb-4">
+                                <div class="col-md-6 mb-2">
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-primary text-white py-2">
-                                            <h6 class="m-2 font-weight-bold">Registro de Tallas</h6>
+                                            <h6 class="m-2 font-weight-bold">Tablero de avisos</h6>
                                         </div>
                                         <div class="card-body">
                                             <form method="post">
@@ -289,30 +289,30 @@
                                                         <option value="XL">XL</option>
                                                     </select>
                                                     <input type="hidden" name="noEmpleadoT" id="noEmpleadoT" value="">
-                                                </div>
+                                                </div>                                                
                                                 <center>
-                                                    <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar Talla</button>
+                                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                                        <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar Talla</button>
+                                                        
+                                                        <?php
+                                                            $usuariosRegistran = array(183, 276, 523, 403);
+                                                            if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                                                                echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
+                                                                echo '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCarrusel">Ver Fotos y Votar</button>';
+                                                            }
+                                                        ?>
+                                                    </div>
                                                     
-                                                    <?php
-                                                        $usuariosRegistran = array(183, 276, 523, 403);
-                                                        if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                                                            echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
-                                                        }
-                                                    ?>
                                                 </center>
                                             </form>
                                             <br>
-                                            <!-- Botón para abrir el modal -->
-                                            <center>
-                                                <button class="btn btn-primary" data-toggle="modal" data-target="#modalCarrusel">Ver Fotos y Votar</button>
-                                            </center>
-                                            <hr>
+                                            
                                             <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/11/Mural-Noviembre-2025.-.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Tablero de avisos 
-                                <div class="col-md-6 mb-4">
+                                <div class="col-md-6 mb-2">
                                     <div class="card shadow h-100">
                                         <div class="card-header bg-light text-black py-2">
                                             <h6 class="m-2 font-weight-bold">Tablero de Avisos</h6>
@@ -323,9 +323,9 @@
                                     </div>
                                 </div> -->
                                 <!-- Agenda Sala de Juntas -->
-                                <div class="col-md-6 mb-4">
+                                <div class="col-md-6 mb-2">
                                     <div class="card shadow h-100">
-                                        <div class="card-header bg-light text-black py-2 d-flex justify-content-between align-items-center">
+                                        <div class="card-header bg-primary text-light py-2 d-flex justify-content-between align-items-center">
                                             <span class="font-weight-bold">Agenda Sala de Juntas</span>
                                             <form method="POST" action="../incidencias/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioSJ" id="id_usuarioSJ" value="">
