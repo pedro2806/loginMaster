@@ -67,7 +67,7 @@
                         <!-- Perfil de Usuario -->
                         <div class="col-xl-3 col-md-3">
                                 <div class="profile-card text-center ">
-                                    <div class="card shadow-sm border-0" style="max-width: 300px; background-color: #f8f9fa;">
+                                    <div class="card shadow-sm border-0" style="background-color: #f8f9fa;">
                                     <div class="card-body text-start p-3">                                        
                                         <div class="profile-avatar mb-1 d-block mx-auto">
                                             <i class="fas fa-user-circle"></i>
