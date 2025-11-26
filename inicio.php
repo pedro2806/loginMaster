@@ -26,14 +26,14 @@
             margin-bottom: 1rem;
         }
         .profile-avatar {
-            width: 70px;
-            height: 70px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: #e9ecef;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: #6c757d;
             margin-bottom: 1rem;
         }
@@ -66,48 +66,70 @@
                     <div class="row">
                         <!-- Perfil de Usuario -->
                         <div class="col-xl-3 col-md-3">
-                            <div class="profile-card text-center shadow">
-                                <div class="profile-avatar mx-auto mb-1">
-                                    <i class="fas fa-user-circle"></i>
-                                </div>
-                                <h3 class="mb-1 px-0 py-0 b" style="color: #1c83f1b9;"><strong><?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : ''; ?></strong></h3>
-                                <ul class="list-group list-group-flush mb-1">
-                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.2rem;">No. Empleado:</strong><p style="font-size:1.2rem;"><?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?></p></li>
-                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.2rem;">Área:</strong><p style="font-size:1.2rem;" id="lblArea"></p></li>
-                                    <li class="list-group-item px-0 py-0 border-1"><strong style="font-size:1.2rem;">Jefe Directo:</strong><p style="font-size:1.2rem;" id="lblJefe"></p></li>
-                                </ul>
-                                <br>
-                                <div class="row">                        
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #484cacff;">
-                                            <h5 id="antig" name="antig" style="color:#fff;"></h5>
-                                            <p style="color:#fff;">Antigüedad</p>
+                                <div class="profile-card text-center ">
+                                    <div class="card shadow-sm border-0" style="max-width: 300px; background-color: #f8f9fa;">
+                                    <div class="card-body text-start p-3">                                        
+                                        <div class="profile-avatar mb-1 d-block mx-auto">
+                                            <i class="fas fa-user-circle"></i>
                                         </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #0fa083ff; ">
-                                            <h5 id="fechaIngreso" name="fechaIngreso" style="color:#fff;"></h5>
-                                            <p style="color:#fff;">Fecha de ingreso</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">                        
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #484cacff;">
-                                            <h5 id ="diasSol" name="diasSol" style="color:#fff;"></h5>
-                                            <p style="color:#fff;">Dias Solicitados</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box mb-1" style="background: #0fa083ff;">
-                                            <h5 id="diasDisp" name="diasDisp" style="color:#fff;"></h5>
-                                            <p style="color:#fff;">Días Disponibles</p>
-                                        </div>
+                                        
+                                        <h3 class="mb-1 fw-bold" style="color: #1c83f1;">
+                                            <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
+                                        </h3>
+                                        <p class="text-muted mb-3">
+                                            No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
+                                        </p>
+
+                                        <ul class="list-group list-group-flush text-start">
+                                            
+                                            <li class="list-group-item px-0 py-1 bg-transparent border-top-0">
+                                                <small class="text-muted fw-bold d-inline-block me-2">Área:</small>
+                                                <span id="lblArea" class="fw-semibold text-dark"></span>
+                                            </li>
+                                            
+                                            <li class="list-group-item px-0 py-1 bg-transparent border-bottom-0">
+                                                <small class="text-muted fw-bold d-inline-block me-2">Jefe Directo:</small>
+                                                <span id="lblJefe" class="fw-semibold text-dark"></span>
+                                            </li>
+                                        </ul>
+
                                     </div>
                                 </div>
                                 <br>
+                                <div class="row"> 
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="stat-box p-2 mb-2" style="background: #484cacff;">
+                                            <h6 id="antig" name="antig" style="color:#fff; margin-bottom: 0.1rem;"></h6>
+                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Antigüedad</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="stat-box p-2 mb-2" style="background: #0fa083ff; ">
+                                            <h6 id="fechaIngreso" name="fechaIngreso" style="color:#fff; margin-bottom: 0.1rem;"></h6>
+                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Fecha de ingreso</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row"> 
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="stat-box p-2 mb-2" style="background: #484cacff;">
+                                            <h6 id ="diasSol" name="diasSol" style="color:#fff; margin-bottom: 0.1rem;"></h6>
+                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Dias Solicitados</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="stat-box p-2 mb-2" style="background: #0fa083ff;">
+                                            <h6 id="diasDisp" name="diasDisp" style="color:#fff; margin-bottom: 0.1rem;"></h6>
+                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Días Disponibles</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="stat-box mb-1" style="background: #164a98ff;">
-                                    <h5 id ="vehiculoAsignado" name="vehiculoAsignado" style="color:#fff;"></h5>
+                                    <h5 id ="vehiculoAsignado" name="vehiculoAsignado" style="color:#fff; margin-bottom: 0.1rem"></h5>
                                     <p style="color:#fff;">Vehículo asignado</p>
                                 </div>
                                 <div class="stat-box" style="background: #e6fff5; display:none">
@@ -143,8 +165,8 @@
                                                 <input type="hidden" name="correo" id="correo" value="">
                                                 <input type="hidden" name="sistema" id="sistema" value="vacaciones">
                                                 <button type="submit" class="btn btn-outline-warning btn-block">
-                                                    <i class="far fa-check-square fa-lg"></i><br>Vacaciones
-                                                </button>
+                                                    <i class="far fa-check-square fa-lg"></i> Vacaciones
+                                                </button>                                                
                                             </form>                                            
                                         </div>
                                     </div>
@@ -160,7 +182,7 @@
                                                 <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
                                                 <input type="hidden" name="correoCV" id="correoCV" value="">                                                
                                                 <button type="submit" class="btn btn-outline-danger btn-block">
-                                                    <i class="fas fa-car fa-lg"></i><br>Ctrl Vehicular
+                                                    <i class="fas fa-car fa-lg"></i> Ctrl Vehicular
                                                 </button>
                                             </form>
                                         </div>
@@ -177,7 +199,7 @@
                                                 <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
                                                 <input type="hidden" name="correoHR" id="correoHR" value="">
                                                 <button type="submit" class="btn btn-outline-info btn-block">
-                                                    <i class="fas fa-clock fa-lg"></i><br>Hrs Extra
+                                                    <i class="fas fa-clock fa-lg"></i> Hrs Extra
                                                 </button>
                                             </form>
                                         </div>
@@ -195,7 +217,7 @@
                                                 <input type="hidden" name="correoI" id="correoI" value="">
                                                 <input type="hidden" name="sistema" id="sistema" value="incidencias">
                                                 <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-list fa-lg"></i><br>Incidencias
+                                                    <i class="fas fa-list fa-lg"></i> Incidencias
                                                 </button>
                                             </form>
                                         </div>
@@ -212,7 +234,7 @@
                                                 <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
                                                 <input type="hidden" name="correoPla" id="correoPla" value="">
                                                 <button type="submit" class="btn btn-outline-dark btn-block">
-                                                    <i class="fas fa-calendar fa-lg"></i><br>Planeación
+                                                    <i class="fas fa-calendar fa-lg"></i> Planeación
                                                 </button>
                                             </form>
                                         </div>
@@ -225,10 +247,10 @@
                                         <div class="card-body text-center">
                                             <div class=" class="btn-group" role="group"">
                                                 <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning">
-                                                    <i class="fas fa-list fa-lg"></i><br>Capacitación
+                                                    <i class="fas fa-list fa-lg"></i> Capacitación
                                                 </a>
                                                 <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-warning">
-                                                    <i class="fas fa-file fa-lg"></i><br>Manual
+                                                    <i class="fas fa-file-pdf fa-lg"></i>
                                                 </a>
                                             </div>
                                         </div>
@@ -242,7 +264,7 @@
                                             <form action="../kpis_pbi/indexK.php" method="post">
                                                 <input type="hidden" name="pass" id="pass" value="">
                                                 <button type="submit" class="btn btn-outline-danger btn-block">
-                                                    <i class="fas fa-chart-line fa-lg"></i><br>KPI's
+                                                    <i class="fas fa-chart-line fa-lg"></i> KPI's
                                                 </button>
                                             </form>
                                         </div>
@@ -259,13 +281,14 @@
                                                 <input type="hidden" name="noEmpleadoTI" id="noEmpleadoTI" value="">
                                                 <input type="hidden" name="correoTI" id="correoTI" value="">
                                                 <button type="submit" class="btn btn-outline-info btn-block">
-                                                    <i class="fas fa-laptop fa-lg"></i><br>TI 
+                                                    <i class="fas fa-laptop fa-lg"></i> TI 
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <br>
                             <div class="row">
                                 <!-- Formulario para Tallas -->
                                 <div class="col-md-6 mb-2">
@@ -307,7 +330,7 @@
                                             </form>
                                             <br>
                                             
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/11/Mural-Noviembre-2025.-.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/11/Mural-Noviembre-2025.-.pdf#zoom=60' type="application/pdf" width="100%" height="300px" />
                                         </div>
                                     </div>
                                 </div>
@@ -803,8 +826,8 @@
                 events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
                 editable: false,
                 locale: 'es',
-                height: 500, // Altura fija en px
-                contentHeight: 400, // Altura del contenido
+                height: 450, // Altura fija en px
+                contentHeight: 4550, // Altura del contenido
                 aspectRatio: 2, // Relación de aspecto (ancho/alto)
                 eventContent: function(info) {
                     var nombreEmpleado = info.event.title;
