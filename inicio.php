@@ -330,7 +330,7 @@
                                             </form>
                                             <br>
                                             
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/11/Mural-Noviembre-2025.-.pdf#zoom=60' type="application/pdf" width="100%" height="300px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/12/Mural-Diciembre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="300px" />
                                         </div>
                                     </div>
                                 </div>
