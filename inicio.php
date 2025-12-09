@@ -382,8 +382,7 @@
     </div>
     <!-- Modal Cambiar Contraseña -->
     <div class="modal fade" id="modalCambiarContrasena" tabindex="-1" role="dialog" aria-labelledby="modalCambiarContrasenaLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <form id="formCambiarContrasena" method="POST" action="cambiar_contrasena.php">
+        <div class="modal-dialog" role="document">            
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalCambiarContrasenaLabel">Cambiar Contraseña</h5>
@@ -407,10 +406,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-primary" onclick="cambiarCont()">Guardar Cambios</button>
                     </div>
-                </div>
-            </form>
+                </div>            
         </div>
     </div>
     <!-- Modal Buzon de Sugerencias -->
@@ -1196,6 +1194,44 @@
                     });
                 }
             });
+        }
+    
+    //CAMBIAR CONTRASEÑA
+        function cambiarCont(){
+
+            contrasena_actual = $('#contrasena_actual').val();
+            nueva_contrasena =  $('#nueva_contrasena').val();
+            confirmar_contrasena =  $('#confirmar_contrasena').val();
+            accion = 'CambiarPass';
+
+            $.ajax({
+                url: 'cambiar_contrasena.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: accion,
+                    contrasena_actual: contrasena_actual,
+                    nueva_contrasena: nueva_contrasena,
+                    confirmar_contrasena: confirmar_contrasena
+                },
+                success: function(response) {
+                    
+                    Swal.fire({
+                            title: response.message,
+                            icon: response.status,
+                            draggable: true
+                    })
+                },
+                error: function() {                    
+                    Swal.fire({
+                            title: "Vuelve a intentar hubo un  problema al actualizar la contraseña!",
+                            icon: "warning",
+                            draggable: true
+                    })
+                }
+            });
+
+
         }
 </script>
 </body>
