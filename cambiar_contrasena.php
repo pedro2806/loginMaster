@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../controlVehicular/conn.php';
+include '../ControlVehicular/conn.php';
 
 $id_usuario = $_COOKIE['noEmpleadoL'] ?? '';
 
