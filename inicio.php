@@ -345,10 +345,12 @@
                                             <h5 class="mb-0">Registro de Capacitaciones</h5>
                                         </div>
                                         <div class="card-body">
-                                            <div class="alert alert-info" role="alert">
-                                                <strong>Importante:</strong> <br> Recuerda que con la siguiente selección confirmas la asistencia a tus cursos de capacitación.
-                                            </div>
-                                            <form id="formCursos">
+                                            <div id="cursosSeleccionados"></div>
+                                            <div id="formCursos">
+                                                <div class="alert alert-info" role="alert">
+                                                    <strong>Importante:</strong> <br> Recuerda que con la siguiente selección confirmas la asistencia a tus cursos de capacitación.
+                                                </div>
+                                            
                                                 <label class="form-label d-block mb-3"><strong>Seleccione los cursos a asistir:</strong></label>
                                                 
                                                 <div class="form-check mb-2">
@@ -377,7 +379,7 @@
                                                 </div>
 
                                                 <button type="button" class="btn btn-primary mt-3" onclick="guardarAsistenciaCurso()">Confirmar asistencia</button>
-                                            </form>
+                                    </div>
                                         </div>                                    
                                     </div>                                
                                 </div> 
@@ -1052,6 +1054,8 @@
                     if (response.success && response.cursos) {
                         response.cursos.forEach(function(cursoId) {
                             $('input[name="cursos[]"][value="' + cursoId.id_voto + '"]').prop('checked', true);
+                            $('#formCursos').hide();
+                            $('#cursosSeleccionados').append('<li>' + cursoId.id_voto + '</li>');
                         });
                     }
                 },
