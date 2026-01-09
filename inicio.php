@@ -379,11 +379,11 @@
                                                 <button type="button" class="btn btn-primary mt-3" onclick="guardarAsistenciaCurso()">Confirmar asistencia</button>
                                             </form>
                                         </div>                                    
-                                </div>
+                                    </div>                                
+                                </div> 
                                 <?php
                                     }   
                                 ?>
-                                </div> 
                                 <!-- Agenda Sala de Juntas -->
                                 <div class="col-md-4 mb-4">
                                     <div class="card shadow h-100">
