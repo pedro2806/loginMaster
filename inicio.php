@@ -95,7 +95,7 @@
 
                                     </div>
                                 </div>
-                                <br>
+                                <br>                                
                                 <div class="row"> 
                                     <div class="col-xl-6 col-md-6">
                                         <div class="stat-box p-2 mb-2" style="background: #484cacff;">
@@ -291,12 +291,12 @@
                             <br>
                             <div class="row">
                                 <!-- Formulario para Tallas -->
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-4 mb-4">
                                     <div class="card shadow h-100">
-                                        <div class="card-header bg-primary text-white py-2">
+                                        <div class="card-header bg-secondary text-white py-2">
                                             <h6 class="m-2 font-weight-bold">Tablero de avisos</h6>
                                         </div>
-                                        <div class="card-body">
+                                        <div class="card-body">                                            
                                             <form method="post">
                                                 <div class="form-group">
                                                     <div id="alertTalla" class="alert alert-danger" role="alert">
@@ -321,7 +321,7 @@
                                                             $usuariosRegistran = array(183, 276, 523, 403);
                                                             if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
                                                                 echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
-                                                                echo '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCarrusel">Ver Fotos y Votar</button>';
+                                                                //echo '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCarrusel">Ver Fotos y Votar</button>';
                                                             }
                                                         ?>
                                                     </div>
@@ -334,21 +334,60 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Tablero de avisos 
-                                <div class="col-md-6 mb-2">
-                                    <div class="card shadow h-100">
-                                        <div class="card-header bg-light text-black py-2">
-                                            <h6 class="m-2 font-weight-bold">Tablero de Avisos</h6>
+                                <!-- Asistencia capacitacion -->
+                                <?php
+                                    $usuariosRegistran = array(183, 276, 523, 403);
+                                    if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                                ?>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card shadow">                                    
+                                        <div class="card-header bg-primary text-white">
+                                            <h5 class="mb-0">Registro de Capacitaciones</h5>
                                         </div>
                                         <div class="card-body">
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/10/Mural-Octubre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="500px" />
-                                        </div>
-                                    </div>
-                                </div> -->
+                                            <div class="alert alert-info" role="alert">
+                                                <strong>Importante:</strong> <br> Recuerda que con la siguiente selección confirmas la asistencia a tus cursos de capacitación.
+                                            </div>
+                                            <form id="formCursos">
+                                                <label class="form-label d-block mb-3"><strong>Seleccione los cursos a asistir:</strong></label>
+                                                
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Multibrigadas" id="c1">
+                                                    <label class="form-check-label" for="c1">Multibrigadas</label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Montacargas" id="c2">
+                                                    <label class="form-check-label" for="c2">Curso Montacargas</label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Alturas" id="c3">
+                                                    <label class="form-check-label" for="c3">Alturas</label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Confinados" id="c4">
+                                                    <label class="form-check-label" for="c4">Curso Espacios confinados</label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="LOTO" id="c5">
+                                                    <label class="form-check-label" for="c5">LOTO</label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Quimicas" id="c6">
+                                                    <label class="form-check-label" for="c6">Manejo de Sustancias Químicas</label>
+                                                </div>
+
+                                                <button type="button" class="btn btn-primary mt-3" onclick="guardarAsistenciaCurso()">Confirmar asistencia</button>
+                                            </form>
+                                        </div>                                    
+                                </div>
+                                <?php
+                                    }   
+                                ?>
+                                </div> 
                                 <!-- Agenda Sala de Juntas -->
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-4 mb-4">
                                     <div class="card shadow h-100">
-                                        <div class="card-header bg-primary text-light py-2 d-flex justify-content-between align-items-center">
+                                        <div class="card-header bg-secondary text-light py-2 d-flex justify-content-between align-items-center">
                                             <span class="font-weight-bold">Agenda Sala de Juntas</span>
                                             <form method="POST" action="../incidencias/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioSJ" id="id_usuarioSJ" value="">
@@ -694,6 +733,7 @@
             infoEmpleado();   
             obtenerPlaca();
             cargarTalla(getCookie('noEmpleadoL'));
+            cargarCursosSeleccionados(getCookie('noEmpleadoL'));
             
             // Asigna los valores de las cookies a los campos del formulario
             document.getElementById('id_usuario').value = getCookie('id_usuarioL');
@@ -995,6 +1035,83 @@
                 }
             });
         });
+
+    //FUNCION PARA CARGAR LOS CURSOS SELECCIONADOS
+        function cargarCursosSeleccionados() {
+            var noEmpleado = getCookie('noEmpleadoL');
+
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'cargar_cursos',
+                    noEmpleado: noEmpleado
+                },
+                success: function(response) {
+                    if (response.success && response.cursos) {
+                        response.cursos.forEach(function(cursoId) {
+                            $('input[name="cursos[]"][value="' + cursoId.id_voto + '"]').prop('checked', true);
+                        });
+                    }
+                },
+                error: function() {
+                    console.error('Error al cargar los cursos seleccionados.');
+                }
+            });
+        }
+
+    //FUNCION PARA GUARDAR ASISTENCIA A CURSOS
+    function guardarAsistenciaCurso() {
+        var noEmpleado = getCookie('noEmpleadoL');
+        var cursosSeleccionados = [];
+        $('input[name="cursos[]"]:checked').each(function() {
+            cursosSeleccionados.push($(this).val());
+        });
+
+        if (cursosSeleccionados.length === 0) {
+            Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Debes seleccionar al menos un curso.'
+            });
+            return;
+        }
+
+        $.ajax({
+            url: 'acciones_inicio.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+            accion: 'guardar_asistencia',
+            cursos: cursosSeleccionados,
+            noEmpleado: noEmpleado
+            },
+            success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                icon: 'success',
+                title: 'Asistencia Guardada',
+                text: 'Tu asistencia a los cursos ha sido registrada correctamente.'
+                });
+                cargarCursosSeleccionados(noEmpleado); // Recarga los cursos seleccionados
+            } else {
+                Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.message || 'No se pudo registrar la asistencia.'
+                });
+            }
+            },
+            error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Ocurrió un error en la solicitud.'
+            });
+            }
+        });
+    }
 
     //FUNCION PARA VER TODAS LAS TALLAS REGISTRADAS
         function VerTallas() {

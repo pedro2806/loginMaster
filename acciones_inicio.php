@@ -85,4 +85,83 @@ if ($accion == 'ver_buzon') {
     exit;
 }
 
+if ($accion == 'guardar_asistencia') {
+
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    $cursos = isset($_POST['cursos']) ? (array)$_POST['cursos'] : [];
+    $encuesta = 'CapacitacionesBrigada2026';
+
+    // 1. Preparamos la consulta de inserción
+    $sqlInsert = "INSERT INTO votos_fotos (id_usuario, id_voto, encuesta, fecha) VALUES (?, ?, ?, NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    
+    // 2. Preparamos una consulta de verificación para evitar duplicados
+    $sqlCheck = "SELECT COUNT(*) FROM votos_fotos WHERE id_usuario = ? AND id_voto = ? AND encuesta = ?";
+    $stmtCheck = $conn->prepare($sqlCheck);
+
+    $success = true;
+    $registrados = 0;
+    $omitidos = 0;
+
+    foreach ($cursos as $valorCurso) {
+        // Verificamos si ya existe el registro
+        $stmtCheck->bind_param("iss", $noEmpleado, $valorCurso, $encuesta);
+        $stmtCheck->execute();
+        $stmtCheck->bind_result($count);
+        $stmtCheck->fetch();
+        
+        // Importante: liberar el resultado para la siguiente vuelta del ciclo
+        $stmtCheck->free_result(); 
+
+        if ($count == 0) {
+            // Si no existe, procedemos a insertar
+            $stmtInsert->bind_param("iss", $noEmpleado, $valorCurso, $encuesta);
+            if ($stmtInsert->execute()) {
+                $registrados++;
+            } else {
+                $success = false;
+            }
+        } else {
+            $omitidos++;
+        }
+    }
+
+    $stmtInsert->close();
+    $stmtCheck->close();
+    $conn->close();
+
+    echo json_encode([
+        'success' => $success,
+        'message' => "Proceso terminado. Registrados: $registrados, Ya existentes: $omitidos",
+        'registrados' => $registrados,
+        'omitidos' => $omitidos
+    ]);
+    exit;
+}
+
+//CARGAR CURSOS PARA ASISTENCIA
+if ($accion == 'cargar_cursos') {
+
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+
+    $sqlCursos = "SELECT id_voto, encuesta as nombre_curso
+                    FROM votos_fotos
+                    WHERE id_usuario = ? AND encuesta = 'CapacitacionesBrigada2026'
+                    ORDER BY nombre_curso ASC";
+    $stmt = $conn->prepare($sqlCursos);
+    $stmt->bind_param("i", $noEmpleado);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $cursosData = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $cursosData[] = $row;
+        }
+    }
+    echo json_encode(['success' => true, 'cursos' => $cursosData]);
+    $conn->close();
+    exit;
+}
+
 ?>
