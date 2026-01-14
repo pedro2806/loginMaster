@@ -287,6 +287,23 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="col-md-3 mb-2" id="divActivos" style="display:none">
+                                    <div class="card card-action border-left-primary shadow h-100">
+                                        <div class="card-body text-center">
+                                            <form method="POST" action="../activos/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioAC" id="id_usuarioAC" value="">
+                                                <input type="hidden" name="nombredelusuarioAC" id="nombredelusuarioAC" value="">
+                                                <input type="hidden" name="noEmpleadoAC" id="noEmpleadoAC" value="">
+                                                <input type="hidden" name="correoAC" id="correoAC" value="">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">                                                    
+                                                    <i class="fas fa-box fa-lg"></i> Activos
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                             <br>
                             <div class="row">
@@ -768,6 +785,11 @@
             document.getElementById('noEmpleadoSJ').value = getCookie('noEmpleadoL');
             document.getElementById('correoSJ').value = getCookie('correoL');
 
+            document.getElementById('id_usuarioAC').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioAC').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoAC').value = getCookie('noEmpleadoL');
+            document.getElementById('correoAC').value = getCookie('correoL');
+
             document.getElementById('pass').value = getCookie('UsrKpis');
         });
 
@@ -838,12 +860,16 @@
                 success: function(response) {
                     if (response.success && response.vehiculos && response.vehiculos.length > 0) {
                         let html = '';
+                        
                         if (response.vehiculos.length === 1) {
-                            html = response.vehiculos[0];
+                            // CORRECCIÓN: Acceder a la placa del primer elemento
+                            let v = response.vehiculos[0];
+                            html = v.placa + '-' + v.modelo + ' <br><a class="btn btn-sm btn-info" href="TENENCIAS_2026/'+ v.placa +'.pdf" title="Tenencia 2026 - '+v.placa+'" target="_blank">Tenencia 2026 <i class="fas fa-download"></i></a>';
                         } else {
                             html = '<ul style="list-style:none;padding-left:0;margin-bottom:0;">';
                             response.vehiculos.forEach(function(vehiculo) {
-                                html += '<li>' + vehiculo + '</li>';
+                                // CORRECCIÓN: Usar vehiculo.placa
+                                html += '<li>' + vehiculo.placa + '-' + vehiculo.modelo + ' <br><a class="btn btn-sm btn-info" href="TENENCIAS_2026/'+ vehiculo.placa +'.pdf" title="Tenencia 2026 - '+vehiculo.placa+'" target="_blank">Tenencia 2026 <i class="fas fa-download"></i></a></li>';
                             });
                             html += '</ul>';
                         }
