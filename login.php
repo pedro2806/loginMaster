@@ -97,7 +97,7 @@ if ($accion == 'Ingresar') {
         while ($row = $result->fetch_assoc()) {
             
             $datosUsr[] = [                
-                'id' => $row['id'],
+                'id' => $row['id_usuario'],
                 'usuario' => $row['usuario'],
                 'nombre' => $row['nombre'],
                 'noEmpleado' => $row['noEmpleado'],
