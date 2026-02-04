@@ -304,6 +304,23 @@
                                     </div>
                                 </div>
 
+                                <!-- ENTRADAS EQ DARK -->
+                                <div class="col-md-3 mb-2" id="divEntradasEq" style="display:none">
+                                    <div class="card card-action border-left-dark shadow h-100">
+                                        <div class="card-body text-center">
+                                            <form method="POST" action="../planeacion/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioPlaEnt" id="id_usuarioPlaEnt" value="">
+                                                <input type="hidden" name="nombredelusuarioPlaEnt" id="nombredelusuarioPlaEnt" value="">
+                                                <input type="hidden" name="noEmpleadoPlaEnt" id="noEmpleadoPlaEnt" value="">
+                                                <input type="hidden" name="correoPlaEnt" id="correoPlaEnt" value="">
+                                                <button type="submit" class="btn btn-outline-dark btn-block">
+                                                    <i class="fas fa-calendar fa-lg"></i> Entradas Eq
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                             <br>
                             <div class="row">
@@ -779,6 +796,11 @@
             document.getElementById('nombredelusuarioPla').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleadoPla').value = getCookie('noEmpleadoL');
             document.getElementById('correoPla').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioPlaEnt').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioPlaEnt').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoPlaEnt').value = getCookie('noEmpleadoL');
+            document.getElementById('correoPlaEnt').value = getCookie('correoL');
 
             document.getElementById('id_usuarioSJ').value = getCookie('id_usuarioL');
             document.getElementById('nombredelusuarioSJ').value = getCookie('nombredelusuarioL');
