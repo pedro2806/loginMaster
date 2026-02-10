@@ -321,6 +321,23 @@
                                     </div>
                                 </div>
 
+                                <!-- PRACTICANTES -->
+                                <div class="col-md-3 mb-2" id="divPracticantes" style="display:none">
+                                    <div class="card card-action border-left-info shadow h-100">
+                                        <div class="card-body text-center">
+                                            <form method="POST" action="../Practicantes/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioPRACT" id="id_usuarioPRACT" value="">
+                                                <input type="hidden" name="nombredelusuarioPRACT" id="nombredelusuarioPRACT" value="">
+                                                <input type="hidden" name="noEmpleadoPRACT" id="noEmpleadoPRACT" value="">
+                                                <input type="hidden" name="correoPRACT" id="correoPRACT" value="">
+                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                    <i class="fas fa-user-clock fa-lg"></i> Practicantes
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                             <br>
                             <div class="row">
@@ -364,7 +381,7 @@
                                             </form>
                                             <br>
                                             
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2025/12/Mural-Diciembre-2025.pdf#zoom=60' type="application/pdf" width="100%" height="300px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/02/MURAL-FEB-CORRECTO_compressed.pdf' type="application/pdf" width="100%" height="300px" />
                                         </div>
                                     </div>
                                 </div>
@@ -811,6 +828,11 @@
             document.getElementById('nombredelusuarioAC').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleadoAC').value = getCookie('noEmpleadoL');
             document.getElementById('correoAC').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioPRACT').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioPRACT').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoPRACT').value = getCookie('noEmpleadoL');
+            document.getElementById('correoPRACT').value = getCookie('correoL');
 
             document.getElementById('pass').value = getCookie('UsrKpis');
         });
