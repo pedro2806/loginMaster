@@ -67,8 +67,7 @@
                                     <div class="text-center" id="calendar"></div>
                                 </div>    
                             </div>
-                        </div>
-                        <br>                        
+                        </div>                                            
                         <!--BARRA DE SOPORTE-->
                         <div class="row">  
                             <div class = "col-lg-6 mx-auto">
@@ -76,9 +75,10 @@
                             </div>          
                             <div class = "col-lg-6 mx-auto">
                                 <center>
-                                    <p class="alert alert-info" style="font-size: 0.9em;">
-                                        Soporte del sistema:                                        
+                                    <p class="alert alert-primary" style="font-size: 0.9em;">
+                                        Soporte del sistema: <br>
                                         <a href="mailto:pedro.martinez@mess.com.mx">pedro.martinez@mess.com.mx</a>
+                                        <a href="mailto:sebastian.gutierrez@mess.com.mx">sebastian.gutierrez@mess.com.mx</a>
                                     </p>
                                 </center>
                             </div>
