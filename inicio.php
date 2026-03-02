@@ -381,7 +381,7 @@
                                             </form>
                                             <br>
                                             
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/02/MURAL-FEB-CORRECTO_compressed.pdf' type="application/pdf" width="100%" height="300px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/03/MURAL-MARZO_compressed.pdf' type="application/pdf" width="100%" height="300px" />
                                         </div>
                                     </div>
                                 </div>
