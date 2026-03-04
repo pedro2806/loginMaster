@@ -98,32 +98,36 @@
                                 <br>                                
                                 <div class="row"> 
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: #484cacff;">
-                                            <h6 id="antig" name="antig" style="color:#fff; margin-bottom: 0.1rem;"></h6>
-                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Antigüedad</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-xl-6 col-md-6">
                                         <div class="stat-box p-2 mb-2" style="background: #0fa083ff; ">
                                             <h6 id="fechaIngreso" name="fechaIngreso" style="color:#fff; margin-bottom: 0.1rem;"></h6>
                                             <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Fecha de ingreso</p>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="row"> 
+                                
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: #484cacff;">
-                                            <h6 id ="diasSol" name="diasSol" style="color:#fff; margin-bottom: 0.1rem;"></h6>
-                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Dias Solicitados</p>
+                                        <div class="stat-box p-2 mb-2" style="background: rgb(224, 126, 34);">
+                                            <center>
+                                                <button class="btn btn-link nav-link fw-bold text-dark position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
+                                                    <i class="fas fa-bell text-light"></i>
+                                                    <span id="badgeNotificaciones" class="position-absolute badge rounded-pill bg-danger text-light" style="top: 2px; right: 2px; font-size: .80rem; min-width: 1rem; padding: .2em .35em; line-height: 1; pointer-events: none;">0</span>
+                                                </button>
+                                            </center>
                                         </div>
                                     </div>
-                                    
+                                </div>
+                                
+                                <div class="row"> 
                                     <div class="col-xl-6 col-md-6">
                                         <div class="stat-box p-2 mb-2" style="background: #0fa083ff;">
                                             <h6 id="diasDisp" name="diasDisp" style="color:#fff; margin-bottom: 0.1rem;"></h6>
                                             <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Días Disponibles</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="stat-box p-2 mb-2" style="background: #484cacff;">
+                                            <h6 id ="diasSol" name="diasSol" style="color:#fff; margin-bottom: 0.1rem;"></h6>
+                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Dias Solicitados</p>
                                         </div>
                                     </div>
                                 </div>
@@ -778,6 +782,8 @@
     <script src = "https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script> 
     <!-- Descargar Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Funciones Globales -->
+    <script src="funcionesGlobales.js"></script>
 
     <script>
         $(document).ready(function () {           
@@ -787,6 +793,12 @@
             obtenerPlaca();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
+
+            //Notificaciones
+            cargarNotificaciones(false); // Carga inicial de notificaciones sin mostrar flotantes
+            setInterval(function() {
+                cargarNotificaciones(false);
+            }, 5400000); // 1.5 horas
             
             // Asigna los valores de las cookies a los campos del formulario
             document.getElementById('id_usuario').value = getCookie('id_usuarioL');
@@ -1136,56 +1148,56 @@
         }
 
     //FUNCION PARA GUARDAR ASISTENCIA A CURSOS
-    function guardarAsistenciaCurso() {
-        var noEmpleado = getCookie('noEmpleadoL');
-        var cursosSeleccionados = [];
-        $('input[name="cursos[]"]:checked').each(function() {
-            cursosSeleccionados.push($(this).val());
-        });
-
-        if (cursosSeleccionados.length === 0) {
-            Swal.fire({
-            icon: 'warning',
-            title: 'Atención',
-            text: 'Debes seleccionar al menos un curso.'
+        function guardarAsistenciaCurso() {
+            var noEmpleado = getCookie('noEmpleadoL');
+            var cursosSeleccionados = [];
+            $('input[name="cursos[]"]:checked').each(function() {
+                cursosSeleccionados.push($(this).val());
             });
-            return;
+
+            if (cursosSeleccionados.length === 0) {
+                Swal.fire({
+                icon: 'warning',
+                title: 'Atención',
+                text: 'Debes seleccionar al menos un curso.'
+                });
+                return;
+            }
+
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                accion: 'guardar_asistencia',
+                cursos: cursosSeleccionados,
+                noEmpleado: noEmpleado
+                },
+                success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                    icon: 'success',
+                    title: 'Asistencia Guardada',
+                    text: 'Tu asistencia a los cursos ha sido registrada correctamente.'
+                    });
+                    cargarCursosSeleccionados(noEmpleado); // Recarga los cursos seleccionados
+                } else {
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.message || 'No se pudo registrar la asistencia.'
+                    });
+                }
+                },
+                error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error en la solicitud.'
+                });
+                }
+            });
         }
-
-        $.ajax({
-            url: 'acciones_inicio.php',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-            accion: 'guardar_asistencia',
-            cursos: cursosSeleccionados,
-            noEmpleado: noEmpleado
-            },
-            success: function(response) {
-            if (response.success) {
-                Swal.fire({
-                icon: 'success',
-                title: 'Asistencia Guardada',
-                text: 'Tu asistencia a los cursos ha sido registrada correctamente.'
-                });
-                cargarCursosSeleccionados(noEmpleado); // Recarga los cursos seleccionados
-            } else {
-                Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: response.message || 'No se pudo registrar la asistencia.'
-                });
-            }
-            },
-            error: function() {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Ocurrió un error en la solicitud.'
-            });
-            }
-        });
-    }
 
     //FUNCION PARA VER TODAS LAS TALLAS REGISTRADAS
         function VerTallas() {

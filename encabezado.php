@@ -44,3 +44,5 @@
     </script>
 </nav>
 <!-- End of Topbar -->
+
+<div id="notificationStack" class="position-fixed" style="top: 70px; right: 20px; z-index: 1080; width: min(420px, calc(100vw - 2rem));"></div>
