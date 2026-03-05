@@ -142,10 +142,7 @@ function marcarNotificacionLeida(idNotificacion, idRegistro, sistema, archivo) {
                     $(this).remove();
                 });
                 cargarNotificaciones(false);
-                var urlDestino = construirUrlNotificacion(sistema, archivo, idRegistro);
-                if (urlDestino !== '') {
-                    window.location.href = urlDestino;
-                }
+                construirUrlNotificacion(sistema, archivo, idRegistro);                
             }
         }
     });
@@ -176,16 +173,38 @@ function construirUrlNotificacion(sistema, archivo, idRegistro) {
             noEmpleado: getCookie('noEmpleadoL'),
             sistema: sistema,
             archivo: archivo,            
-            idRegistro: idRegistro,
+            idRegistro: idRegistro
+        },
+        beforeSend: function() {
+            // Opcional: Mostrar un loader o deshabilitar el botón
+            console.log('Validando acceso...');
         },
         success: function(response) {
-            
-                    alert('Redirigiendo a la sección correspondiente...');
-                    window.location.href = '/planeacion/entradaDetalleEntradas.php?id=' + idRegistro;
-            
-            
+            // Validamos que el servidor responda con éxito (asumiendo que envías un campo 'status' o 'success')
+            if (response.status === 'success' || response.success === true) {
+                
+                alert('Redirigiendo a la sección correspondiente...');
+                
+                // Opción A: Usar la URL que mande el servidor (más flexible)
+                if (response.urlDestino) {
+                    window.location.href = response.urlDestino;
+                } 
+                // Opción B: Construir la URL localmente si el servidor no la envía
+                else {
+                    window.location.href = '../planeacion/' + archivo + '?id=' + idRegistro;
+                }
+
+            } else {
+                // Manejar error de validación (ej. sesión expirada o sin permisos)
+                alert('Error: ' + (response.mensaje || 'No tienes permisos para acceder.'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en la petición:', error);
+            alert('Hubo un error de conexión con el servidor.');
         }
     });
+}
     /*var urlBase = 'https://messbook.com.mx/';
     var urlBase = 'http://localhost/';
     
@@ -213,5 +232,4 @@ function construirUrlNotificacion(sistema, archivo, idRegistro) {
     if (sistema.toLowerCase().indexOf('activos') !== -1) {
         return urlBase + '/activos/detalleActivo.php?id=' + idRegistro;
     }*/
-    return '';
-}
+    
