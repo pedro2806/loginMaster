@@ -105,7 +105,7 @@
                                     </div>
                                 
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: rgb(224, 126, 34);">
+                                        <div class="stat-box p-2 mb-2" style="background: rgb(116, 34, 224);">
                                             <center>
                                                 <button class="btn btn-link nav-link fw-bold text-dark position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
                                                     <i class="fas fa-bell text-light"></i>
@@ -162,7 +162,7 @@
                                 <div class="col-md-3 mb-2" id="divVacaciones" style="display:none">
                                     <div class="card card-action border-left-warning shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../incidencias/validaLoginMaster.php">
+                                            <form id="formVacaciones" method="POST" action="../incidencias/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuario" id="id_usuario" value="">
                                                 <input type="hidden" name="nombredelusuario" id="nombredelusuario" value="">
                                                 <input type="hidden" name="noEmpleado" id="noEmpleado" value="">
@@ -180,7 +180,7 @@
                                 <div class="col-md-3 mb-2" id="divControlVehicular" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../ControlVehicular/validaLoginMaster.php">
+                                            <form id="formControlVehicular" method="POST" action="../ControlVehicular/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
                                                 <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
                                                 <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
@@ -197,7 +197,7 @@
                                 <div class="col-md-3 mb-2" id="divHorasExtra" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../horasextra/validaLoginMaster.php">
+                                            <form id="formHorasExtra" method="POST" action="../horasextra/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioHR" id="id_usuarioHR" value="">
                                                 <input type="hidden" name="nombredelusuarioHR" id="nombredelusuarioHR" value="">
                                                 <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
@@ -214,7 +214,7 @@
                                 <div class="col-md-3 mb-2" id="divIncidencias" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
+                                            <form id="formIncidencias" method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioI" id="id_usuarioI" value="">
                                                 <input type="hidden" name="nombredelusuarioI" id="nombredelusuarioI" value="">
                                                 <input type="hidden" name="noEmpleadoI" id="noEmpleadoI" value="">
@@ -232,7 +232,7 @@
                                 <div class="col-md-3 mb-2" id="divPlaneacion" style="display:none">
                                     <div class="card card-action border-left-dark shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../planeacion/validaLoginMaster.php">
+                                            <form id="formPlaneacion" method="POST" action="../planeacion/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioPla" id="id_usuarioPla" value="">
                                                 <input type="hidden" name="nombredelusuarioPla" id="nombredelusuarioPla" value="">
                                                 <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
@@ -265,7 +265,7 @@
                                 <div class="col-md-3 mb-2" id="divKPIs" style="display:none">
                                     <div class="card card-action border-left-danger shadow h-100">
                                         <div class="card-body text-center">
-                                            <form action="../kpis_pbi/indexK.php" method="post">
+                                            <form id="formKPIs" action="../kpis_pbi/indexK.php" method="post">
                                                 <input type="hidden" name="pass" id="pass" value="">
                                                 <button type="submit" class="btn btn-outline-danger btn-block">
                                                     <i class="fas fa-chart-line fa-lg"></i> KPI's
@@ -279,7 +279,7 @@
                                 <div class="col-md-3 mb-2" id="divTI" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="inicio">
+                                            <form id="formTI" method="POST" action="inicio">
                                                 <input type="hidden" name="id_usuarioTI" id="id_usuarioTI" value="">
                                                 <input type="hidden" name="nombredelusuarioTI" id="nombredelusuarioTI" value="">
                                                 <input type="hidden" name="noEmpleadoTI" id="noEmpleadoTI" value="">
@@ -292,10 +292,11 @@
                                     </div>
                                 </div>
 
+                                <!-- ACTIVOS PRIMARY -->
                                 <div class="col-md-3 mb-2" id="divActivos" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../activos/validaLoginMaster.php">
+                                            <form id="formActivos" method="POST" action="../activos/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioAC" id="id_usuarioAC" value="">
                                                 <input type="hidden" name="nombredelusuarioAC" id="nombredelusuarioAC" value="">
                                                 <input type="hidden" name="noEmpleadoAC" id="noEmpleadoAC" value="">
@@ -312,11 +313,12 @@
                                 <div class="col-md-3 mb-2" id="divEntradasEq" style="display:none">
                                     <div class="card card-action border-left-dark shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../planeacion/validaLoginMaster.php">
+                                            <form id="formEntradasEq" method="POST" action="../planeacion/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioPlaEnt" id="id_usuarioPlaEnt" value="">
                                                 <input type="hidden" name="nombredelusuarioPlaEnt" id="nombredelusuarioPlaEnt" value="">
                                                 <input type="hidden" name="noEmpleadoPlaEnt" id="noEmpleadoPlaEnt" value="">
                                                 <input type="hidden" name="correoPlaEnt" id="correoPlaEnt" value="">
+                                                <input type="hidden" name="rutaredireccion" id="campoNuevoValor">
                                                 <button type="submit" class="btn btn-outline-dark btn-block">
                                                     <i class="fas fa-calendar fa-lg"></i> Entradas Eq
                                                 </button>
@@ -329,13 +331,32 @@
                                 <div class="col-md-3 mb-2" id="divPracticantes" style="display:none">
                                     <div class="card card-action border-left-info shadow h-100">
                                         <div class="card-body text-center">
-                                            <form method="POST" action="../Practicantes/validaLoginMaster.php">
+                                            <form id="formPracticantes"
+                                            method="POST" action="../Practicantes/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioPRACT" id="id_usuarioPRACT" value="">
                                                 <input type="hidden" name="nombredelusuarioPRACT" id="nombredelusuarioPRACT" value="">
                                                 <input type="hidden" name="noEmpleadoPRACT" id="noEmpleadoPRACT" value="">
                                                 <input type="hidden" name="correoPRACT" id="correoPRACT" value="">
                                                 <button type="submit" class="btn btn-outline-info btn-block">
                                                     <i class="fas fa-user-clock fa-lg"></i> Practicantes
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CONTROL SGC -->
+                                <div class="col-md-3 mb-2" id="divControlSGC" style="display:none">
+                                    <div class="card card-action border-left-success shadow h-100">
+                                        <div class="card-body text-center">
+                                            <form id="formControlSGC" method="POST" action="../ControlSGC/validaLoginMaster.php">
+                                                <input type="hidden" name="id_usuarioSGC" id="id_usuarioSGC" value="">
+                                                <input type="hidden" name="nombredelusuarioSGC" id="nombredelusuarioSGC" value="">
+                                                <input type="hidden" name="noEmpleadoSGC" id="noEmpleadoSGC" value="">
+                                                <input type="hidden" name="correoSGC" id="correoSGC" value="">
+                                                <!--<input type="hidden" name="rutaredireccion" id="campoNuevoValor">-->
+                                                <button type="submit" class="btn btn-outline-success btn-block">
+                                                    <i class="fas fa-check fa-lg"></i> Control SGC
                                                 </button>
                                             </form>
                                         </div>
@@ -845,6 +866,11 @@
             document.getElementById('nombredelusuarioPRACT').value = getCookie('nombredelusuarioL');
             document.getElementById('noEmpleadoPRACT').value = getCookie('noEmpleadoL');
             document.getElementById('correoPRACT').value = getCookie('correoL');
+
+            document.getElementById('id_usuarioSGC').value = getCookie('id_usuarioL');
+            document.getElementById('nombredelusuarioSGC').value = getCookie('nombredelusuarioL');
+            document.getElementById('noEmpleadoSGC').value = getCookie('noEmpleadoL');
+            document.getElementById('correoSGC').value = getCookie('correoL');
 
             document.getElementById('pass').value = getCookie('UsrKpis');
         });
