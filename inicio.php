@@ -105,7 +105,7 @@
                                     </div>
                                 
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: rgb(116, 34, 224);">
+                                        <div class="stat-box p-2 mb-2" style="background: rgb(84, 87, 97);">
                                             <center>
                                                 <button class="btn btn-link nav-link fw-bold text-dark position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
                                                     <i class="fas fa-bell text-light"></i>
@@ -160,7 +160,7 @@
                             <div class="row">
                                 <!-- VACACIONES WARNIGN -->
                                 <div class="col-md-3 mb-2" id="divVacaciones" style="display:none">
-                                    <div class="card card-action border-left-warning shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formVacaciones" method="POST" action="../incidencias/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuario" id="id_usuario" value="">
@@ -168,7 +168,7 @@
                                                 <input type="hidden" name="noEmpleado" id="noEmpleado" value="">
                                                 <input type="hidden" name="correo" id="correo" value="">
                                                 <input type="hidden" name="sistema" id="sistema" value="vacaciones">
-                                                <button type="submit" class="btn btn-outline-warning btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="far fa-check-square fa-lg"></i> Vacaciones
                                                 </button>                                                
                                             </form>                                            
@@ -178,14 +178,14 @@
 
                                 <!-- CONTROL VEHICULAR DANGER -->
                                 <div class="col-md-3 mb-2" id="divControlVehicular" style="display:none">
-                                    <div class="card card-action border-left-danger shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formControlVehicular" method="POST" action="../ControlVehicular/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
                                                 <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
                                                 <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
                                                 <input type="hidden" name="correoCV" id="correoCV" value="">                                                
-                                                <button type="submit" class="btn btn-outline-danger btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-car fa-lg"></i> Ctrl Vehicular
                                                 </button>
                                             </form>
@@ -195,14 +195,14 @@
 
                                 <!-- HORAS EXTRA INFO -->
                                 <div class="col-md-3 mb-2" id="divHorasExtra" style="display:none">
-                                    <div class="card card-action border-left-info shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formHorasExtra" method="POST" action="../horasextra/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioHR" id="id_usuarioHR" value="">
                                                 <input type="hidden" name="nombredelusuarioHR" id="nombredelusuarioHR" value="">
                                                 <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
                                                 <input type="hidden" name="correoHR" id="correoHR" value="">
-                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-clock fa-lg"></i> Hrs Extra
                                                 </button>
                                             </form>
@@ -230,14 +230,14 @@
 
                                 <!-- PLANEACION DARK -->
                                 <div class="col-md-3 mb-2" id="divPlaneacion" style="display:none">
-                                    <div class="card card-action border-left-dark shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formPlaneacion" method="POST" action="../planeacion/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioPla" id="id_usuarioPla" value="">
                                                 <input type="hidden" name="nombredelusuarioPla" id="nombredelusuarioPla" value="">
                                                 <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
                                                 <input type="hidden" name="correoPla" id="correoPla" value="">
-                                                <button type="submit" class="btn btn-outline-dark btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-calendar fa-lg"></i> Planeación
                                                 </button>
                                             </form>
@@ -247,13 +247,13 @@
 
                                 <!-- CAPACITACION WARNING -->
                                 <div class="col-md-3 mb-2" id="divCapacitacion" style="display:none">
-                                    <div class="card card-action border-left-warning shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
-                                            <div class=" class="btn-group" role="group"">
-                                                <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-warning">
+                                            <div class="btn-group" role="group">
+                                                <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary">
                                                     <i class="fas fa-list fa-lg"></i> Capacitación
                                                 </a>
-                                                <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-warning">
+                                                <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-primary">
                                                     <i class="fas fa-file-pdf fa-lg"></i>
                                                 </a>
                                             </div>
@@ -263,11 +263,11 @@
 
                                 <!-- KPI'S DANGER -->
                                 <div class="col-md-3 mb-2" id="divKPIs" style="display:none">
-                                    <div class="card card-action border-left-danger shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formKPIs" action="../kpis_pbi/indexK.php" method="post">
                                                 <input type="hidden" name="pass" id="pass" value="">
-                                                <button type="submit" class="btn btn-outline-danger btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-chart-line fa-lg"></i> KPI's
                                                 </button>
                                             </form>
@@ -277,14 +277,14 @@
 
                                 <!-- KPI'S INFO -->
                                 <div class="col-md-3 mb-2" id="divTI" style="display:none">
-                                    <div class="card card-action border-left-info shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formTI" method="POST" action="inicio">
                                                 <input type="hidden" name="id_usuarioTI" id="id_usuarioTI" value="">
                                                 <input type="hidden" name="nombredelusuarioTI" id="nombredelusuarioTI" value="">
                                                 <input type="hidden" name="noEmpleadoTI" id="noEmpleadoTI" value="">
                                                 <input type="hidden" name="correoTI" id="correoTI" value="">
-                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-laptop fa-lg"></i> TI 
                                                 </button>
                                             </form>
@@ -311,7 +311,7 @@
 
                                 <!-- ENTRADAS EQ DARK -->
                                 <div class="col-md-3 mb-2" id="divEntradasEq" style="display:none">
-                                    <div class="card card-action border-left-dark shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formEntradasEq" method="POST" action="../planeacion/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioPlaEnt" id="id_usuarioPlaEnt" value="">
@@ -319,7 +319,7 @@
                                                 <input type="hidden" name="noEmpleadoPlaEnt" id="noEmpleadoPlaEnt" value="">
                                                 <input type="hidden" name="correoPlaEnt" id="correoPlaEnt" value="">
                                                 <input type="hidden" name="rutaredireccion" id="campoNuevoValor">
-                                                <button type="submit" class="btn btn-outline-dark btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-calendar fa-lg"></i> Entradas Eq
                                                 </button>
                                             </form>
@@ -329,7 +329,7 @@
 
                                 <!-- PRACTICANTES -->
                                 <div class="col-md-3 mb-2" id="divPracticantes" style="display:none">
-                                    <div class="card card-action border-left-info shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formPracticantes"
                                             method="POST" action="../Practicantes/validaLoginMaster.php">
@@ -337,7 +337,7 @@
                                                 <input type="hidden" name="nombredelusuarioPRACT" id="nombredelusuarioPRACT" value="">
                                                 <input type="hidden" name="noEmpleadoPRACT" id="noEmpleadoPRACT" value="">
                                                 <input type="hidden" name="correoPRACT" id="correoPRACT" value="">
-                                                <button type="submit" class="btn btn-outline-info btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-user-clock fa-lg"></i> Practicantes
                                                 </button>
                                             </form>
@@ -347,7 +347,7 @@
 
                                 <!-- CONTROL SGC -->
                                 <div class="col-md-3 mb-2" id="divControlSGC" style="display:none">
-                                    <div class="card card-action border-left-success shadow h-100">
+                                    <div class="card card-action border-left-primary shadow h-100">
                                         <div class="card-body text-center">
                                             <form id="formControlSGC" method="POST" action="../ControlSGC/validaLoginMaster.php">
                                                 <input type="hidden" name="id_usuarioSGC" id="id_usuarioSGC" value="">
@@ -355,7 +355,7 @@
                                                 <input type="hidden" name="noEmpleadoSGC" id="noEmpleadoSGC" value="">
                                                 <input type="hidden" name="correoSGC" id="correoSGC" value="">
                                                 <!--<input type="hidden" name="rutaredireccion" id="campoNuevoValor">-->
-                                                <button type="submit" class="btn btn-outline-success btn-block">
+                                                <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-check fa-lg"></i> Control SGC
                                                 </button>
                                             </form>
