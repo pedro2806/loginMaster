@@ -45,7 +45,7 @@ function renderNotificacionFlotante(notificacion) {
     html += '                  <span class="text-muted" style="font-size: .90rem; white-space: nowrap;"><i class="far fa-calendar-alt mr-1"></i>' + fecha + '</span>';
     html += '              </div>';
     html += '          </div>';
-    html += '          <button class="btn btn-sm btn-light border border-success text-success px-2 py-1" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + getCookie('noEmpleado') + '\')">';
+    html += '          <button class="btn btn-sm btn-light border border-success text-success px-2 py-1" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + getCookie('noEmpleadoL') + '\')">';
     html += '              <i class="fas fa-check fa-sm"></i>';
     html += '          </button>';
     html += '      </div>';
@@ -127,14 +127,16 @@ function cargarNotificaciones(mostrarFlotantes) {
 }
 
 // Función para marcar una notificación como leída
-function marcarNotificacionLeida(idNotificacion, idRegistro, sistema, archivo) {
+function marcarNotificacionLeida(idNotificacion, idRegistro, sistema, archivo, noEmpleado) {
+    $("#campoNuevoValor").val(archivo);
     $.ajax({
         url: 'acciones_globales.php',
         method: 'POST',
         dataType: 'json',
         data: {
             accion: 'marcarLeida',
-            idNotificacion: idNotificacion
+            idNotificacion: idNotificacion,
+            noEmpleado: noEmpleado
         },
         success: function(response) {
             if (response.success) {
@@ -168,7 +170,7 @@ function construirUrlNotificacion(sistema, archivo, idRegistro) {
     $.ajax({
         url: '../planeacion/validaLoginNot.php',
         type: 'POST',
-        dataType: 'json',
+        dataType: 'text',
         data: {
             noEmpleado: getCookie('noEmpleadoL'),
             sistema: sistema,
@@ -179,28 +181,145 @@ function construirUrlNotificacion(sistema, archivo, idRegistro) {
             // Opcional: Mostrar un loader o deshabilitar el botón
             console.log('Validando acceso...');
         },
-        success: function(response) {
-            // Validamos que el servidor responda con éxito (asumiendo que envías un campo 'status' o 'success')
+        success: function(rawResponse) {
+            var response = rawResponse;
+            if (typeof rawResponse === 'string') {
+                var texto = rawResponse.trim();
+                try {
+                    response = JSON.parse(texto);
+                } catch (e1) {
+                    // Algunos entornos retornan scripts + JSON al final; tomamos el ultimo bloque JSON.
+                    var inicioJson = texto.lastIndexOf('{');
+                    if (inicioJson !== -1) {
+                        try {
+                            response = JSON.parse(texto.substring(inicioJson));
+                        } catch (e2) {
+                            console.error('Respuesta no es JSON valido:', texto);
+                            //alert('Error de formato en la respuesta del servidor.');
+                            return;
+                        }
+                    } else {
+                        console.error('No se encontro JSON en la respuesta:', texto);
+                        //alert('Respuesta invalida del servidor.');
+                        return;
+                    }
+                }
+            }
+
             if (response.status === 'success' || response.success === true) {
-                
-                alert('Redirigiendo a la sección correspondiente...');
-                
-                // Opción A: Usar la URL que mande el servidor (más flexible)
-                if (response.urlDestino) {
-                    window.location.href = response.urlDestino;
-                } 
-                // Opción B: Construir la URL localmente si el servidor no la envía
-                else {
-                    window.location.href = '../planeacion/' + archivo + '?id=' + idRegistro;
+                var valorSistema = String(sistema || '').toLowerCase();
+                var idFormulario = null;
+
+                if (valorSistema.indexOf('incidencia') !== -1) {
+                    idFormulario = 'formIncidencias';
+                } else if (valorSistema.indexOf('ctrlvehicular') !== -1) {
+                    idFormulario = 'formControlVehicular';
+                } else if (valorSistema.indexOf('entradaseq') !== -1 || valorSistema.indexOf('entradaeq') !== -1 || valorSistema.indexOf('entradas') !== -1) {
+                    idFormulario = 'formEntradasEq';
+                } else if (valorSistema.indexOf('planeacion') !== -1) {
+                    idFormulario = 'formPlaneacion';
+                } else if (valorSistema.indexOf('activos') !== -1) {
+                    idFormulario = 'formActivos';
+                } else if (valorSistema.indexOf('vacaciones') !== -1) {
+                    idFormulario = 'formVacaciones';
+                } else if (valorSistema.indexOf('horas') !== -1) {
+                    idFormulario = 'formHorasExtra';
+                } else if (valorSistema.indexOf('practicantes') !== -1) {
+                    idFormulario = 'formPracticantes';
                 }
 
+                var formulario = idFormulario ? document.getElementById(idFormulario) : null;
+
+                if (formulario) {
+                    if (response.urlDestino) {
+                        formulario.action = response.urlDestino;
+                    }
+
+                    var idUsuario = getCookie('id_usuarioL') || '';
+                    var nombre = getCookie('nombredelusuarioL') || '';
+                    var noEmpleado = getCookie('noEmpleadoL') || '';
+                    var correo = getCookie('correoL') || '';
+
+                    formulario.querySelectorAll('input[type="hidden"]').forEach(function(input) {
+                        var nombreCampo = (input.name || '').toLowerCase();
+                        if (nombreCampo.indexOf('id_usuario') === 0 || nombreCampo.indexOf('idusuario') === '') {
+                            input.value = idUsuario;
+                        } else if (nombreCampo.indexOf('nombredelusuario') === 0) {
+                            input.value = nombre;
+                        } else if (nombreCampo.indexOf('noempleado') === 0) {
+                            input.value = noEmpleado;
+                        } else if (nombreCampo.indexOf('correo') === 0) {
+                            input.value = correo;
+                        }
+                    });
+
+                    var agregarCampo = function(nombreCampo, valorCampo) {
+                        if (valorCampo === undefined || valorCampo === null || valorCampo === '') {
+                            return;
+                        }
+                        var campo = formulario.querySelector('input[name="' + nombreCampo + '"]');
+                        if (!campo) {
+                            campo = document.createElement('input');
+                            campo.type = 'hidden';
+                            campo.name = nombreCampo;
+                            formulario.appendChild(campo);
+                        }
+                        campo.value = String(valorCampo);
+                    };
+
+                    agregarCampo('id', idRegistro);
+                    agregarCampo('idRegistro', idRegistro);
+                    agregarCampo('archivo', archivo);
+                    agregarCampo('sistema', sistema);
+                    if (archivo) {
+                        agregarCampo('rutaredireccion', archivo);
+                    }
+
+                    formulario.submit();
+                } else {
+                    // Fallback para páginas que no tienen formularios por sistema.
+                    var actionUrl = response.urlDestino || ('../planeacion/' + archivo);
+                    var formularioId = 'miFormularioNotificacion';
+                    var formularioExistente = document.getElementById(formularioId);
+                    if (formularioExistente) {
+                        formularioExistente.remove();
+                    }
+
+                    var formularioDinamico = document.createElement('form');
+                    formularioDinamico.id = formularioId;
+                    formularioDinamico.method = 'POST';
+                    formularioDinamico.action = actionUrl;
+                    formularioDinamico.style.display = 'none';
+
+                    var campos = {
+                        id: idRegistro,
+                        idRegistro: idRegistro,
+                        sistema: sistema,
+                        archivo: archivo,
+                        noEmpleado: getCookie('noEmpleadoL')
+                    };
+
+                    Object.keys(campos).forEach(function(clave) {
+                        if (campos[clave] === undefined || campos[clave] === null) {
+                            return;
+                        }
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = clave;
+                        input.value = String(campos[clave]);
+                        formularioDinamico.appendChild(input);
+                    });
+
+                    document.body.appendChild(formularioDinamico);
+                    formularioDinamico.submit();
+                }
             } else {
                 // Manejar error de validación (ej. sesión expirada o sin permisos)
                 alert('Error: ' + (response.mensaje || 'No tienes permisos para acceder.'));
             }
         },
         error: function(xhr, status, error) {
-            console.error('Error en la petición:', error);
+            console.error('Error en la petición:', error, 'status:', xhr.status, 'response:', xhr.responseText);
             alert('Hubo un error de conexión con el servidor.');
         }
     });
