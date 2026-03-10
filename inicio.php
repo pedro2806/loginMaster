@@ -814,12 +814,6 @@
             obtenerPlaca();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
-
-            //Notificaciones
-            cargarNotificaciones(false); // Carga inicial de notificaciones sin mostrar flotantes
-            setInterval(function() {
-                cargarNotificaciones(false);
-            }, 5400000); // 1.5 horas
             
             // Asigna los valores de las cookies a los campos del formulario
             document.getElementById('id_usuario').value = getCookie('id_usuarioL');
@@ -873,6 +867,12 @@
             document.getElementById('correoSGC').value = getCookie('correoL');
 
             document.getElementById('pass').value = getCookie('UsrKpis');
+
+            //Notificaciones
+            cargarNotificaciones(false); // Carga inicial de notificaciones sin mostrar flotantes
+            setInterval(function() {
+                cargarNotificaciones(false);
+            }, 5400000); // 1.5 horas
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
