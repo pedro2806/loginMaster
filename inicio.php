@@ -95,7 +95,12 @@
 
                                     </div>
                                 </div>
-                                <br>                                
+                                <br>
+                                <div  style="display:none;">
+                                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalEvento">
+                                        <i class="fas fa-plus-circle"></i> Nuevo Evento
+                                    </button>
+                                </div>                                
                                 <div class="row"> 
                                     <div class="col-xl-6 col-md-6">
                                         <div class="stat-box p-2 mb-2" style="background: #0fa083ff; ">
@@ -409,12 +414,7 @@
                                             <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/03/MURAL-MARZO_compressed.pdf' type="application/pdf" width="100%" height="300px" />
                                         </div>
                                     </div>
-                                </div>
-                                <!-- Asistencia capacitacion -->
-                                <?php
-                                    $usuariosRegistran = array(183, 276, 523, 403);
-                                    if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                                ?>
+                                </div>                               
                                 <div class="col-md-4 mb-3">
                                     <div class="card shadow">                                    
                                         <div class="card-header bg-primary text-white">
@@ -459,9 +459,6 @@
                                         </div>                                    
                                     </div>                                
                                 </div> 
-                                <?php
-                                    }   
-                                ?>
                                 <!-- Agenda Sala de Juntas -->
                                 <div class="col-md-4 mb-4">
                                     <div class="card shadow h-100">
@@ -789,9 +786,12 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal de encuestas -->
+    <?php include 'modal.php'; ?>
 
     <!-- Scripts -->
-    <!-- Bootstrap core JavaScript-->
+    <!-- Bootstrap core JavaScript-->    
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src = "vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- Core plugin JavaScript-->
@@ -873,6 +873,7 @@
             setInterval(function() {
                 cargarNotificaciones(false);
             }, 5400000); // 1.5 horas
+            
         });
 
     // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
