@@ -96,11 +96,17 @@
                                     </div>
                                 </div>
                                 <br>
-                                <div  style="display:none;">
-                                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalEvento">
-                                        <i class="fas fa-plus-circle"></i> Nuevo Evento
-                                    </button>
-                                </div>                                
+                                <div class="row mb-4" style="display: none;">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
+                                            <i class="fas fa-plus-circle"></i> Nuevo Evento
+                                        </button>
+
+                                        <button type="button" class="btn btn-info shadow-sm" onclick="cargarListaEventos()">
+                                            <i class="fas fa-list"></i> Ver Registros
+                                        </button>
+                                    </div>
+                                </div>                               
                                 <div class="row"> 
                                     <div class="col-xl-6 col-md-6">
                                         <div class="stat-box p-2 mb-2" style="background: #0fa083ff; ">
@@ -415,7 +421,7 @@
                                         </div>
                                     </div>
                                 </div>                               
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-4 mb-3"  style="display: none;">
                                     <div class="card shadow">                                    
                                         <div class="card-header bg-primary text-white">
                                             <h5 class="mb-0">Registro de Capacitaciones</h5>
@@ -1463,6 +1469,12 @@
 
 
         }
+
+        // Para mostrar nombre de archivo en inputs de BS4
+        $('.custom-file-input').on('change', function() {
+            let fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        });
 </script>
 </body>
 </html>
