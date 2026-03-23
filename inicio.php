@@ -55,6 +55,17 @@
             box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
         }
         .fc .fc-list-event-title { font-weight: 600; }
+
+        #encuestasAsigandas .btn-outline-primary {
+            border-width: 1px;
+            border-color: #eaecf4;
+            color: #4e73df;
+        }
+        #encuestasAsigandas .btn-outline-primary:hover {
+            background-color: #f8f9fc;
+            border-color: #4e73df;
+            color: #4e73df;
+        }
     </style>
 </head>
 <body id="page-top">
@@ -96,14 +107,14 @@
                                     </div>
                                 </div>
                                 <br>
-                                <div class="row mb-4" style="display: none;">
+                                <div class="row mb-4">
                                     <div class="col-md-12">
                                         <button type="button" class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
                                             <i class="fas fa-plus-circle"></i> Nuevo Evento
                                         </button>
 
                                         <button type="button" class="btn btn-info shadow-sm" onclick="cargarListaEventos()">
-                                            <i class="fas fa-list"></i> Ver Registros
+                                            <i class="fas fa-list"></i> Ver Eventos
                                         </button>
                                     </div>
                                 </div>                               
@@ -421,47 +432,13 @@
                                         </div>
                                     </div>
                                 </div>                               
-                                <div class="col-md-4 mb-3"  style="display: none;">
+                                <div class="col-md-4 mb-3" id="divCapacitacionCursos">
                                     <div class="card shadow">                                    
                                         <div class="card-header bg-primary text-white">
-                                            <h5 class="mb-0">Registro de Capacitaciones</h5>
+                                            <h5 class="mb-0">Encuestas/Votaciones/Etc..</h5>
                                         </div>
                                         <div class="card-body">
-                                            <div id="cursosSeleccionados"></div>
-                                            <div id="formCursos">
-                                                <div class="alert alert-info" role="alert">
-                                                    <strong>Importante:</strong> <br> Recuerda que con la siguiente selección confirmas la asistencia a tus cursos de capacitación.
-                                                </div>
-                                            
-                                                <label class="form-label d-block mb-3"><strong>Seleccione los cursos a asistir:</strong></label>
-                                                
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Multibrigadas" id="c1">
-                                                    <label class="form-check-label" for="c1">Multibrigadas</label>
-                                                </div>
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Montacargas" id="c2">
-                                                    <label class="form-check-label" for="c2">Curso Montacargas</label>
-                                                </div>
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Alturas" id="c3">
-                                                    <label class="form-check-label" for="c3">Alturas</label>
-                                                </div>
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Confinados" id="c4">
-                                                    <label class="form-check-label" for="c4">Curso Espacios confinados</label>
-                                                </div>
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="LOTO" id="c5">
-                                                    <label class="form-check-label" for="c5">LOTO</label>
-                                                </div>
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="cursos[]" value="Quimicas" id="c6">
-                                                    <label class="form-check-label" for="c6">Manejo de Sustancias Químicas</label>
-                                                </div>
-
-                                                <button type="button" class="btn btn-primary mt-3" onclick="guardarAsistenciaCurso()">Confirmar asistencia</button>
-                                    </div>
+                                            <div id="encuestasAsigandas"></div>                                            
                                         </div>                                    
                                     </div>                                
                                 </div> 
@@ -809,6 +786,11 @@
     <script src = "https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script> 
     <!-- Descargar Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
     <!-- Funciones Globales -->
     <script src="funcionesGlobales.js"></script>
 
@@ -873,6 +855,16 @@
             document.getElementById('correoSGC').value = getCookie('correoL');
 
             document.getElementById('pass').value = getCookie('UsrKpis');
+
+            $('.select2').select2({
+                theme: 'bootstrap4',
+                placeholder: "Escribe el nombre del empleado...",
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#modalAsignacion')
+            });
+
+            cargarMisEncuestas();
 
             //Notificaciones
             cargarNotificaciones(false); // Carga inicial de notificaciones sin mostrar flotantes
@@ -1469,6 +1461,62 @@
 
 
         }
+function cargarMisEncuestas() {
+    // Usamos el ID del empleado (debería venir de tu sesión de PHP)
+    const id_empleado = <?php echo $_COOKIE['noEmpleadoL']; ?>;
+
+   $.post('acciones_eventos.php', { 
+        accion: 'listar_mis_actividades_completas', 
+        id_empleado: id_empleado 
+    }, function(data) {
+        let html = '';
+        
+        if (data.length > 0) {
+            data.forEach(ev => {
+                // Lógica para saber si ya completó
+                // Si es asistencia, checamos 'asignado_confirmado'. Si es voto/encuesta, checamos 'respondido'.
+                let completado = (ev.tipo === 'asistencia') ? (ev.asignado_confirmado == 1) : (ev.respondido > 0);
+                
+                let icono = 'fa-poll';
+                if(ev.tipo === 'asistencia') icono = 'fa-check-square';
+                if(ev.tipo === 'votacion') icono = 'fa-heart';
+
+                if (completado) {
+                    // DISEÑO PARA COMPLETADAS (Deshabilitado y Verde)
+                    html += `
+                    <div class="mb-2">
+                        <div class="card border-left-success bg-light shadow-sm py-1">
+                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                                <span class="text-success font-weight-bold small">
+                                    <i class="fas fa-check-circle mr-2"></i> ${ev.nombre}
+                                </span>
+                                <span class="badge badge-success px-2">Completado</span>
+                            </div>
+                        </div>
+                    </div>`;
+                } else {
+                    // DISEÑO PARA PENDIENTES (Botón azul clickable)
+                    html += `
+                    <div class="mb-2">
+                        <a href="ver_evento.php?id=${ev.id_evento}" class="btn btn-white btn-block text-left shadow-sm py-2 border-left-primary card-btn-pendiente">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary font-weight-bold small">
+                                    <i class="fas ${icono} mr-2"></i> ${ev.nombre}
+                                </span>
+                                <i class="fas fa-arrow-right fa-sm text-gray-400"></i>
+                            </div>
+                            <small class="d-block text-muted ml-4">Pendiente - Cierra: ${ev.fecha_fin}</small>
+                        </a>
+                    </div>`;
+                }
+            });
+        } else {
+            html = '<div class="text-center text-muted small py-3">Sin actividades asignadas.</div>';
+        }
+
+        $('#encuestasAsigandas').html(html);
+    }, 'json');
+}
 
         // Para mostrar nombre de archivo en inputs de BS4
         $('.custom-file-input').on('change', function() {

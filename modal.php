@@ -51,42 +51,53 @@
                     
                     <form id="formOpcion" enctype="multipart/form-data" class="bg-light p-3 border rounded shadow-sm">
                         <div class="row">
-                            <div class="col-md-12 form-group" id="divPregunta">
-                                <label class="small font-weight-bold">Pregunta / Categoría (Solo para Encuestas)</label>
-                                <input type="text" name="pregunta_texto" id="pregunta_texto" class="form-control form-control-sm" placeholder="Ej: ¿Qué tal te pareció el ponente?">
+                            <div class="col-md-12 form-group">
+                                <label class="small font-weight-bold">Pregunta / Título del Bloque</label>
+                                <input type="text" name="pregunta_texto" class="form-control form-control-sm" placeholder="Ej: Cursos Disponibles">
                             </div>
                             <div class="col-md-6 form-group">
-                                <label class="small font-weight-bold">Texto de la Opción / Ítem</label>
-                                <input type="text" name="titulo" class="form-control form-control-sm" placeholder="Ej: Excelente / Juan Pérez" required>
+                                <label class="small font-weight-bold">Nombre del Ítem / Opción</label>
+                                <input type="text" name="titulo" class="form-control form-control-sm" required>
                             </div>
-                            <div class="col-md-6 form-group" id="divFotoAdmin">
-                                <label class="small font-weight-bold">Imagen (Opcional - Votaciones)</label>
+                            <div class="col-md-3 form-group">
+                                <label class="small font-weight-bold">Grupo</label>
+                                <input type="text" name="grupo" class="form-control form-control-sm" placeholder="A, B, Matutino...">
+                            </div>
+                            <div class="col-md-3 form-group">
+                                <label class="small font-weight-bold">Fecha Específica</label>
+                                <input type="date" name="fecha_opcion" class="form-control form-control-sm">
+                            </div>
+                            
+                            <div class="col-md-12 form-group" id="divFotoAdmin">
+                                <label class="small font-weight-bold">Imagen (Solo para Votaciones)</label>
                                 <div class="custom-file">
                                     <input type="file" name="foto" class="custom-file-input custom-file-input-sm" id="inputFoto">
-                                    <label class="custom-file-label col-form-label-sm" for="inputFoto">Elegir foto...</label>
+                                    <label class="custom-file-label col-form-label-sm" for="inputFoto">Elegir archivo...</label>
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            <button type="button" class="btn btn-success btn-sm px-4 shadow-sm" id="btnAñadirOpcion" onclick="guardarOpcion()">
-                                <i class="fas fa-plus"></i> Añadir a la Lista
+                            <button type="button" class="btn btn-success btn-sm px-4" onclick="guardarOpcion()">
+                                <i class="fas fa-plus"></i> Agregar
                             </button>
                         </div>
                     </form>
                     
                     <div class="table-responsive mt-3" style="max-height: 250px; overflow-y: auto;">
-                        <table class="table table-sm table-bordered table-striped table-hover">
-                            <thead class="bg-gray-200 small">
-                                <tr>
-                                    <th>Pregunta/Bloque</th>
-                                    <th>Opción/Ítem</th>
-                                    <th class="text-center">IMG</th>
-                                    <th class="text-center">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="listaOpcionesCargadas" class="small">
-                                </tbody>
-                        </table>
+                        <table class="table table-sm table-bordered table-striped">
+                        <thead class="bg-gray-200 small font-weight-bold">
+                            <tr>
+                                <th>Pregunta/Bloque</th>
+                                <th>Opción/Ítem</th>
+                                <th class="text-center">Grupo</th>
+                                <th class="text-center">Fecha</th>
+                                <th class="text-center">IMG</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaOpcionesCargadas">
+                            </tbody>
+                    </table>
                     </div>
                 </div>
             </div>
@@ -122,7 +133,136 @@
     </div>
 </div>
 
+
+<div class="modal fade" id="modalAsignacion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content border-left-info shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-users-cog"></i> Convocatoria: <span id="nombreEventoAsignar" class="text-warning"></span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="id_evento_asignar">
+                
+                <div class="card bg-light mb-3">
+                    <div class="card-body p-3">
+                        <div class="row">
+                            <div class="col-md-9 form-group mb-0">
+                                <label class="small font-weight-bold text-dark">Seleccionar Personal para este Curso</label>
+                                <select id="select_empleados" class="form-control form-control-sm select2" multiple="multiple" style="width: 100%;">
+                                    <?php 
+                                    // Consulta rápida para llenar el select (ajusta 'usuarios' a tu tabla real)
+                                    $res_emp = $conn->query("SELECT noEmpleado, nombre FROM usuarios WHERE estatus = 1 ORDER BY nombre ASC");
+                                    while($emp = $res_emp->fetch_assoc()): ?>
+                                        <option value="<?php echo $emp['noEmpleado']; ?>"><?php echo $emp['nombre']; ?></option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="d-block">&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-sm btn-block shadow-sm" onclick="guardarAsignacionMasiva()">
+                                    <i class="fas fa-user-plus"></i> Asignar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-hover">
+                        <thead class="bg-gray-200 small text-dark font-weight-bold">
+                            <tr>
+                                <th>Nombre del Empleado</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAsignados" class="small text-dark">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// --- FUNCIÓN PARA ABRIR ESTE NUEVO MODAL ---
+function abrirModalAsignacion(id, nombre) {
+    // Cerramos el de lista si estuviera abierto (opcional)
+    // $('#modalListaEventos').modal('hide'); 
+    
+    $('#id_evento_asignar').val(id);
+    $('#nombreEventoAsignar').text(nombre);
+    
+    // Limpiamos el select (si usas Select2)
+    if ($.fn.select2) {
+        $('#select_empleados').val(null).trigger('change');
+    }
+    
+    // Abrimos el modal
+    $('#modalAsignacion').modal('show');
+    
+    // Cargamos los usuarios ya asignados
+    cargarListaAsignados(id);
+}
+
+// --- GUARDAR ASIGNACIÓN ---
+function guardarAsignacionMasiva() {
+    const id_ev = $('#id_evento_asignar').val();
+    const empleados = $('#select_empleados').val();
+
+    if (!empleados || empleados.length === 0) {
+        return Swal.fire('Atención', 'Por favor selecciona al menos un empleado.', 'warning');
+    }
+
+    $.post('acciones_eventos.php', {
+        accion: 'asignar_usuarios_evento',
+        id_evento: id_ev,
+        empleados: empleados
+    }, function(res) {
+        if(res.status === 'success') {
+            Swal.fire({ icon: 'success', title: 'Personal Asignado', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+            if ($.fn.select2) $('#select_empleados').val(null).trigger('change');
+            cargarListaAsignados(id_ev);
+        }
+    }, 'json');
+}
+
+// --- CARGAR LISTA DE ASIGNADOS ---
+function cargarListaAsignados(id) {
+    $.post('acciones_eventos.php', { accion: 'listar_asignados', id_evento: id }, function(data) {
+        let html = '';
+        data.forEach(asig => {
+            let badge = asig.confirmado == 1 
+                ? '<span class="badge badge-success px-2">Confirmó Asistencia</span>' 
+                : '<span class="badge badge-warning px-2">Pendiente</span>';
+            
+            html += `<tr>
+                <td class="align-middle font-weight-bold">${asig.nombre}</td>
+                <td class="text-center align-middle">${badge}</td>
+                <td class="text-center align-middle">
+                    <button class="btn btn-outline-danger btn-xs" onclick="eliminarAsignacion(${asig.id_asignacion}, ${id})">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                </td>
+            </tr>`;
+        });
+        $('#listaAsignados').html(html || '<tr><td colspan="3" class="text-center py-3 text-muted">No hay personal convocado para este evento</td></tr>');
+    }, 'json');
+}
+
+// --- ELIMINAR ASIGNACIÓN ---
+function eliminarAsignacion(id_asig, id_ev) {
+    $.post('acciones_eventos.php', { accion: 'quitar_asignacion', id_asignacion: id_asig }, function() {
+        cargarListaAsignados(id_ev);
+    });
+}
+
 // --- AL ABRIR UN NUEVO EVENTO ---
 function limpiarModalEvento() {
     $('#id_evento_edit').val(''); 
@@ -187,17 +327,29 @@ function cargarTablaOpciones(id_evento) {
     $.post('acciones_eventos.php', { accion: 'listar_opciones', id_evento: id_evento }, function(opciones) {
         let html = '';
         opciones.forEach(op => {
-            let img = op.ruta_imagen ? `<i class="fas fa-image text-primary"></i>` : `<i class="fas fa-times text-muted"></i>`;
-            html += `<tr>
-                <td>${op.pregunta}</td>
-                <td class="font-weight-bold">${op.titulo}</td>
+            let img = op.ruta_imagen ? `<i class="fas fa-image text-primary" title="Tiene imagen"></i>` : `<i class="fas fa-times text-muted"></i>`;
+            
+            // Formateamos la fecha para que no se vea vacía si no existe
+            let fechaTxt = op.fecha_opcion ? op.fecha_opcion : '---';
+            let grupoTxt = op.grupo ? `<span class="badge badge-dark">${op.grupo}</span>` : '---';
+
+            html += `
+            <tr>
+                <td class="small text-muted">${op.pregunta}</td>
+                <td class="font-weight-bold text-dark">${op.titulo}</td>
+                <td class="text-center">${grupoTxt}</td>
+                <td class="text-center small">${fechaTxt}</td>
                 <td class="text-center">${img}</td>
                 <td class="text-center">
-                    <button class="btn btn-danger btn-xs" onclick="eliminarOpcion(${op.id_opcion}, ${id_evento})"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-danger btn-xs shadow-sm" onclick="eliminarOpcion(${op.id_opcion}, ${id_evento})">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>`;
         });
-        $('#listaOpcionesCargadas').html(html || '<tr><td colspan="4" class="text-center">No hay ítems</td></tr>');
+        
+        // Si no hay datos, mostramos aviso con 6 columnas de ancho
+        $('#listaOpcionesCargadas').html(html || '<tr><td colspan="6" class="text-center text-muted py-3">No hay ítems registrados</td></tr>');
     }, 'json');
 }
 
@@ -219,24 +371,28 @@ function cargarListaEventos() {
             const badge = (ahora > fFin) ? '<span class="badge badge-secondary">Finalizado</span>' : '<span class="badge badge-success">Activo</span>';
             
             html += `<tr>
-                    <td class="font-weight-bold text-dark">${ev.nombre}</td>
-                    <td><span class="badge badge-light text-uppercase border">${ev.tipo}</span></td>
-                    <td><small>${ev.fecha_inicio} / ${ev.fecha_fin}</small></td>
-                    <td class="text-center">${badge}</td>
-                    <td class="text-center">
-                        <button class="btn btn-success btn-sm" onclick="descargarExcelResultados(${ev.id_evento}, '${ev.nombre}')" title="Descargar Excel">
-                            <i class="fas fa-file-excel"></i>
-                        </button>
+                        <td class="font-weight-bold text-dark">${ev.nombre}</td>
+                        <td><span class="badge badge-light text-uppercase border">${ev.tipo}</span></td>
+                        <td><small>${ev.fecha_inicio} / ${ev.fecha_fin}</small></td>
+                        <td class="text-center">${badge}</td>
+                        <td class="text-center">
+                            <button class="btn btn-success btn-sm" onclick="descargarExcelResultados(${ev.id_evento}, '${ev.nombre}')" title="Excel">
+                                <i class="fas fa-file-excel"></i>
+                            </button>
 
-                        <button class="btn btn-primary btn-sm" onclick="prepararEdicion(${ev.id_evento})" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalAsignacion(${ev.id_evento}, '${ev.nombre}')" title="Asignar Personal">
+                                <i class="fas fa-users text-white"></i>
+                            </button>
 
-                        <button class="btn btn-danger btn-sm" onclick="eliminarEventoRaiz(${ev.id_evento})" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>`; 
+                            <button class="btn btn-primary btn-sm" onclick="prepararEdicion(${ev.id_evento})" title="Editar">
+                                <i class="fas fa-edit text-white"></i>
+                            </button>
+
+                            <button class="btn btn-danger btn-sm" onclick="eliminarEventoRaiz(${ev.id_evento})" title="Eliminar">
+                                <i class="fas fa-trash text-white"></i>
+                            </button>
+                        </td>
+                    </tr>`; 
         });
         
         $('#cuerpoListaEventos').html(html || '<tr><td colspan="5" class="text-center">Vacío</td></tr>');
@@ -303,6 +459,7 @@ function descargarExcelResultados(id_evento, nombreEvento) {
             if (!reporte[fila.id_empleado]) {
                 reporte[fila.id_empleado] = { 
                     "ID Empleado": fila.id_empleado,
+                    "Nombre": fila.nombre_empleado,
                     "Fecha Participación": fila.fecha_registro 
                 };
             }
@@ -324,4 +481,6 @@ function descargarExcelResultados(id_evento, nombreEvento) {
         
     }, 'json');
 }
+
+
 </script>

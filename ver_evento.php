@@ -1,24 +1,27 @@
 <?php
 require_once '../incidencias/conn.php';
 
-// Validamos el ID del evento
+// 1. Obtener ID del evento y del empleado (Simulado o de Sesión)
 $id_evento = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-if ($id_evento <= 0) {
-    die("ID de evento no válido.");
-}
+$id_empleado = $_COOKIE['noEmpleadoL'] ?? null;
 
-// 1. Consultar datos del evento
-$sql_ev = "SELECT * FROM enc_eventos WHERE id_evento = $id_evento AND estatus = 1";
-$res_ev = $conn->query($sql_ev);
+if ($id_evento <= 0) die("Acceso no válido.");
+
+// 2. Consultar datos del evento
+$res_ev = $conn->query("SELECT * FROM enc_eventos WHERE id_evento = $id_evento AND estatus = 1");
 $evento = $res_ev->fetch_assoc();
 
-if (!$evento) {
-    die("El evento no existe o ya no está disponible.");
-}
+if (!$evento) die("El evento no existe o ha finalizado.");
 
-// Simulamos el ID del empleado (Normalmente de $_SESSION)
-$id_empleado = 1; 
+// 3. VALIDACIÓN CRÍTICA: ¿Está el empleado invitado/asignado?
+$sql_asig = "SELECT confirmado FROM enc_eventos_asignados WHERE id_evento = $id_evento AND id_empleado = $id_empleado";
+
+$res_asig = $conn->query($sql_asig);
+$asignacion = $res_asig->fetch_assoc();
+
+// Bandera para saber si ya participó
+$ya_participo = ($asignacion && $asignacion['confirmado'] == 1) ? true : false;
 ?>
 
 <!DOCTYPE html>
@@ -27,178 +30,147 @@ $id_empleado = 1;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $evento['nombre']; ?></title>
-    
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
-    
     <style>
-        .card-hover:hover { transform: scale(1.01); transition: 0.2s; cursor: pointer; }
-        .custom-control-lg .custom-control-label::before, 
-        .custom-control-lg .custom-control-label::after {
-            top: 0.1rem !important; left: -2rem !important;
-            width: 1.5rem !important; height: 1.5rem !important;
-        }
-        .custom-control-lg .custom-control-label {
-            margin-left: 0.5rem !important; padding-top: 0.2rem !important;
-            cursor: pointer; font-size: 1.1rem;
-        }
-        .pregunta-header { background-color: #f8f9fc; border-bottom: 2px solid #4e73df; }
+        .card-dinamica { transition: 0.3s; border-radius: 15px; overflow: hidden; }
+        .card-dinamica:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .badge-info-custom { background: #4e73df; color: white; padding: 5px 12px; border-radius: 50px; font-size: 0.75rem; }
     </style>
 </head>
 <body class="bg-light">
 
-<div class="container py-4">
-    <div class="card shadow border-left-primary mb-4 text-center">
-        <div class="card-body">
-            <h1 class="h3 font-weight-bold text-primary"><?php echo $evento['nombre']; ?></h1>
-            <p class="mb-2 text-dark"><?php echo $evento['descripcion']; ?></p>
-            <span class="badge badge-pill badge-info px-3">
-                <i class="far fa-clock"></i> Cierra: <?php echo date("d/m/Y H:i", strtotime($evento['fecha_fin'])); ?>
-            </span>
+<div class="container py-5">
+    
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-10 text-center">
+            <h1 class="h2 font-weight-bold text-primary"><?php echo $evento['nombre']; ?></h1>
+            <p class="text-muted"><?php echo $evento['descripcion']; ?></p>
         </div>
     </div>
 
-    <form id="formParticipacion">
-        <input type="hidden" name="id_evento" value="<?php echo $id_evento; ?>">
-        <input type="hidden" name="id_empleado" value="<?php echo $id_empleado; ?>">
-
+    <?php if (!$asignacion): ?>
         <div class="row justify-content-center">
-            <?php
-            // Consultamos las opciones
-            $res_op = $conn->query("SELECT * FROM enc_eventos_opciones WHERE id_evento = $id_evento");
-            
-            // --- CASO A: VOTACIÓN (GALERÍA DE FOTOS) ---
-            if ($evento['tipo'] == 'votacion'): 
-                while ($op = $res_op->fetch_assoc()): ?>
-                    <div class="col-sm-6 col-md-4 mb-4">
-                        <div class="card h-100 shadow border-bottom-primary card-hover">
-                            <img src="<?php echo $op['ruta_imagen']; ?>" class="card-img-top" style="height: 220px; object-fit: cover;">
-                            <div class="card-body text-center">
-                                <h5 class="font-weight-bold"><?php echo $op['titulo']; ?></h5>
-                                <button type="button" class="btn btn-primary btn-block rounded-pill" onclick="enviarVotoUnico(<?php echo $op['id_opcion']; ?>)">
-                                    <i class="fas fa-heart"></i> Votar
-                                </button>
-                            </div>
-                        </div>
+            <div class="col-md-8">
+                <div class="card border-left-danger shadow h-100 py-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-circle fa-4x text-danger mb-3"></i>
+                        <h4 class="font-weight-bold">Acceso Restringido</h4>
+                        <p>Lo sentimos, no te encuentras en la lista de convocados para esta actividad.</p>
+                        <a href="index.php" class="btn btn-secondary btn-sm">Regresar al Inicio</a>
                     </div>
-                <?php endwhile; ?>
+                </div>
+            </div>
+        </div>
 
-            // --- CASO B: ASISTENCIA (CHECKLIST MÚLTIPLE) ---
-            <?php elseif ($evento['tipo'] == 'asistencia'): 
-                while ($op = $res_op->fetch_assoc()): ?>
-                    <div class="col-md-10 col-lg-8 mb-2">
-                        <div class="card shadow-sm border-left-success py-2 card-hover" onclick="$('#chk<?php echo $op['id_opcion']; ?>').click()">
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold text-dark"><?php echo $op['titulo']; ?></h6>
-                                <div class="custom-control custom-checkbox custom-control-lg">
-                                    <input type="checkbox" class="custom-control-input chk-asistencia" id="chk<?php echo $op['id_opcion']; ?>" value="<?php echo $op['id_opcion']; ?>" onclick="event.stopPropagation()">
-                                    <label class="custom-control-label" for="chk<?php echo $op['id_opcion']; ?>"></label>
+    <?php elseif ($ya_participo): ?>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-left-success shadow h-100 py-4">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                        <h4 class="font-weight-bold">¡Participación Registrada!</h4>
+                        <p>Gracias por confirmar tu asistencia o voto. Tu respuesta ha sido guardada correctamente.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <?php else: ?>
+        <form id="formParticipacion">
+            <input type="hidden" name="id_evento" value="<?php echo $id_evento; ?>">
+            <input type="hidden" name="id_empleado" value="<?php echo $id_empleado; ?>">
+
+            <div class="row justify-content-center">
+                <?php
+                $opciones = $conn->query("SELECT * FROM enc_eventos_opciones WHERE id_evento = $id_evento ORDER BY pregunta ASC");
+                
+                while ($op = $opciones->fetch_assoc()): ?>
+                    
+                    <?php if ($evento['tipo'] == 'votacion'): ?>
+                        <div class="col-md-4 mb-4">
+                            <div class="card card-dinamica shadow h-100 border-0">
+                                <img src="<?php echo $op['ruta_imagen']; ?>" class="card-img-top" style="height: 200px; object-fit: cover;">
+                                <div class="card-body text-center">
+                                    <h5 class="font-weight-bold text-dark mb-3"><?php echo $op['titulo']; ?></h5>
+                                    <button type="button" class="btn btn-primary btn-block rounded-pill" onclick="enviarRespuesta(<?php echo $op['id_opcion']; ?>)">
+                                        <i class="fas fa-vote-yea"></i> Votar
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                <?php endwhile; ?>
-                <div class="col-12 text-center mt-4">
-                    <button type="button" class="btn btn-success btn-lg shadow rounded-pill px-5" onclick="guardarAsistencias()">
-                        <i class="fas fa-check-double"></i> Confirmar Mi Asistencia
-                    </button>
-                </div>
 
-            // --- CASO C: ENCUESTA (MÚLTIPLES PREGUNTAS) ---
-            <?php elseif ($evento['tipo'] == 'encuesta'): 
-                // Agrupamos opciones por pregunta en un array de PHP
-                
-                $preguntas = [];
-                while($row = $res_op->fetch_assoc()) {
-                    $titulo_p = !empty($row['pregunta']) ? $row['pregunta'] : 'Pregunta General';
-                    $preguntas[$titulo_p][] = $row;
-                }
-                
-                $idx = 0;
-                foreach ($preguntas as $pregunta_texto => $items): $idx++; ?>
-                    <div class="col-md-10 col-lg-8 mb-4">
-                        <div class="card shadow">
-                            <div class="card-header pregunta-header">
-                                <h6 class="m-0 font-weight-bold text-primary"><?php echo $idx; ?>. <?php echo $pregunta_texto; ?></h6>
-                            </div>
-                            <div class="card-body">
-                                <?php foreach ($items as $op): ?>
-                                    <div class="custom-control custom-radio custom-control-lg mb-3">
-                                        <input type="radio" name="preg_<?php echo $idx; ?>" class="custom-control-input rad-encuesta" 
-                                                id="rad<?php echo $op['id_opcion']; ?>" value="<?php echo $op['id_opcion']; ?>">
-                                        <label class="custom-control-label text-dark" for="rad<?php echo $op['id_opcion']; ?>">
-                                            <?php echo $op['titulo']; ?>
-                                        </label>
+                    <?php else: // ASISTENCIA O ENCUESTA ?>
+                        <div class="col-md-10 mb-3">
+                            <div class="card card-dinamica shadow-sm border-left-info py-2">
+                                <div class="card-body d-flex justify-content-between align-items-center px-4">
+                                    <div>
+                                        <h6 class="m-0 font-weight-bold text-primary"><?php echo $op['titulo']; ?></h6>
+                                        <div class="mt-1">
+                                            <?php if($op['grupo']): ?>
+                                                <span class="badge-info-custom">Gpo: <?php echo $op['grupo']; ?></span>
+                                            <?php endif; ?>
+                                            <?php if($op['fecha_opcion']): ?>
+                                                <small class="text-muted ml-2"><i class="far fa-calendar-alt"></i> <?php echo date('d/m/Y', strtotime($op['fecha_opcion'])); ?></small>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                <?php endforeach; ?>
+                                    <div class="custom-control <?php echo ($evento['tipo'] == 'asistencia' ? 'custom-checkbox' : 'custom-radio'); ?> custom-control-lg">
+                                        <input type="<?php echo ($evento['tipo'] == 'asistencia' ? 'checkbox' : 'radio'); ?>" 
+                                               name="opcion_val[]" 
+                                               class="custom-control-input chk-participacion" 
+                                               id="opt<?php echo $op['id_opcion']; ?>" 
+                                               value="<?php echo $op['id_opcion']; ?>">
+                                        <label class="custom-control-label" for="opt<?php echo $op['id_opcion']; ?>"></label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-                <div class="col-12 text-center mt-2">
-                    <button type="button" class="btn btn-info btn-lg shadow rounded-pill px-5" onclick="enviarEncuestaCompleta()">
-                        <i class="fas fa-paper-plane"></i> Enviar Encuesta
+                    <?php endif; ?>
+
+                <?php endwhile; ?>
+            </div>
+
+            <?php if ($evento['tipo'] != 'votacion'): ?>
+                <div class="text-center mt-5">
+                    <button type="button" class="btn btn-success btn-lg px-5 shadow rounded-pill" onclick="guardarMultiple()">
+                        <i class="fas fa-check-double"></i> Confirmar Participación
                     </button>
                 </div>
             <?php endif; ?>
-        </div>
-    </form>
+        </form>
+    <?php endif; ?>
 </div>
 
 <script src="vendor/jquery/jquery.min.js"></script>
-<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-// A. VOTO ÚNICO (Votación)
-function enviarVotoUnico(id_op) {
-    ejecutarRegistro([id_op], 'Tu voto ha sido registrado.');
+// Para Votaciones (una sola opción)
+function enviarRespuesta(id_op) {
+    ejecutarEnvio([id_op]);
 }
 
-// B. ASISTENCIAS (Múltiples)
-function guardarAsistencias() {
-    let seleccionados = $('.chk-asistencia:checked').map(function(){ return $(this).val(); }).get();
-    if(seleccionados.length === 0) return Swal.fire('Atención', 'Selecciona al menos un ítem', 'warning');
-    ejecutarRegistro(seleccionados, 'Asistencia confirmada.');
+// Para Asistencias o Encuestas (múltiples o selección)
+function guardarMultiple() {
+    let seleccionados = $('.chk-participacion:checked').map(function(){ return $(this).val(); }).get();
+    if(seleccionados.length === 0) return Swal.fire('Atención', 'Selecciona al menos una opción.', 'warning');
+    ejecutarEnvio(seleccionados);
 }
 
-// C. ENCUESTA (Múltiples preguntas)
-function enviarEncuestaCompleta() {
-    let seleccionados = [];
-    let grupos = [...new Set($('.rad-encuesta').map(function(){ return $(this).attr('name'); }).get())];
-    let incompleto = false;
-
-    grupos.forEach(nombre => {
-        let valor = $(`input[name="${nombre}"]:checked`).val();
-        if(!valor) incompleto = true;
-        else seleccionados.push(valor);
-    });
-
-    if(incompleto) return Swal.fire('Atención', 'Por favor responde todas las preguntas.', 'warning');
-    ejecutarRegistro(seleccionados, 'Encuesta enviada con éxito.');
-}
-
-// FUNCIÓN DE ENVÍO AL BACKEND
-function ejecutarRegistro(opciones_ids, mensajeExito) {
+function ejecutarEnvio(opciones_array) {
     $.post('acciones_eventos.php', {
-        accion: 'registrar_asistencia_multiple', // Usamos este case para procesar arrays
+        accion: 'registrar_participacion_final',
         id_evento: <?php echo $id_evento; ?>,
-        id_empleado: getCookie('noEmpleadoL'), // Intentamos obtener de cookie, si no usamos el hardcodeado
-        opciones: opciones_ids
+        id_empleado: <?php echo $id_empleado; ?>,
+        opciones: opciones_array
     }, function(res) {
         if(res.status === 'success') {
-            Swal.fire('¡Gracias!', mensajeExito, 'success').then(() => { location.reload(); });
+            Swal.fire('¡Éxito!', 'Tu participación ha sido guardada.', 'success').then(() => { location.reload(); });
         } else {
             Swal.fire('Atención', res.msg, 'info');
         }
     }, 'json');
-}
-
-function getCookie(name) {
-    let value = "; " + document.cookie;
-    let parts = value.split("; " + name + "=");
-    if (parts.length === 2) return parts.pop().split(";").shift();
-    return null; // Si no encuentra la cookie, retorna null
 }
 </script>
 </body>

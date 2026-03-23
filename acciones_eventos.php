@@ -36,16 +36,33 @@ switch ($accion) {
         break;
 
     case 'guardar_opcion':
-        $id_evento = $_POST['id_evento'];
-        $titulo = $_POST['titulo'];
-        $pregunta = !empty($_POST['pregunta_texto']) ? $_POST['pregunta_texto'] : 'Pregunta General';
-        $ruta_final = null;
+        $id_evento    = $_POST['id_evento'];
+        $titulo       = $_POST['titulo'];
+        $pregunta     = !empty($_POST['pregunta_texto']) ? $_POST['pregunta_texto'] : 'General';
+        $grupo        = !empty($_POST['grupo']) ? $_POST['grupo'] : null;
+        $fecha_opcion = !empty($_POST['fecha_opcion']) ? $_POST['fecha_opcion'] : null;
+        $ruta_final   = null;
 
-        // ... (Tu código de manejo de imagen que ya tienes) ...
+        // Manejo de la imagen (Si aplica para Votación)
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+            $directorio = "uploads/eventos/ev_" . $id_evento . "/";
+            if (!is_dir($directorio)) {
+                mkdir($directorio, 0777, true);
+            }
+            $extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
+            $nombre_archivo = "item_" . uniqid() . "." . $extension;
+            $ruta_destinatario = $directorio . $nombre_archivo;
 
-        $sql = "INSERT INTO enc_eventos_opciones (id_evento, titulo, pregunta, ruta_imagen) VALUES (?, ?, ?, ?)";
+            if (move_uploaded_file($_FILES['foto']['tmp_name'], $ruta_destinatario)) {
+                $ruta_final = $ruta_destinatario;
+            }
+        }
+
+        // Insertamos incluyendo los nuevos campos: grupo y fecha_opcion
+        $sql = "INSERT INTO enc_eventos_opciones (id_evento, titulo, pregunta, grupo, fecha_opcion, ruta_imagen) 
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isss", $id_evento, $titulo, $pregunta, $ruta_final);
+        $stmt->bind_param("isssss", $id_evento, $titulo, $pregunta, $grupo, $fecha_opcion, $ruta_final);
 
         if ($stmt->execute()) {
             echo json_encode(['status' => 'success']);
@@ -173,10 +190,11 @@ switch ($accion) {
                         r.id_empleado, 
                         o.pregunta, 
                         o.titulo as respuesta,
-                        r.fecha_registro
+                        r.fecha_registro, u.nombre as nombre_empleado
                     FROM enc_respuestas r
                     JOIN enc_eventos_opciones o ON r.id_opcion = o.id_opcion
                     JOIN enc_eventos e ON r.id_evento = e.id_evento
+                    JOIN usuarios u ON r.id_empleado = u.noEmpleado
                     WHERE r.id_evento = ?
                     ORDER BY r.id_empleado, o.pregunta";
                     
@@ -191,6 +209,148 @@ switch ($accion) {
             }
             echo json_encode($datos);
         exit;
+
+case 'asignar_usuarios_evento':
+        $id_ev = $_POST['id_evento'];
+        $empleados = $_POST['empleados']; // Recibe el array del select múltiple
+
+        if (!empty($empleados) && is_array($empleados)) {
+            foreach ($empleados as $id_emp) {
+                // 1. Validar que no esté ya asignado para no duplicar filas
+                $check = $conn->query("SELECT id_asignacion FROM enc_eventos_asignados WHERE id_evento = $id_ev AND id_empleado = $id_emp");
+                
+                if ($check->num_rows == 0) {
+                    $stmt = $conn->prepare("INSERT INTO enc_eventos_asignados (id_evento, id_empleado) VALUES (?, ?)");
+                    $stmt->bind_param("ii", $id_ev, $id_emp);
+                    $stmt->execute();
+                }
+            }
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'No se seleccionaron empleados.']);
+        }
+        exit;
+
+case 'listar_asignados':
+        $id_ev = $_POST['id_evento'];
+        
+        // Ajusta 'usuarios' e 'id_usuario' según tu tabla real de personal
+        $sql = "SELECT a.id_asignacion, u.nombre, a.confirmado 
+                FROM enc_eventos_asignados a
+                JOIN usuarios u ON a.id_empleado = u.noEmpleado
+                WHERE a.id_evento = ?
+                ORDER BY u.nombre ASC";
+                
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id_ev);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        $data = [];
+        while($row = $res->fetch_assoc()) {
+            $data[] = $row;
+        }
+        echo json_encode($data);
+        exit;
+
+case 'quitar_asignacion':
+        $id_asig = $_POST['id_asignacion'];
+        
+        $stmt = $conn->prepare("DELETE FROM enc_eventos_asignados WHERE id_asignacion = ?");
+        $stmt->bind_param("i", $id_asig);
+        
+        if ($stmt->execute()) {
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => $conn->error]);
+        }
+        exit;
+
+case 'registrar_participacion_final':
+        $id_ev = $_POST['id_evento'];
+        $id_emp = $_POST['id_empleado'];
+        $opciones = $_POST['opciones']; // Array de IDs
+
+        // 1. Insertar las respuestas en enc_respuestas
+        foreach ($opciones as $id_op) {
+            $stmt = $conn->prepare("INSERT INTO enc_respuestas (id_evento, id_opcion, id_empleado) VALUES (?, ?, ?)");
+            $stmt->bind_param("iii", $id_ev, $id_op, $id_emp);
+            $stmt->execute();
+        }
+
+        // 2. Marcar como CONFIRMADO en la tabla de asignaciones
+        $update = $conn->prepare("UPDATE enc_eventos_asignados SET confirmado = 1 WHERE id_evento = ? AND id_empleado = ?");
+        $update->bind_param("ii", $id_ev, $id_emp);
+        $update->execute();
+
+        echo json_encode(['status' => 'success']);
+        exit;
+        
+case 'listar_eventos_pendientes_empleado':
+        $id_emp = $_POST['id_empleado'];
+
+        // Consulta que trae:
+        // 1. Eventos tipo 'asistencia' donde el usuario ESTÁ asignado y NO ha confirmado.
+        // 2. Eventos tipo 'votacion' o 'encuesta' que estén activos (estos son abiertos).
+        $sql = "SELECT e.id_evento, e.nombre, e.tipo, e.fecha_fin 
+                FROM enc_eventos e
+                LEFT JOIN enc_eventos_asignados a ON e.id_evento = a.id_evento AND a.id_empleado = ?
+                WHERE e.estatus = 1 
+                AND (
+                    (e.tipo = 'asistencia' AND a.id_empleado IS NOT NULL AND a.confirmado = 0)
+                    OR 
+                    (e.tipo != 'asistencia' AND NOT EXISTS (
+                        SELECT 1 FROM enc_respuestas r 
+                        WHERE r.id_evento = e.id_evento AND r.id_empleado = ?
+                    ))
+                )
+                ORDER BY e.fecha_fin ASC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ii", $id_emp, $id_emp);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        $data = [];
+        while($row = $res->fetch_assoc()) {
+            $data[] = $row;
+        }
+        echo json_encode($data);
+        exit;
+
+case 'listar_mis_actividades_completas':
+        $id_emp = $_POST['id_empleado'];
+
+        $sql = "SELECT 
+                    e.id_evento, 
+                    e.nombre, 
+                    e.tipo, 
+                    e.fecha_fin,
+                    -- Verificamos si ya existe respuesta o confirmación
+                    (SELECT COUNT(*) FROM enc_respuestas r WHERE r.id_evento = e.id_evento AND r.id_empleado = ?) as respondido,
+                    (SELECT confirmado FROM enc_eventos_asignados a WHERE a.id_evento = e.id_evento AND a.id_empleado = ?) as asignado_confirmado
+                FROM enc_eventos e
+                LEFT JOIN enc_eventos_asignados asig ON e.id_evento = asig.id_evento AND asig.id_empleado = ?
+                WHERE e.estatus = 1 
+                AND (
+                    (e.tipo = 'asistencia' AND asig.id_empleado IS NOT NULL) -- Solo donde está invitado
+                    OR 
+                    (e.tipo != 'asistencia') -- O las que son abiertas (encuesta/votación)
+                )
+                ORDER BY respondido ASC, e.fecha_fin ASC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $id_emp, $id_emp, $id_emp);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        $data = [];
+        while($row = $res->fetch_assoc()) {
+            $data[] = $row;
+        }
+        echo json_encode($data);
+        exit;
+
     default:
         echo json_encode(['status' => 'error', 'msg' => 'Acción no válida']);
         break;
