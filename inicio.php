@@ -109,7 +109,7 @@
                                 <br>
                                 <div class="row mb-4">
                                     <?php 
-                                    $empleadosPermitidos = [276, 403];
+                                    $empleadosPermitidos = [276, 403, 569];
                                     
                                     if (isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosPermitidos)): 
                                     ?>
