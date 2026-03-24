@@ -109,7 +109,7 @@
                                 <br>
                                 <div class="row mb-4">
                                     <?php 
-                                    $empleadosPermitidos = [276, 403, 569];
+                                    $empleadosPermitidos = [276, 403, 569, 523];
                                     
                                     if (isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosPermitidos)): 
                                     ?>
@@ -120,6 +120,10 @@
 
                                             <button type="button" class="btn btn-info shadow-sm" onclick="cargarListaEventos()">
                                                 <i class="fas fa-list"></i> Ver Eventos
+                                            </button>
+                                            <br><br>
+                                            <button type="button" class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#modalAccesosEspeciales" >
+                                                <i class="fas fa-user-shield"></i> Accesos Especiales
                                             </button>
                                         </div>
                                     <?php endif; ?>
@@ -778,6 +782,9 @@
     
     <!-- Modal de encuestas -->
     <?php include 'modal.php'; ?>
+
+    <!-- Modal Accesos Especiales -->
+    <?php include 'modalAccesosEspeciales.php'; ?>
 
     <!-- Scripts -->
     <!-- Bootstrap core JavaScript-->    
