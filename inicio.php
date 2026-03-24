@@ -108,16 +108,22 @@
                                 </div>
                                 <br>
                                 <div class="row mb-4">
-                                    <div class="col-md-12">
-                                        <button type="button" class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
-                                            <i class="fas fa-plus-circle"></i> Nuevo Evento
-                                        </button>
+                                    <?php 
+                                    $empleadosPermitidos = [276, 403];
+                                    
+                                    if (isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosPermitidos)): 
+                                    ?>
+                                        <div class="col-md-12">
+                                            <button type="button" class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
+                                                <i class="fas fa-plus-circle"></i> Nuevo Evento
+                                            </button>
 
-                                        <button type="button" class="btn btn-info shadow-sm" onclick="cargarListaEventos()">
-                                            <i class="fas fa-list"></i> Ver Eventos
-                                        </button>
-                                    </div>
-                                </div>                               
+                                            <button type="button" class="btn btn-info shadow-sm" onclick="cargarListaEventos()">
+                                                <i class="fas fa-list"></i> Ver Eventos
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>                              
                                 <div class="row"> 
                                     <div class="col-xl-6 col-md-6">
                                         <div class="stat-box p-2 mb-2" style="background: #0fa083ff; ">
