@@ -7,7 +7,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-scroll">
                 <form id="formEvento">
                     <input type="hidden" name="id_evento" id="id_evento_edit">
                     <div class="row">
@@ -203,7 +203,27 @@
         </div>
     </div>
 </div>
+<style>
+   /* Altura máxima para el cuerpo de los modales grandes */
+    .modal-body-scroll {
+        max-height: 70vh; /* Ocupa hasta el 70% de la altura de la pantalla */
+        overflow-y: auto;  /* Scroll vertical automático */
+        overflow-x: hidden; /* Evita el scroll horizontal molesto */
+        padding-right: 15px; /* Espacio para que el scroll no tape el contenido */
+    }
 
+    /* Opcional: Personalizar la barra de scroll para que se vea más moderna */
+    .modal-body-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+    .modal-body-scroll::-webkit-scrollbar-thumb {
+        background: #4e73df;
+        border-radius: 10px;
+    }
+    .modal-body-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    } 
+</style>
 <script>
 // --- FUNCIÓN PARA ABRIR MODAL ASIGNACION---
 function abrirModalAsignacion(id, nombre) {

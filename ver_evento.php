@@ -117,10 +117,10 @@ $ya_participo = ($asignacion && $asignacion['confirmado'] == 1) ? true : false;
                                     </div>
                                     <div class="custom-control <?php echo ($evento['tipo'] == 'asistencia' ? 'custom-checkbox' : 'custom-radio'); ?> custom-control-lg">
                                         <input type="<?php echo ($evento['tipo'] == 'asistencia' ? 'checkbox' : 'radio'); ?>" 
-                                               name="opcion_val[]" 
-                                               class="custom-control-input chk-participacion" 
-                                               id="opt<?php echo $op['id_opcion']; ?>" 
-                                               value="<?php echo $op['id_opcion']; ?>">
+                                                name="opcion_val[]" 
+                                                class="custom-control-input chk-participacion" 
+                                                id="opt<?php echo $op['id_opcion']; ?>" 
+                                                value="<?php echo $op['id_opcion']; ?>">
                                         <label class="custom-control-label" for="opt<?php echo $op['id_opcion']; ?>"></label>
                                     </div>
                                 </div>
