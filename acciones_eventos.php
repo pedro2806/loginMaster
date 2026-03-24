@@ -337,6 +337,7 @@ case 'listar_mis_actividades_completas':
                     OR 
                     (e.tipo != 'asistencia') -- O las que son abiertas (encuesta/votación)
                 )
+                AND e.fecha_inicio <= NOW() AND e.fecha_fin >= NOW() -- Solo eventos activos
                 ORDER BY respondido ASC, e.fecha_fin ASC";
 
         $stmt = $conn->prepare($sql);
