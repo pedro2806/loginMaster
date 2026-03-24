@@ -190,8 +190,22 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalEncuestaUsuuario" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content border-left-info shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-list"></i> Evento</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="iframeEncuesta" name="iframeEncuesta" src="#" frameborder="0" style="width: 100%; height: 500px;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// --- FUNCIÓN PARA ABRIR ESTE NUEVO MODAL ---
+// --- FUNCIÓN PARA ABRIR MODAL ASIGNACION---
 function abrirModalAsignacion(id, nombre) {
     // Cerramos el de lista si estuviera abierto (opcional)
     // $('#modalListaEventos').modal('hide'); 
@@ -480,6 +494,13 @@ function descargarExcelResultados(id_evento, nombreEvento) {
         XLSX.writeFile(wb, `Reporte_${nombreEvento}_${fechaCorte}.xlsx`);
         
     }, 'json');
+}
+
+function abrirModalEncuestaUsuuario(id) {            
+    // Abrimos el modal
+    $('#iframeEncuesta').attr('src', `ver_evento.php?id=${id}`);
+    $('#modalEncuestaUsuuario').modal('show');
+    
 }
 
 
