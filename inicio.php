@@ -1503,8 +1503,8 @@ function cargarMisEncuestas() {
                 } else {
                     // DISEÑO PARA PENDIENTES (Botón azul clickable)
                     html += `
-                    <div class="mb-2">
-                        <a href="ver_evento.php?id=${ev.id_evento}" class="btn btn-white btn-block text-left shadow-sm py-2 border-left-primary card-btn-pendiente">
+                    <div class="mb-2">                        
+                        <a type="button" onClick="abrirModalEncuestaUsuuario(${ev.id_evento})" class="btn btn-white btn-block text-left shadow-sm py-2 border-left-primary card-btn-pendiente">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-primary font-weight-bold small">
                                     <i class="fas ${icono} mr-2"></i> ${ev.nombre}
