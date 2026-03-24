@@ -328,7 +328,8 @@ case 'listar_mis_actividades_completas':
                     e.fecha_fin,
                     -- Verificamos si ya existe respuesta o confirmación
                     (SELECT COUNT(*) FROM enc_respuestas r WHERE r.id_evento = e.id_evento AND r.id_empleado = ?) as respondido,
-                    (SELECT confirmado FROM enc_eventos_asignados a WHERE a.id_evento = e.id_evento AND a.id_empleado = ?) as asignado_confirmado
+                    (SELECT confirmado FROM enc_eventos_asignados a WHERE a.id_evento = e.id_evento AND a.id_empleado = ?) as asignado_confirmado,
+                    (SELECT DATE_FORMAT(fecha_opcion, '%d/%m/%Y') FROM enc_eventos_opciones o WHERE o.id_evento = e.id_evento ORDER BY id_opcion LIMIT 1) as fecha_opcion
                 FROM enc_eventos e
                 LEFT JOIN enc_eventos_asignados asig ON e.id_evento = asig.id_evento AND asig.id_empleado = ?
                 WHERE e.estatus = 1 

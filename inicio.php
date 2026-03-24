@@ -1502,8 +1502,9 @@ function cargarMisEncuestas() {
                             <div class="card-body py-2 d-flex justify-content-between align-items-center">
                                 <span class="text-success font-weight-bold small">
                                     <i class="fas fa-check-circle mr-2"></i> ${ev.nombre}
+                                    Fecha del curso: ${ev.fecha_opcion}
                                 </span>
-                                <span class="badge badge-success px-2">Completado</span>
+                                <span class="badge badge-success px-2">Completado</span>                                
                             </div>
                         </div>
                     </div>`;

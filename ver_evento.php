@@ -90,7 +90,7 @@ $ya_participo = ($asignacion && $asignacion['confirmado'] == 1) ? true : false;
                     <?php if ($evento['tipo'] == 'votacion'): ?>
                         <div class="col-md-4 mb-4">
                             <div class="card card-dinamica shadow h-100 border-0">
-                                <img src="<?php echo $op['ruta_imagen']; ?>" class="card-img-top" style="height: 200px; object-fit: cover;">
+                                <img src="<?php echo $op['ruta_imagen']; ?>" class="card-img-top" style="height: 350px; object-fit: cover;">
                                 <div class="card-body text-center">
                                     <h5 class="font-weight-bold text-dark mb-3"><?php echo $op['titulo']; ?></h5>
                                     <button type="button" class="btn btn-primary btn-block rounded-pill" onclick="enviarRespuesta(<?php echo $op['id_opcion']; ?>)">
@@ -105,13 +105,13 @@ $ya_participo = ($asignacion && $asignacion['confirmado'] == 1) ? true : false;
                             <div class="card card-dinamica shadow-sm border-left-info py-2">
                                 <div class="card-body d-flex justify-content-between align-items-center px-4">
                                     <div>
-                                        <h6 class="m-0 font-weight-bold text-primary"><?php echo $op['titulo']; ?></h6>
+                                        <h6 class="m-1 font-weight-bold text-primary text-bold"><?php echo $op['titulo']; ?></h6>
                                         <div class="mt-1">
                                             <?php if($op['grupo']): ?>
-                                                <span class="badge-info-custom">Gpo: <?php echo $op['grupo']; ?></span>
+                                                <span class="badge-info-custom text-white">Gpo: <?php echo $op['grupo']; ?></span>
                                             <?php endif; ?>
                                             <?php if($op['fecha_opcion']): ?>
-                                                <small class="text-muted ml-2"><i class="far fa-calendar-alt"></i> <?php echo date('d/m/Y', strtotime($op['fecha_opcion'])); ?></small>
+                                                <b>Fecha del curso:<small class="text-muted ml-3"><i class="far fa-calendar-alt"></i> <?php echo date('d/m/Y', strtotime($op['fecha_opcion'])); ?></small></b>
                                             <?php endif; ?>
                                         </div>
                                     </div>
