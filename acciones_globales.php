@@ -14,7 +14,7 @@ $idNotificacion = $_POST['idNotificacion'] ?? 0;
 
 if($accion == "ValidarPermisos"){
     // Usamos sentencias preparadas para evitar inyecciones SQL
-    $stmt = $conn->prepare("SELECT COUNT(*) AS cuantos FROM accesos_especiales 
+    $stmt = $conn->prepare("SELECT COUNT(*) AS cuantos, inf_adicional FROM accesos_especiales 
                             WHERE noEmpleado = ? AND sistema = ? AND opcion = ? AND estatus = 1");
     $stmt->bind_param("iss", $noEmpleado, $sistema, $opcion);
     $stmt->execute();
@@ -25,7 +25,10 @@ if($accion == "ValidarPermisos"){
         // Devolvemos una estructura más simple para facilitar el JS
         echo json_encode([
             'status' => 'success', 
-            'data' => [['cuantos' => $row['cuantos']]] 
+            'data' => [[
+                'cuantos' => $row['cuantos'],
+                'inf_adicional' => $row['inf_adicional']
+            ]] 
         ]);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Error en la consulta']);
