@@ -50,7 +50,7 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'ae_') === 0) {
         $ae_opcion  = trim($_POST['opcion']       ?? '');
         $ae_noEmp   = intval($_POST['noEmpleado'] ?? 0);
 
-        $sql    = "SELECT ae.id, ae.sistema, ae.opcion, ae.noEmpleado, ae.estatus,
+        $sql    = "SELECT ae.id, ae.sistema, ae.opcion, ae.inf_adicional, ae.noEmpleado, ae.estatus,
                           IFNULL(u.nombre, ae.noEmpleado) AS nombre
                    FROM accesos_especiales ae
                    LEFT JOIN usuarios u ON ae.noEmpleado = u.noEmpleado
@@ -76,9 +76,10 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'ae_') === 0) {
 
     //  Agregar acceso (insert o reactiva si estatus = 0) 
     if ($accion === 'ae_agregar_acceso') {
-        $ae_sistema = trim($_POST['sistema']      ?? '');
-        $ae_opcion  = trim($_POST['opcion']       ?? '');
-        $ae_noEmp   = intval($_POST['noEmpleado'] ?? 0);
+        $ae_sistema       = trim($_POST['sistema']       ?? '');
+        $ae_opcion        = trim($_POST['opcion']        ?? '');
+        $ae_infAdicional  = trim($_POST['inf_adicional'] ?? '');
+        $ae_noEmp         = intval($_POST['noEmpleado']  ?? 0);
 
         if ($ae_sistema === '' || $ae_opcion === '' || $ae_noEmp <= 0) {
             echo json_encode(['success' => false, 'message' => 'Datos incompletos']); exit;
@@ -95,11 +96,11 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'ae_') === 0) {
             if ($existente['estatus'] == 1) {
                 echo json_encode(['success' => false, 'message' => 'El usuario ya tiene este acceso']); exit;
             }
-            $stmt = $conn->prepare("UPDATE accesos_especiales SET estatus = 1 WHERE id = ?");
-            $stmt->bind_param("i", $existente['id']);
+            $stmt = $conn->prepare("UPDATE accesos_especiales SET estatus = 1, inf_adicional = ? WHERE id = ?");
+            $stmt->bind_param("si", $ae_infAdicional, $existente['id']);
         } else {
-            $stmt = $conn->prepare("INSERT INTO accesos_especiales (sistema, opcion, noEmpleado, estatus) VALUES (?, ?, ?, 1)");
-            $stmt->bind_param("ssi", $ae_sistema, $ae_opcion, $ae_noEmp);
+            $stmt = $conn->prepare("INSERT INTO accesos_especiales (sistema, opcion, inf_adicional, noEmpleado, estatus) VALUES (?, ?, ?, ?, 1)");
+            $stmt->bind_param("sssi", $ae_sistema, $ae_opcion, $ae_infAdicional, $ae_noEmp);
         }
         $ok = $stmt->execute();
         $stmt->close();
@@ -167,12 +168,14 @@ if (!in_array($_ae_actual, $_ae_permitidos)) return;
                         <select id="ae_selectSistema" class="form-control form-control-sm">
                             <option value="">Selecciona un sistema</option>
                         </select>
+                        <textarea id="ae_textareaSistemaNuevo" class="form-control form-control-sm mt-2 d-none" rows="2" placeholder="Captura el nuevo sistema"></textarea>
                     </div>
                     <div class="col-md-3">
                         <label class="small font-weight-bold text-dark mb-1">Opción</label>
                         <select id="ae_selectOpcion" class="form-control form-control-sm" disabled>
                             <option value="">Selecciona una opción</option>
                         </select>
+                        <textarea id="ae_textareaOpcionNueva" class="form-control form-control-sm mt-2 d-none" rows="2" placeholder="Captura la nueva opción"></textarea>
                     </div>
                     <div class="col-md-3">
                         <label class="small font-weight-bold text-dark mb-1">Usuario</label>
@@ -188,21 +191,29 @@ if (!in_array($_ae_actual, $_ae_permitidos)) return;
                     </div>
                 </div>
 
+                <div class="row mb-3" id="ae_rowInfAdicional">
+                    <div class="col-md-9">
+                        <label class="small font-weight-bold text-dark mb-1">Información adicional</label>
+                        <textarea id="ae_textareaInfAdicional" class="form-control form-control-sm" rows="2" placeholder="Captura información adicional del registro"></textarea>
+                    </div>
+                </div>
+
                 <!-- Tabla de accesos -->
                 <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
-                    <table class="table table-sm table-bordered table-hover">
+                    <table id="ae_dataTableAccesos" class="table table-sm table-bordered table-hover">
                         <thead class="thead-dark text-uppercase small font-weight-bold">
                             <tr>
-                                <th>Sistema</th>
-                                <th>Opción</th>
-                                <th>Usuario</th>
-                                <th>Estatus</th>
+                                <th class="text-center">Sistema</th>
+                                <th class="text-center">Opción</th>
+                                <th class="text-center">Información adicional</th>
+                                <th class="text-center">Usuario</th>
+                                <th class="text-center">Estatus</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="ae_tablaAccesos">
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-3">
+                                <td colspan="6" class="text-center text-muted py-3">
                                     Selecciona un sistema para ver los accesos
                                 </td>
                             </tr>
@@ -217,6 +228,100 @@ if (!in_array($_ae_actual, $_ae_permitidos)) return;
 
 <script>
 const AE_URL = 'modalAccesosEspeciales.php';
+const AE_NUEVO_REGISTRO = '__nuevo_registro__';
+
+function ae_esNuevoRegistro(valor) {
+    return valor === AE_NUEVO_REGISTRO;
+}
+
+function ae_toggleCampoNuevo(selector, mostrar) {
+    $(selector).toggleClass('d-none', !mostrar);
+}
+
+function ae_actualizarCamposNuevoRegistro() {
+    const sistema = $('#ae_selectSistema').val();
+    const opcion = $('#ae_selectOpcion').val();
+    const mostrarSistemaNuevo = ae_esNuevoRegistro(sistema);
+    const mostrarOpcionNueva = mostrarSistemaNuevo || ae_esNuevoRegistro(opcion);
+
+    ae_toggleCampoNuevo('#ae_textareaSistemaNuevo', mostrarSistemaNuevo);
+    ae_toggleCampoNuevo('#ae_textareaOpcionNueva', mostrarOpcionNueva);
+
+    if (!mostrarSistemaNuevo) {
+        $('#ae_textareaSistemaNuevo').val('');
+    }
+
+    if (!mostrarOpcionNueva) {
+        $('#ae_textareaOpcionNueva').val('');
+    }
+}
+
+function ae_obtenerSistemaSeleccionado() {
+    const sistema = $('#ae_selectSistema').val();
+    if (ae_esNuevoRegistro(sistema)) {
+        return ($('#ae_textareaSistemaNuevo').val() || '').trim();
+    }
+    return (sistema || '').trim();
+}
+
+function ae_obtenerOpcionSeleccionada() {
+    const opcion = $('#ae_selectOpcion').val();
+    if (ae_esNuevoRegistro($('#ae_selectSistema').val()) || ae_esNuevoRegistro(opcion)) {
+        return ($('#ae_textareaOpcionNueva').val() || '').trim();
+    }
+    return (opcion || '').trim();
+}
+
+function ae_inicializarDataTableAccesos() {
+    if (typeof window.jQuery === 'undefined' || typeof $.fn.DataTable === 'undefined') return;
+
+    const $tabla = $('#ae_dataTableAccesos');
+    if ($.fn.dataTable.isDataTable($tabla)) return;
+
+    $tabla.DataTable({
+        pageLength: 5,
+        lengthChange: false,
+        searching: false ,
+        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
+        order: [[0, 'asc'], [1, 'asc']],
+        columnDefs: [
+            { orderable: false, targets: 5 }
+        ],
+        language: {
+            decimal: '',
+            emptyTable: 'No hay datos disponibles en la tabla',
+            info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+            infoEmpty: 'Mostrando 0 a 0 de 0 registros',
+            infoFiltered: '(filtrado de _MAX_ registros totales)',
+            lengthMenu: 'Mostrar _MENU_ registros',
+            loadingRecords: 'Cargando...',
+            processing: 'Procesando...',
+            search: 'Buscar:',
+            zeroRecords: 'No se encontraron resultados',
+            paginate: {
+                first: 'Primero',
+                last: 'Último',
+                next: 'Siguiente',
+                previous: 'Anterior'
+            }
+        }
+    });
+}
+
+function ae_destruirDataTableAccesos() {
+    if (typeof window.jQuery === 'undefined' || typeof $.fn.DataTable === 'undefined') return;
+
+    const $tabla = $('#ae_dataTableAccesos');
+    if ($.fn.dataTable.isDataTable($tabla)) {
+        $tabla.DataTable().destroy();
+    }
+}
+
+function ae_mostrarTablaVacia() {
+    ae_destruirDataTableAccesos();
+    $('#ae_tablaAccesos').html('');
+    ae_inicializarDataTableAccesos();
+}
 
 function ae_inicializarEventos() {
     if (typeof window.jQuery === 'undefined') return;
@@ -245,18 +350,27 @@ function ae_inicializarEventos() {
         $('#ae_selectOpcion')
             .html('<option value="">Selecciona una opción</option>')
             .prop('disabled', true);
+        ae_actualizarCamposNuevoRegistro();
         ae_actualizarBtnAgregar();
 
         if (!sistema) {
             // Si hay usuario seleccionado, mostrar sus accesos; si no hay usuario, mostrar mensaje
             const usuario = $('#ae_selectUsuario').val();
             if (!usuario) {
-                $('#ae_tablaAccesos').html(
-                    '<tr><td colspan="5" class="text-center text-muted py-3">Selecciona un sistema o un usuario para ver accesos</td></tr>'
-                );
+                ae_mostrarTablaVacia();
             } else {
                 ae_refrescarTabla();
             }
+            return;
+        }
+
+        if (ae_esNuevoRegistro(sistema)) {
+            $('#ae_selectOpcion')
+                .html('<option value="">Selecciona una opción</option><option value="' + AE_NUEVO_REGISTRO + '">Nuevo Registro</option>')
+                .prop('disabled', false);
+            $('#ae_selectOpcion').val(AE_NUEVO_REGISTRO);
+            ae_actualizarCamposNuevoRegistro();
+            ae_actualizarBtnAgregar();
             return;
         }
 
@@ -265,6 +379,7 @@ function ae_inicializarEventos() {
             if (Array.isArray(data)) {
                 data.forEach(function (o) { opts += '<option value="' + o + '">' + o + '</option>'; });
             }
+            opts += '<option value="' + AE_NUEVO_REGISTRO + '">Nuevo Registro</option>';
             $('#ae_selectOpcion').html(opts).prop('disabled', false);
         }, 'json');
 
@@ -273,8 +388,12 @@ function ae_inicializarEventos() {
 
     //  Cambio de opción 
     $('#ae_selectOpcion').on('change', function () {
+        ae_actualizarCamposNuevoRegistro();
         ae_actualizarBtnAgregar();
-        ae_refrescarTabla();
+
+        if (!ae_esNuevoRegistro($('#ae_selectSistema').val()) && !ae_esNuevoRegistro($(this).val())) {
+            ae_refrescarTabla();
+        }
     });
 
     //  Cambio de usuario (filtro opcional - ahora independiente de sistema) 
@@ -282,7 +401,13 @@ function ae_inicializarEventos() {
         ae_actualizarBtnAgregar();
         const usuario = $(this).val();
         const sistema = $('#ae_selectSistema').val();
-        if (usuario || sistema) ae_refrescarTabla();
+        if ((usuario || sistema) && !ae_esNuevoRegistro(sistema) && !ae_esNuevoRegistro($('#ae_selectOpcion').val())) {
+            ae_refrescarTabla();
+        }
+    });
+
+    $('#ae_textareaSistemaNuevo, #ae_textareaOpcionNueva, #ae_textareaInfAdicional').on('input', function () {
+        ae_actualizarBtnAgregar();
     });
 }
 
@@ -295,11 +420,11 @@ function ae_cargarSistemas() {
         if (Array.isArray(data)) {
             data.forEach(function (s) { opts += '<option value="' + s + '">' + s + '</option>'; });
         }
+        opts += '<option value="' + AE_NUEVO_REGISTRO + '">Nuevo Registro</option>';
         $('#ae_selectSistema').html(opts);
         $('#ae_selectOpcion').html('<option value="">Selecciona una opción</option>').prop('disabled', true);
-        $('#ae_tablaAccesos').html(
-            '<tr><td colspan="5" class="text-center text-muted py-3">Selecciona un sistema para ver los accesos</td></tr>'
-        );
+        ae_actualizarCamposNuevoRegistro();
+        ae_mostrarTablaVacia();
     }, 'json');
 }
 
@@ -329,23 +454,30 @@ function ae_cargarTodosUsuarios() {
 
 //  Habilitar botón Agregar (requiere los tres selects con valor) 
 function ae_actualizarBtnAgregar() {
-    const ok = $('#ae_selectSistema').val() &&
-               $('#ae_selectOpcion').val()  &&
-               $('#ae_selectUsuario').val();
+    const sistemaSelect = $('#ae_selectSistema').val();
+    const opcionSelect = $('#ae_selectOpcion').val();
+    const sistema = ae_obtenerSistemaSeleccionado();
+    const opcion = ae_obtenerOpcionSeleccionada();
+    const usaSistemaNuevo = ae_esNuevoRegistro(sistemaSelect);
+    const ok = sistemaSelect &&
+               (usaSistemaNuevo || opcionSelect) &&
+               $('#ae_selectUsuario').val() &&
+               sistema !== '' &&
+               opcion !== '';
     $('#ae_btnAgregar').prop('disabled', !ok);
 }
 
 //  Refrescar tabla según filtros activos 
 function ae_refrescarTabla() {
-    const sistema = $('#ae_selectSistema').val();
-    const opcion  = $('#ae_selectOpcion').val();
+    const sistemaSelect = $('#ae_selectSistema').val();
+    const opcionSelect  = $('#ae_selectOpcion').val();
+    const sistema = ae_esNuevoRegistro(sistemaSelect) ? '' : sistemaSelect;
+    const opcion  = ae_esNuevoRegistro(opcionSelect) ? '' : opcionSelect;
     const noEmp   = $('#ae_selectUsuario').val();
 
     // Si no hay ningún filtro, mostrar mensaje
     if (!sistema && !noEmp) {
-        $('#ae_tablaAccesos').html(
-            '<tr><td colspan="5" class="text-center text-muted py-3">Selecciona un sistema o un usuario para ver accesos</td></tr>'
-        );
+        ae_mostrarTablaVacia();
         return;
     }
 
@@ -356,11 +488,12 @@ function ae_refrescarTabla() {
 
     $.post(AE_URL, payload, function (data) {
         if (!Array.isArray(data) || data.length === 0) {
-            $('#ae_tablaAccesos').html(
-                '<tr><td colspan="5" class="text-center text-muted py-3">Sin accesos registrados para este filtro</td></tr>'
-            );
+            ae_destruirDataTableAccesos();
+            ae_mostrarTablaVacia();
             return;
         }
+
+        ae_destruirDataTableAccesos();
         let html = '';
         data.forEach(function (row) {
             let badgeEstatus = row.estatus == 1 
@@ -369,34 +502,43 @@ function ae_refrescarTabla() {
             let btnAccion = row.estatus == 1
                 ? '<button class="btn btn-warning btn-sm shadow-sm" onclick="ae_eliminarAcceso(' + row.id + ')"><i class="fas fa-minus-circle"></i> Desactivar</button>'
                 : '<button class="btn btn-info btn-sm shadow-sm" onclick="ae_reactivarAcceso(' + row.id + ')"><i class="fas fa-check-circle"></i> Reactivar</button>';
+            let infoAdicional = row.inf_adicional ? row.inf_adicional : '-';
             
             html += '<tr>'
                   + '<td class="align-middle">' + row.sistema + '</td>'
                   + '<td class="align-middle">' + row.opcion  + '</td>'
+                  + '<td class="align-middle">' + infoAdicional + '</td>'
                   + '<td class="align-middle font-weight-bold">' + row.nombre + '</td>'
                   + '<td class="align-middle text-center">' + badgeEstatus + '</td>'
                   + '<td class="text-center align-middle">'
                   +   btnAccion
-                  +   '</button>'
                   + '</td>'
                   + '</tr>';
         });
         $('#ae_tablaAccesos').html(html);
+        ae_inicializarDataTableAccesos();
     }, 'json');
 }
 
 //  Agregar acceso 
 function ae_agregarAcceso() {
-    const sistema = $('#ae_selectSistema').val();
-    const opcion  = $('#ae_selectOpcion').val();
+    const sistema = ae_obtenerSistemaSeleccionado();
+    const opcion  = ae_obtenerOpcionSeleccionada();
     const noEmp   = $('#ae_selectUsuario').val();
+    const infAdicional = ($('#ae_textareaInfAdicional').val() || '').trim();
 
     if (!sistema || !opcion || !noEmp) {
         return Swal.fire('Atención', 'Debes seleccionar sistema, opción y usuario.', 'warning');
     }
 
     $.post(AE_URL,
-        { accion: 'ae_agregar_acceso', sistema: sistema, opcion: opcion, noEmpleado: noEmp },
+        {
+            accion: 'ae_agregar_acceso',
+            sistema: sistema,
+            opcion: opcion,
+            noEmpleado: noEmp,
+            inf_adicional: infAdicional
+        },
         function (res) {
             if (res.success) {
                 Swal.fire({ icon: 'success', title: 'Acceso agregado', toast: true,
