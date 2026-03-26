@@ -136,6 +136,21 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'ae_') === 0) {
         exit;
     }
 
+    //  Actualizar información adicional 
+    if ($accion === 'ae_actualizar_inf_adicional') {
+        $ae_id = intval($_POST['id'] ?? 0);
+        $ae_infAdicional = trim($_POST['inf_adicional'] ?? '');
+        if ($ae_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID inválido']); exit;
+        }
+        $stmt = $conn->prepare("UPDATE accesos_especiales SET inf_adicional = ? WHERE id = ?");
+        $stmt->bind_param("si", $ae_infAdicional, $ae_id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        echo json_encode(['success' => $ok, 'message' => $ok ? 'Información actualizada' : 'Error al actualizar']);
+        exit;
+    }
+
     // Acción no reconocida
     echo json_encode(['success' => false, 'message' => 'Acción no válida']);
     exit;
@@ -221,6 +236,27 @@ if (!in_array($_ae_actual, $_ae_permitidos)) return;
                     </table>
                 </div>
 
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar información adicional -->
+<div class="modal fade" id="modalEditarInfAdicional" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Editar Información Adicional</h6>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="ae_inputInfAdicionalEditar" class="form-control" rows="4" 
+                          style="resize: vertical;"></textarea>
+                <input type="hidden" id="ae_idEditando">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="ae_guardarInfAdicional()">Guardar</button>
             </div>
         </div>
     </div>
@@ -503,11 +539,12 @@ function ae_refrescarTabla() {
                 ? '<button class="btn btn-warning btn-sm shadow-sm" onclick="ae_eliminarAcceso(' + row.id + ')"><i class="fas fa-minus-circle"></i> Desactivar</button>'
                 : '<button class="btn btn-info btn-sm shadow-sm" onclick="ae_reactivarAcceso(' + row.id + ')"><i class="fas fa-check-circle"></i> Reactivar</button>';
             let infoAdicional = row.inf_adicional ? row.inf_adicional : '-';
+            let btnEditarInfo = '<button class="btn btn-secondary btn-sm shadow-sm" data-id="' + row.id + '" data-info="' + (row.inf_adicional || '').replace(/"/g, '&quot;') + '" onclick="ae_editarInfAdicional(this)"><i class="fas fa-edit"></i> Editar</button>';
             
             html += '<tr>'
                   + '<td class="align-middle">' + row.sistema + '</td>'
                   + '<td class="align-middle">' + row.opcion  + '</td>'
-                  + '<td class="align-middle">' + infoAdicional + '</td>'
+                  + '<td class="align-middle">' + infoAdicional + '<br>' + btnEditarInfo + '</td>'
                   + '<td class="align-middle font-weight-bold">' + row.nombre + '</td>'
                   + '<td class="align-middle text-center">' + badgeEstatus + '</td>'
                   + '<td class="text-center align-middle">'
@@ -599,5 +636,34 @@ function ae_reactivarAcceso(id) {
             }, 'json');
         }
     });
+}
+
+//  Editar información adicional 
+function ae_editarInfAdicional(btn) {
+    const id  = $(btn).data('id');
+    const info = $(btn).data('info') || '';
+
+    $('#ae_idEditando').val(id);
+    $('#ae_inputInfAdicionalEditar').val(info);
+    $('#modalEditarInfAdicional').modal('show');
+}
+
+function ae_guardarInfAdicional() {
+    const id      = $('#ae_idEditando').val();
+    const nuevaInfo = $('#ae_inputInfAdicionalEditar').val().trim();
+
+    $.post(AE_URL,
+        { accion: 'ae_actualizar_inf_adicional', id: id, inf_adicional: nuevaInfo },
+        function (res) {
+            $('#modalEditarInfAdicional').modal('hide');
+            Swal.fire({
+                icon: res.success ? 'success' : 'error',
+                title: res.message,
+                toast: true, position: 'top-end',
+                timer: 2000, showConfirmButton: false
+            });
+            if (res.success) ae_refrescarTabla();
+        }, 'json'
+    );
 }
 </script>
