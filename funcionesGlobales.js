@@ -144,7 +144,7 @@ function marcarNotificacionLeida(idNotificacion, idRegistro, sistema, archivo, n
                     $(this).remove();
                 });
                 cargarNotificaciones(false);
-                construirUrlNotificacion(sistema, archivo, idRegistro);                
+                construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro);                
             }
         }
     });
@@ -165,10 +165,136 @@ function escapeHtml(texto) {
         .replace(/'/g, '&#039;');
 }
 
+// Función para pasar de texto a JSON
+function parsearRespuestaNotificacion(rawResponse) {
+    var response = rawResponse;
+    if (typeof rawResponse !== 'string') {
+        return response;
+    }
+
+    var texto = rawResponse.trim();
+    try {
+        response = JSON.parse(texto);
+    } catch (e1) {
+        // Algunos entornos retornan scripts + JSON al final; tomamos el ultimo bloque JSON.
+        var inicioJson = texto.lastIndexOf('{');
+        if (inicioJson === -1) {
+            console.error('No se encontro JSON en la respuesta:', texto);
+            return null;
+        }
+
+        try {
+            response = JSON.parse(texto.substring(inicioJson));
+        } catch (e2) {
+            console.error('Respuesta no es JSON valido:', texto);
+            return null;
+        }
+    }
+
+    return response;
+}
+
+// Función para procesar la redirección después de marcar la notificación como leída
+function procesarRedireccionNotificacion(response, idNotificacion, sistema, archivo, idRegistro) {
+    var idRegistroInt = parseInt(idRegistro || 0, 10);
+    var idNotificacionInt = parseInt(idNotificacion || 0, 10);
+    var idFormulario = null;
+    var urlDestino = String((response && response.urlDestino) || '').trim();
+
+    if (urlDestino === '') {
+        console.error('No se recibio urlDestino para el sistema:', sistema, 'archivo:', archivo);
+        alert('No se pudo determinar la pantalla destino para esta notificacion.');
+        return;
+    }
+
+    // Caso especial: entradasEq redirige directo con URL Query
+    if (sistema === 'entradasEq' && idRegistroInt > 0) {
+        var separadorId = urlDestino.indexOf('?') === -1 ? '?' : '&';
+        window.location.href = urlDestino + separadorId + 'id=' + idRegistroInt;
+        return;
+    }
+
+    // Identificar el formulario según el sistema
+    if (sistema === 'incidencias') {
+        idFormulario = 'formIncidencias';
+    } else if (sistema === 'ctrlVehicular') {
+        idFormulario = 'formControlVehicular';
+    } else if (sistema === 'entradasEq') {
+        idFormulario = 'formEntradasEq';
+    } else if (sistema === 'planeacion') {
+        idFormulario = 'formPlaneacion';
+    } else if (sistema === 'activos') {
+        idFormulario = 'formActivos';
+    } else if (sistema === 'vacaciones') {
+        idFormulario = 'formVacaciones';
+    } else if (sistema === 'horas') {
+        idFormulario = 'formHorasExtra';
+    } else if (sistema === 'practicantes') {
+        idFormulario = 'formPracticantes';
+    }
+
+    var formulario = idFormulario ? document.getElementById(idFormulario) : null;
+
+    if (formulario) {
+        formulario.action = urlDestino;
+
+        // Rellenar campos hidden existentes con datos del usuario
+        var idUsuario = getCookie('id_usuarioL') || '';
+        var nombre = getCookie('nombredelusuarioL') || '';
+        var noEmpleado = getCookie('noEmpleadoL') || '';
+        var correo = getCookie('correoL') || '';
+
+        formulario.querySelectorAll('input[type="hidden"]').forEach(function(input) {
+            var nombreCampo = input.name || '';
+            if (nombreCampo === 'id_usuario' || nombreCampo === 'idUsuario') {
+                input.value = idUsuario;
+            } else if (nombreCampo === 'nombredelusuario') {
+                input.value = nombre;
+            } else if (nombreCampo === 'noEmpleado') {
+                input.value = noEmpleado;
+            } else if (nombreCampo === 'correo') {
+                input.value = correo;
+            } else if (nombreCampo === 'id') {
+                input.value = idNotificacionInt;
+            } else if (nombreCampo === 'idRegistro') {
+                input.value = idRegistroInt;
+            } else if (nombreCampo === 'archivo') {
+                input.value = archivo;
+            } else if (nombreCampo === 'sistema') {
+                input.value = sistema;
+            }
+        });
+
+        formulario.submit();
+        return;
+    }
+
+    // Si no existe formulario, redirigir vía URL con query parameters
+    var separador = urlDestino.indexOf('?') === -1 ? '?' : '&';
+    var queryParams = 'id=' + idNotificacionInt + '&idRegistro=' + idRegistroInt + '&archivo=' + encodeURIComponent(archivo) + '&sistema=' + encodeURIComponent(sistema);
+
+    // Redirigir a la URL construida
+    window.location.href = urlDestino + separador + queryParams;
+}
+
 // Función para construir la URL de destino según el sistema y archivo
-function construirUrlNotificacion(sistema, archivo, idRegistro) {
+function construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro) {
+    var endpointsPorSistema = {
+        entradasEq: '/planeacion/validaLoginNot.php',
+        planeacion: '/planeacion/validaLoginNot.php',
+
+        incidencias: '/incidencias/validaLoginNot.php',
+        vacaciones: '/incidencias/validaLoginNot.php',
+        
+        ctrlVehicular: '/ctrlVehicular/validaLoginNot.php',
+        activos: '/activos/validaLoginNot.php',
+        horas: '/horas/validaLoginNot.php',
+        practicantes: '/practicantes/validaLoginNot.php'
+    };
+    var endpointValidaLogin = endpointsPorSistema[sistema];
+
     $.ajax({
-        url: '../planeacion/validaLoginNot.php',
+        url: endpointValidaLogin,
         type: 'POST',
         dataType: 'text',
         data: {
@@ -177,142 +303,14 @@ function construirUrlNotificacion(sistema, archivo, idRegistro) {
             archivo: archivo,            
             idRegistro: idRegistro
         },
-        beforeSend: function() {
-            // Opcional: Mostrar un loader o deshabilitar el botón
-            console.log('Validando acceso...');
-        },
         success: function(rawResponse) {
-            var response = rawResponse;
-            if (typeof rawResponse === 'string') {
-                var texto = rawResponse.trim();
-                try {
-                    response = JSON.parse(texto);
-                } catch (e1) {
-                    // Algunos entornos retornan scripts + JSON al final; tomamos el ultimo bloque JSON.
-                    var inicioJson = texto.lastIndexOf('{');
-                    if (inicioJson !== -1) {
-                        try {
-                            response = JSON.parse(texto.substring(inicioJson));
-                        } catch (e2) {
-                            console.error('Respuesta no es JSON valido:', texto);
-                            //alert('Error de formato en la respuesta del servidor.');
-                            return;
-                        }
-                    } else {
-                        console.error('No se encontro JSON en la respuesta:', texto);
-                        //alert('Respuesta invalida del servidor.');
-                        return;
-                    }
-                }
+            var response = parsearRespuestaNotificacion(rawResponse);
+            if (!response) {
+                return;
             }
 
             if (response.status === 'success' || response.success === true) {
-                var valorSistema = String(sistema || '').toLowerCase();
-                var idFormulario = null;
-
-                if (valorSistema.indexOf('incidencia') !== -1) {
-                    idFormulario = 'formIncidencias';
-                } else if (valorSistema.indexOf('ctrlvehicular') !== -1) {
-                    idFormulario = 'formControlVehicular';
-                } else if (valorSistema.indexOf('entradaseq') !== -1 || valorSistema.indexOf('entradaeq') !== -1 || valorSistema.indexOf('entradas') !== -1) {
-                    idFormulario = 'formEntradasEq';
-                } else if (valorSistema.indexOf('planeacion') !== -1) {
-                    idFormulario = 'formPlaneacion';
-                } else if (valorSistema.indexOf('activos') !== -1) {
-                    idFormulario = 'formActivos';
-                } else if (valorSistema.indexOf('vacaciones') !== -1) {
-                    idFormulario = 'formVacaciones';
-                } else if (valorSistema.indexOf('horas') !== -1) {
-                    idFormulario = 'formHorasExtra';
-                } else if (valorSistema.indexOf('practicantes') !== -1) {
-                    idFormulario = 'formPracticantes';
-                }
-
-                var formulario = idFormulario ? document.getElementById(idFormulario) : null;
-
-                if (formulario) {
-                    if (response.urlDestino) {
-                        formulario.action = response.urlDestino;
-                    }
-
-                    var idUsuario = getCookie('id_usuarioL') || '';
-                    var nombre = getCookie('nombredelusuarioL') || '';
-                    var noEmpleado = getCookie('noEmpleadoL') || '';
-                    var correo = getCookie('correoL') || '';
-
-                    formulario.querySelectorAll('input[type="hidden"]').forEach(function(input) {
-                        var nombreCampo = (input.name || '').toLowerCase();
-                        if (nombreCampo.indexOf('id_usuario') === 0 || nombreCampo.indexOf('idusuario') === '') {
-                            input.value = idUsuario;
-                        } else if (nombreCampo.indexOf('nombredelusuario') === 0) {
-                            input.value = nombre;
-                        } else if (nombreCampo.indexOf('noempleado') === 0) {
-                            input.value = noEmpleado;
-                        } else if (nombreCampo.indexOf('correo') === 0) {
-                            input.value = correo;
-                        }
-                    });
-
-                    var agregarCampo = function(nombreCampo, valorCampo) {
-                        if (valorCampo === undefined || valorCampo === null || valorCampo === '') {
-                            return;
-                        }
-                        var campo = formulario.querySelector('input[name="' + nombreCampo + '"]');
-                        if (!campo) {
-                            campo = document.createElement('input');
-                            campo.type = 'hidden';
-                            campo.name = nombreCampo;
-                            formulario.appendChild(campo);
-                        }
-                        campo.value = String(valorCampo);
-                    };
-
-                    agregarCampo('id', idRegistro);
-                    agregarCampo('idRegistro', idRegistro);
-                    agregarCampo('archivo', archivo);
-                    agregarCampo('sistema', sistema);
-                    if (archivo) {
-                        agregarCampo('rutaredireccion', archivo);
-                    }
-
-                    formulario.submit();
-                } else {
-                    // Fallback para páginas que no tienen formularios por sistema.
-                    var actionUrl = response.urlDestino || ('../planeacion/' + archivo);
-                    var formularioId = 'miFormularioNotificacion';
-                    var formularioExistente = document.getElementById(formularioId);
-                    if (formularioExistente) {
-                        formularioExistente.remove();
-                    }
-
-                    var formularioDinamico = document.createElement('form');
-                    formularioDinamico.id = formularioId;
-                    formularioDinamico.method = 'POST';
-                    formularioDinamico.action = actionUrl;
-                    formularioDinamico.style.display = 'none';
-
-                    var campos = {
-                        id: idRegistro,
-                        idRegistro: idRegistro,
-                        sistema: sistema,
-                        archivo: archivo,
-                        noEmpleado: getCookie('noEmpleadoL')
-                    };
-
-                    Object.keys(campos).forEach(function(clave) {
-                        if (campos[clave] === undefined || campos[clave] === null) {
-                            return;
-                        }
-                        var input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = clave;
-                        input.value = String(campos[clave]);
-                        formularioDinamico.appendChild(input);
-                    });
-
-                    document.body.appendChild(formularioDinamico);
-                    formularioDinamico.submit();
-                }
+                procesarRedireccionNotificacion(response, idNotificacion, sistema, archivo, idRegistro);
             } else {
                 // Manejar error de validación (ej. sesión expirada o sin permisos)
                 alert('Error: ' + (response.mensaje || 'No tienes permisos para acceder.'));
@@ -324,31 +322,3 @@ function construirUrlNotificacion(sistema, archivo, idRegistro) {
         }
     });
 }
-    /*var urlBase = 'https://messbook.com.mx/';
-    var urlBase = 'http://localhost/';
-    
-    //INCIDENCIAS
-    if (sistema.toLowerCase().indexOf('incidencia') !== -1) {
-        return urlBase + 'incidencias/entradaTareas.php?id=' + idRegistro;
-    }
-    
-    //CTRL VEHICULAR
-    if (sistema.toLowerCase().indexOf('ctrlvehicular') !== -1) {
-        return urlBase + '/ControlVehicular/autorizar_prestamo.php'
-    } 
-
-    //ENTRADAS EQUIPOS
-    if (sistema.toLowerCase().indexOf('entradaseq') !== -1) {
-        return urlBase + '/planeacion/entradaDetalleEntradas.php?id=' + idRegistro;
-    }
-
-    //PLANEACION
-    if (sistema.toLowerCase().indexOf('planeacion') !== -1) {
-        return urlBase + '/planeacion/seguimiento_actividades.php?id=' + idRegistro;
-    }
-
-    //ACTIVOS
-    if (sistema.toLowerCase().indexOf('activos') !== -1) {
-        return urlBase + '/activos/detalleActivo.php?id=' + idRegistro;
-    }*/
-    
