@@ -1,5 +1,5 @@
 <?php
-include '../ControlVehicular/conn.php';
+include '../incidencias/conn.php';
 
 $email = $_POST['InputEmail'];
 //validar variable email
