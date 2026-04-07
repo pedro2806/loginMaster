@@ -164,4 +164,112 @@ if ($accion == 'cargar_cursos') {
     exit;
 }
 
+// VERIFICAR USUARIO POR CORREO
+if ($accion == 'validar_usuario') {    
+    ob_clean(); 
+    header('Content-Type: application/json');
+
+    $correo = $_POST['correo'] ?? '';
+    
+    $sqlUsuario = "SELECT us.noEmpleado, us.nombre, dep.departamento, reg.region 
+                    FROM usuarios us
+                    LEFT JOIN departamento dep ON us.departamento = dep.id
+                    LEFT JOIN region reg ON us.region = reg.id WHERE correo = ? LIMIT 1";
+    $stmt = $conn->prepare($sqlUsuario);
+    $stmt->bind_param("s", $correo);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        echo json_encode([
+            'success' => true,
+            'usuario' => [
+                'nombre' => $row['nombre'],
+                'departamento' => $row['departamento'],
+                'region' => $row['region']
+            ]
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Usuario no encontrado'
+        ]);
+    }
+
+    $stmt->close();
+    $conn->close();
+    exit;
+}
+
+// REGISTRAR ASISTENCIA
+if ($accion == 'registrar_asistencia') {    
+    if (ob_get_length()) ob_clean(); 
+    header('Content-Type: application/json');
+    
+    $correo     = $_POST['correo'] ?? '';
+    $nombre     = $_POST['nombre'] ?? '';
+    $area       = $_POST['area'] ?? '';
+    $nave       = $_POST['nave'] ?? '';
+    $curso      = $_POST['curso'] ?? '';
+    $fecha      = $_POST['fecha'] ?? '';
+    $instructor = $_POST['instructor'] ?? '';
+    $duracion   = $_POST['duracion'] ?? '';
+
+    $sqlCheck = "SELECT id FROM asistencias WHERE correo = ? AND curso = ? AND fecha_curso = ? LIMIT 1";
+    $stmtCheck = $conn->prepare($sqlCheck);
+    $stmtCheck->bind_param("sss", $correo, $curso, $fecha);
+    $stmtCheck->execute();
+    $resCheck = $stmtCheck->get_result();
+
+    if ($resCheck->num_rows > 0) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Atención: Ya habías registrado tu asistencia para este curso el día de hoy.'
+        ]);
+        $stmtCheck->close();
+        $conn->close();
+        exit;
+    }
+    $stmtCheck->close();
+    
+    $sqlInsert = "INSERT INTO asistencias (correo, nombre, area, nave, curso, fecha_curso, instructor, duracion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sqlInsert);
+
+    if ($stmt) {
+        $stmt->bind_param("ssssssss", 
+            $correo, 
+            $nombre, 
+            $area, 
+            $nave, 
+            $curso, 
+            $fecha, 
+            $instructor, 
+            $duracion
+        );
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'success' => true, 
+                'message' => '¡Asistencia registrada con éxito!'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Error al guardar en la base de datos.',
+                'error' => $stmt->error
+            ]);
+        }
+        $stmt->close();
+    } else {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Error en la preparación de la consulta.',
+            'error' => $conn->error
+        ]);
+    }
+
+    $conn->close();
+    exit;
+}
+
 ?>
