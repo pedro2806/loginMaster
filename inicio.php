@@ -115,17 +115,26 @@
                                     if (isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosPermitidos)): 
                                     ?>
                                         <div class="col-md-12">
-                                            <button type="button" class="btn btn-success shadow-sm" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
-                                                <i class="fas fa-plus-circle"></i> Nuevo Evento
-                                            </button>
-
-                                            <button type="button" class="btn btn-info shadow-sm" onclick="cargarListaEventos()">
-                                                <i class="fas fa-list"></i> Ver Eventos
-                                            </button>
-                                            <br><br>
-                                            <button type="button" class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#modalAccesosEspeciales" >
-                                                <i class="fas fa-user-shield"></i> Accesos Especiales
-                                            </button>
+                                            <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Acciones de eventos">
+                                                <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
+                                                    <i class="fas fa-plus-circle"></i> Nuevo
+                                                </button>
+                                                
+                                                <button type="button" class="btn btn-outline-info" onclick="cargarListaEventos()">
+                                                    <i class="fas fa-list"></i> Eventos
+                                                </button>                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 mt-2">
+                                            <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Acciones de eventos">
+                                                <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalRegistrosAsistencia" onclick="abrirModalRegistrosAsistencia('', '')">
+                                                    <i class="fas fa-users"></i> Asistencias
+                                                </button>
+                                                
+                                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalAccesosEspeciales">
+                                                    <i class="fas fa-user-shield"></i> Accesos
+                                                </button>
+                                            </div>
                                         </div>
                                     <?php endif; ?>
                                 </div>                              
@@ -1477,63 +1486,64 @@
 
 
         }
-function cargarMisEncuestas() {
-    // Usamos el ID del empleado (debería venir de tu sesión de PHP)
-    const id_empleado = <?php echo $_COOKIE['noEmpleadoL']; ?>;
-
-   $.post('acciones_eventos.php', { 
-        accion: 'listar_mis_actividades_completas', 
-        id_empleado: id_empleado 
-    }, function(data) {
-        let html = '';
         
-        if (data.length > 0) {
-            data.forEach(ev => {
-                // Lógica para saber si ya completó
-                // Si es asistencia, checamos 'asignado_confirmado'. Si es voto/encuesta, checamos 'respondido'.
-                let completado = (ev.tipo === 'asistencia') ? (ev.asignado_confirmado == 1) : (ev.respondido > 0);
+        function cargarMisEncuestas() {
+            // Usamos el ID del empleado (debería venir de tu sesión de PHP)
+            const id_empleado = <?php echo $_COOKIE['noEmpleadoL']; ?>;
+
+        $.post('acciones_eventos.php', { 
+                accion: 'listar_mis_actividades_completas', 
+                id_empleado: id_empleado 
+            }, function(data) {
+                let html = '';
                 
-                let icono = 'fa-poll';
-                if(ev.tipo === 'asistencia') icono = 'fa-check-square';
-                if(ev.tipo === 'votacion') icono = 'fa-heart';
+                if (data.length > 0) {
+                    data.forEach(ev => {
+                        // Lógica para saber si ya completó
+                        // Si es asistencia, checamos 'asignado_confirmado'. Si es voto/encuesta, checamos 'respondido'.
+                        let completado = (ev.tipo === 'asistencia') ? (ev.asignado_confirmado == 1) : (ev.respondido > 0);
+                        
+                        let icono = 'fa-poll';
+                        if(ev.tipo === 'asistencia') icono = 'fa-check-square';
+                        if(ev.tipo === 'votacion') icono = 'fa-heart';
 
-                if (completado) {
-                    // DISEÑO PARA COMPLETADAS (Deshabilitado y Verde)
-                    html += `
-                    <div class="mb-2">
-                        <div class="card border-left-success bg-light shadow-sm py-1">
-                            <div class="card-body py-2 d-flex justify-content-between align-items-center">
-                                <span class="text-success font-weight-bold small">
-                                    <i class="fas fa-check-circle mr-2"></i> ${ev.nombre}
-                                    Fecha del curso: ${ev.fecha_opcion}
-                                </span>
-                                <span class="badge badge-success px-2">Completado</span>                                
-                            </div>
-                        </div>
-                    </div>`;
+                        if (completado) {
+                            // DISEÑO PARA COMPLETADAS (Deshabilitado y Verde)
+                            html += `
+                            <div class="mb-2">
+                                <div class="card border-left-success bg-light shadow-sm py-1">
+                                    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                                        <span class="text-success font-weight-bold small">
+                                            <i class="fas fa-check-circle mr-2"></i> ${ev.nombre}
+                                            Fecha del curso: ${ev.fecha_opcion}
+                                        </span>
+                                        <span class="badge badge-success px-2">Completado</span>                                
+                                    </div>
+                                </div>
+                            </div>`;
+                        } else {
+                            // DISEÑO PARA PENDIENTES (Botón azul clickable)
+                            html += `
+                            <div class="mb-2">                        
+                                <a type="button" onClick="abrirModalEncuestaUsuuario(${ev.id_evento})" class="btn btn-white btn-block text-left shadow-sm py-2 border-left-primary card-btn-pendiente">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-primary font-weight-bold small">
+                                            <i class="fas ${icono} mr-2"></i> ${ev.nombre}
+                                        </span>
+                                        <i class="fas fa-arrow-right fa-sm text-gray-400"></i>
+                                    </div>
+                                    <small class="d-block text-muted ml-4">Pendiente - Cierra: ${ev.fecha_fin}</small>
+                                </a>
+                            </div>`;
+                        }
+                    });
                 } else {
-                    // DISEÑO PARA PENDIENTES (Botón azul clickable)
-                    html += `
-                    <div class="mb-2">                        
-                        <a type="button" onClick="abrirModalEncuestaUsuuario(${ev.id_evento})" class="btn btn-white btn-block text-left shadow-sm py-2 border-left-primary card-btn-pendiente">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-primary font-weight-bold small">
-                                    <i class="fas ${icono} mr-2"></i> ${ev.nombre}
-                                </span>
-                                <i class="fas fa-arrow-right fa-sm text-gray-400"></i>
-                            </div>
-                            <small class="d-block text-muted ml-4">Pendiente - Cierra: ${ev.fecha_fin}</small>
-                        </a>
-                    </div>`;
+                    html = '<div class="text-center text-muted small py-3">Sin actividades asignadas.</div>';
                 }
-            });
-        } else {
-            html = '<div class="text-center text-muted small py-3">Sin actividades asignadas.</div>';
-        }
 
-        $('#encuestasAsigandas').html(html);
-    }, 'json');
-}
+                $('#encuestasAsigandas').html(html);
+            }, 'json');
+        }
 
         // Para mostrar nombre de archivo en inputs de BS4
         $('.custom-file-input').on('change', function() {

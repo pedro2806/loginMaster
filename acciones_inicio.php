@@ -272,4 +272,32 @@ if ($accion == 'registrar_asistencia') {
     exit;
 }
 
+//REGISISTROS DE ASISTENCIA 
+if ($accion == 'obtener_asistencias') {    
+    header('Content-Type: application/json');
+    
+    $curso = $_POST['curso'] ?? '';
+    $fecha = $_POST['fecha'] ?? '';
+
+    // Si quieres filtrar, añade un WHERE a tu SQL
+    $sqlAsistencias = "SELECT id, correo, nombre, area, nave, curso, fecha_curso, instructor, duracion, fecha_curso, registrado_el 
+                        FROM asistencias ORDER BY fecha_curso DESC";
+    
+    $result = $conn->query($sqlAsistencias);
+
+    $asistenciasData = [];
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $asistenciasData[] = $row;
+        }
+    }
+
+    echo json_encode([
+        'success' => true, 
+        'asistencias' => $asistenciasData
+    ]);
+    
+    $conn->close();
+    exit;
+}
 ?>

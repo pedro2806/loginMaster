@@ -133,7 +133,6 @@
     </div>
 </div>
 
-
 <div class="modal fade" id="modalAsignacion" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content border-left-info shadow">
@@ -203,6 +202,41 @@
         </div>
     </div>
 </div>
+
+<!--MODAL PARA VER REGISTROS DE ASISTENCIA-->
+<div class="modal fade" id="modalRegistrosAsistencia" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content border-left-info shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-list"></i> Registros de Asistencia</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body modal-body-scroll">
+                <button type="button" class="btn btn-success" onclick="descargarExcelAsistencias()">
+                    <i class="fas fa-file-excel"></i> Descargar Excel
+                </button>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover" id="tablaRegistrosAsistencia">
+                        <thead class="bg-gray-200 small text-dark font-weight-bold">
+                            <tr>
+                                <th>Nombre del Empleado</th>
+                                <th>Correo</th>
+                                <th>Área</th>                                
+                                <th>Nave</th>
+                                <th>Curso</th>
+                                <th>Fecha curso</th>
+                                <th>Fecha asistencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoRegistrosAsistencia" class="small text-dark">
+                        </tbody>
+                    </table>
+                </div>                
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
    /* Altura máxima para el cuerpo de los modales grandes */
     .modal-body-scroll {
@@ -523,5 +557,55 @@ function abrirModalEncuestaUsuuario(id) {
     
 }
 
+function abrirModalRegistrosAsistencia(curso, fecha) {
+    $('#cuerpoRegistrosAsistencia').html('<tr><td colspan="7" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>');
+
+    $.ajax({
+        type: 'POST',
+        url: 'acciones_inicio.php',
+        data: { 
+            accion: 'obtener_asistencias',
+            curso: curso, 
+            fecha: fecha 
+        },
+        dataType: 'json', 
+        success: function(response) {
+            let html = '';
+                        
+            if (response.success && response.asistencias.length > 0) {
+                response.asistencias.forEach(reg => {                    
+                    html += `<tr>
+                        <td>${reg.nombre || ''}</td>
+                        <td>${reg.correo || ''}</td>
+                        <td>${reg.area || ''}</td>                        
+                        <td>${reg.nave || ''}</td>
+                        <td>${reg.curso || ''}</td>
+                        <td>${reg.fecha_curso || ''}</td>
+                        <td>${reg.registrado_el || ''}</td>
+                    </tr>`;
+                });
+            }
+
+            $('#cuerpoRegistrosAsistencia').html(html || '<tr><td colspan="7" class="text-center py-3 text-muted">No hay registros para este curso.</td></tr>');
+            $('#modalRegistrosAsistencia').modal('show');
+        },
+        error: function() {
+            $('#cuerpoRegistrosAsistencia').html('<tr><td colspan="7" class="text-center py-3 text-danger">Error al cargar los registros.</td></tr>');
+        }
+    });
+}
+
+function descargarExcelAsistencias() {
+    try {
+        var table = document.getElementById("tablaRegistrosAsistencia");
+        if (!table) throw "No se encontró la tabla";
+
+        var wb = XLSX.utils.table_to_book(table, { sheet: "Asistencia" });
+        XLSX.writeFile(wb, "Reporte_Asistencia.xlsx");
+    } catch (e) {
+        console.error("Error al descargar:", e);
+        alert("No se pudo generar el Excel. Revisa la consola.");
+    }
+}
 
 </script>
