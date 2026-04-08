@@ -98,7 +98,7 @@
                 url: 'acciones_inicio.php',
                 data: { accion: 'validar_usuario', correo },
                 success: function(response) {
-                    console.log(response);
+                    //console.log(response);
                     if (response.success) {
                         const usuario = response.usuario;
                         document.getElementById('nombre').value = usuario.nombre;
