@@ -117,7 +117,7 @@
                                         <div class="col-md-12">
                                             <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Acciones de eventos">
                                                 <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
-                                                    <i class="fas fa-plus-circle"></i> Nuevo
+                                                    <i class="fas fa-plus-circle"></i> Nuevo evento
                                                 </button>
                                                 
                                                 <button type="button" class="btn btn-outline-info" onclick="cargarListaEventos()">
