@@ -42,7 +42,7 @@
         </div>
 
         <div class="form-section" id="formulario-asistencia">            
-                <center><h6>Confirma tu asistencia</h6></center>
+                <center><h6>Regisra tu asistencia</h6></center>
                 <div class="mb-4">
                     <label class="form-label">Correo Institucional</label>
                     <input type="email" id="correo" class="form-control form-control-lg" placeholder="usuario@empresa.com" required>
@@ -177,7 +177,7 @@
                         text: 'Tu asistencia ha sido registrada exitosamente.',
                         confirmButtonText: 'Aceptar'
                     }).then(() => {                        
-                        $('#formulario-asistencia').html('<div class="text-center"><h5 class="text-success">¡Gracias por registrar tu asistencia!</h5><p>Nos vemos en el curso.</p><a href="index.php" class="btn btn-primary">Ir al inicio</a></div>');
+                        $('#formulario-asistencia').html('<div class="text-center"><h5 class="text-success">¡Gracias por registrar tu asistencia!</h5><p>Bienvenido al curso.</p><a href="index.php" class="btn btn-primary">Ir al inicio</a></div>');
                     });
                 } else {
                     swal.fire({
