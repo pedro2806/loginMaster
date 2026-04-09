@@ -21,9 +21,6 @@ async function validaOpciones(sistema, opcion) {
 // Función para renderizar una notificación flotante
 function renderNotificacionFlotante(notificacion) {
     var stack = $('#notificationStack');
-    var iniciales = escapeHtml(notificacion.iniciales || 'NA');
-    var nota = escapeHtml(notificacion.nota || notificacion.mensaje || 'Sin nota');
-    var accion = escapeHtml(notificacion.accion || '');
     var sistema = escapeHtml(notificacion.sistema || accion || 'General');
     var fecha = escapeHtml(notificacion.fecha_actualizacion || notificacion.fecha || '');
     var iconoSistema = obtenerIconoNotificacion(sistema.toLowerCase());
@@ -31,6 +28,8 @@ function renderNotificacionFlotante(notificacion) {
     var idRegistro = parseInt(notificacion.id_registro_referencia, 10) || 0;
     var sistema = escapeHtml(notificacion.sistema || 'General');
     var archivo = escapeHtml(notificacion.archivo || '');
+    var recordar = escapeHtml(notificacion.recordar || '');
+    var creadoPor = escapeHtml(notificacion.usuario_actualiza_nombre || notificacion.id_usuario_actualiza || '');
 
     var html = '';
     html += '<div class="toast show border-0 shadow-sm mb-3" data-notificacion-id="' + id + '" role="alert" aria-live="assertive" aria-atomic="true">';
@@ -38,10 +37,10 @@ function renderNotificacionFlotante(notificacion) {
     html += '      <div class="d-flex justify-content-between align-items-center">';
     html += '          <div class="d-flex align-items-center flex-wrap">';
     html += '              <span class="badge rounded-pill bg-primary text-white px-3 py-2 mr-2 mb-1">';
-    html += '                  <i class="' + iconoSistema + ' mr-2"></i>' + iniciales + ' - ' + sistema;
+    html += '                  <i class="' + iconoSistema + ' mr-2"></i>' + sistema;
     html += '              </span>';
     html += '              <div class="mb-1">';
-    html += '                  <span class="text-dark font-weight-bold mr-3" style="font-size: .95rem; line-height:1.1;">' + nota + '</span>';
+    html += '                  <span class="text-dark font-weight-bold mr-3" style="font-size: .95rem; line-height:1.1;">' + creadoPor + ' - ' + recordar + '</span>';
     html += '                  <span class="text-muted" style="font-size: .90rem; white-space: nowrap;"><i class="far fa-calendar-alt mr-1"></i>' + fecha + '</span>';
     html += '              </div>';
     html += '          </div>';
@@ -115,7 +114,6 @@ function cargarNotificaciones(mostrarFlotantes) {
                     } else {
                         renderNotificacionFlotante({
                             id: 0,
-                            iniciales: 'OK',
                             nota: 'No tienes nuevas notificaciones.',
                             fecha_actualizacion: ''
                         });
