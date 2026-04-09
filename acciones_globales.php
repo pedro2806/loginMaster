@@ -38,11 +38,12 @@ if($accion == "ValidarPermisos"){
 
 // Cargar Registros de Notificaciones
 if ($accion === 'cargarNotificaciones') {
-        $sqlCargarNoti = "  SELECT *
-                            FROM notificacion_historial nh
-                            WHERE nh.id_usuario_destino = ?
-                                AND nh.estatus = 'NoLeida'
-                            ORDER BY nh.fecha_creacion DESC";
+    $sqlCargarNoti = "  SELECT nh.*, us.nombre AS nombre_actualiza
+                        FROM notificacion_historial nh
+                        LEFT JOIN usuarios us ON us.noEmpleado = nh.id_usuario_actualiza
+                        WHERE nh.id_usuario_destino = ?
+                            AND nh.estatus = 'NoLeida'
+                        ORDER BY nh.fecha_creacion DESC";
 
     $stmt = $conn->prepare($sqlCargarNoti);
     if (!$stmt) {
@@ -68,12 +69,13 @@ if ($accion === 'cargarNotificaciones') {
             'sistema' => $row['sistema'],
             'archivo' => $row['archivo'],
             'id_registro_referencia' => $row['id_registro_referencia'],
+            'id_usuario_actualiza' => isset($row['id_usuario_actualiza']) ? intval($row['id_usuario_actualiza']) : 0,
+            'usuario_actualiza_nombre' => isset($row['nombre_actualiza']) ? trim((string)$row['nombre_actualiza']) : '',
             'fecha' => $fechaCreacion,
             'fecha_actualizacion' => $fechaActualizacion,
             'fecha_atencion' => $row['fecha_atencion'],
             'recordar' => $row['recordar'],
             'id_usuario_nota' => isset($row['id_usuario_nota']) ? intval($row['id_usuario_nota']) : 0,
-            'iniciales' => obtenerIniciales($nombreUsuarioLogeado),
             'nota' => $nota,
             'estatus' => $estatus,
             'leida' => strcasecmp($estatus, 'Leida') === 0 ? 1 : 0
@@ -136,34 +138,6 @@ if ($accion === 'marcarLeida') {
 
     echo json_encode(['success' => $ok, 'message' => $ok ? 'OK' : 'Error al actualizar la notificación']);
     exit;
-}
-
-// Función para obtener iniciales de un nombre completo
-function obtenerIniciales($nombreCompleto) {
-    $nombreCompleto = trim((string)$nombreCompleto);
-    if ($nombreCompleto === '') {
-        return 'NA';
-    }
-
-    $partes = preg_split('/\s+/', $nombreCompleto);
-    $partes = array_values(array_filter($partes, function ($parte) {
-        return trim($parte) !== '';
-    }));
-
-    $totalPartes = count($partes);
-    if ($totalPartes >= 3) {
-        $primeraInicial = strtoupper(substr($partes[0], 0, 1));
-        $apellidoPaternoInicial = strtoupper(substr($partes[$totalPartes - 2], 0, 1));
-        $apellidoMaternoInicial = strtoupper(substr($partes[$totalPartes - 1], 0, 1));
-        return $primeraInicial . $apellidoPaternoInicial . $apellidoMaternoInicial;
-    }
-
-    $iniciales = '';
-    foreach ($partes as $parte) {
-        $iniciales .= strtoupper(substr($parte, 0, 1));
-    }
-
-    return $iniciales !== '' ? $iniciales : 'NA';
 }
 
 // Función para formatear fechas a formato corto (d/m/Y H:i)
