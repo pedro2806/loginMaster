@@ -339,3 +339,20 @@ function construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro) 
         }
     });
 }
+
+// Llama a acciones_notificaciones.php para generar notificaciones internas
+// de planeación y refrescar el contador del badge al terminar.
+function registrarNotificacionPlaneacion() {
+    $.ajax({
+        url: '../planeacion/acciones_notificaciones.php',
+        type: 'POST',
+        dataType: 'json',
+        data: { accion: 'registrarNotificacionPlaneacion' },
+        success: function(response) {
+            if (response.success) {
+                // cargarNotificaciones(false) actualiza el badge sin mostrar toasts
+                cargarNotificaciones(false);
+            }
+        }
+    });
+}

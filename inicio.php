@@ -147,7 +147,7 @@
                                     </div>
                                 
                                     <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: rgb(84, 87, 97);">
+                                        <div class="stat-box p-2 mb-2" style="background: rgb(226, 213, 34);">
                                             <center>
                                                 <button class="btn btn-link nav-link fw-bold text-dark position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
                                                     <i class="fas fa-bell text-light"></i>
@@ -827,6 +827,7 @@
             obtenerPlaca();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
+            registrarNotificacionPlaneacion();
             
             // Asigna los valores de las cookies a los campos del formulario
             document.getElementById('id_usuario').value = getCookie('id_usuarioL');
