@@ -18,6 +18,25 @@ async function validaOpciones(sistema, opcion) {
     }
 }
 
+async function validaOpcionesSistema(sistema, opcion) {
+    try {
+        const info = await $.ajax({
+            url: '../loginMaster/acciones_globales.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {                
+                sistema: sistema,
+                opcion: opcion,
+                accion: 'ValidarPermisosSistema'
+            }
+        });
+        
+        return info; // Ahora sí espera a tener el valor
+    } catch (error) {        
+        return 0;
+    }
+}
+
 // Función para renderizar una notificación flotante
 function renderNotificacionFlotante(notificacion) {
     var stack = $('#notificationStack');

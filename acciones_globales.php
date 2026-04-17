@@ -36,6 +36,40 @@ if($accion == "ValidarPermisos"){
     $stmt->close();
 }
 
+if($accion == "ValidarPermisosSistema"){
+    // 1. Preparar la sentencia
+    $stmt = $conn->prepare("SELECT COUNT(*) AS cuantos, inf_adicional FROM accesos_especiales 
+                            WHERE sistema = ? AND opcion = ? AND estatus = 1 
+                            GROUP BY inf_adicional LIMIT 1"); // Agregamos GROUP BY si necesitas el dato extra
+    
+    $stmt->bind_param("ss", $sistema, $opcion);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    // 2. Verificar si hay resultados
+    if ($result) {
+        $row = $result->fetch_assoc();
+        
+        // Si no encontró nada, fetch_assoc devuelve null, hay que manejarlo
+        if (!$row) {
+            $row = ['cuantos' => 0, 'inf_adicional' => ''];
+        }
+
+        echo json_encode([
+            'status' => 'success', 
+            'data' => [[
+                'cuantos' => (int)$row['cuantos'], // Casteo a entero para evitar strings en JS
+                'inf_adicional' => $row['inf_adicional'] ?? ''
+            ]] 
+        ]);
+    } else {
+        // Error de ejecución
+        http_response_code(500); // Opcional: enviar código de error HTTP
+        echo json_encode(['status' => 'error', 'message' => 'Error en la consulta']);
+    }
+    $stmt->close();
+}
+
 // Cargar Registros de Notificaciones
 if ($accion === 'cargarNotificaciones') {
     $sqlCargarNoti = "  SELECT nh.*, us.nombre AS nombre_actualiza
