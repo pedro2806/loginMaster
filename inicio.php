@@ -448,7 +448,7 @@
                                             </form>
                                             <br>
                                             
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/03/MURAL-MARZO_compressed.pdf' type="application/pdf" width="100%" height="300px" />
+                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-MAYO26_compressed.pdf' type="application/pdf" width="100%" height="300px" />
                                         </div>
                                     </div>
                                 </div>                               
@@ -1469,12 +1469,12 @@
                     confirmar_contrasena: confirmar_contrasena
                 },
                 success: function(response) {
-                    
+                    $('#modalCambiarContrasena').modal('hide');
                     Swal.fire({
                             title: response.message,
                             icon: response.status,
                             draggable: true
-                    })
+                    });
                 },
                 error: function() {                    
                     Swal.fire({
@@ -1484,8 +1484,6 @@
                     })
                 }
             });
-
-
         }
         
         function cargarMisEncuestas() {
