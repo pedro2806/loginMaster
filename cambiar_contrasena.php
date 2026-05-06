@@ -12,8 +12,6 @@ $accion = $_POST['accion'] ?? '';
 
 if ($accion === 'CambiarPass') {
     
-   if ($accion === 'CambiarPass') {
-    
     // --- Configuración de Respuesta ---
     header('Content-Type: application/json');
     $response = ['status' => 'error', 'message' => ''];
@@ -78,5 +76,5 @@ if ($accion === 'CambiarPass') {
     $conn->close(); // Cierra la conexión
     exit;
 }
-}
+
 ?>
