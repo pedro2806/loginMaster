@@ -134,6 +134,10 @@
                                                 <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalAccesosEspeciales">
                                                     <i class="fas fa-user-shield"></i> Accesos
                                                 </button>
+
+                                                <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#modalAccesoSistemas">
+                                                    <i class="fas fa-desktop"></i> Sistemas
+                                                </button>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -311,23 +315,6 @@
                                                 <input type="hidden" name="pass" id="pass" value="">
                                                 <button type="submit" class="btn btn-outline-primary btn-block">
                                                     <i class="fas fa-chart-line fa-lg"></i> KPI's
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- KPI'S INFO -->
-                                <div class="col-md-3 mb-2" id="divTI" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formTI" method="POST" action="inicio">
-                                                <input type="hidden" name="id_usuarioTI" id="id_usuarioTI" value="">
-                                                <input type="hidden" name="nombredelusuarioTI" id="nombredelusuarioTI" value="">
-                                                <input type="hidden" name="noEmpleadoTI" id="noEmpleadoTI" value="">
-                                                <input type="hidden" name="correoTI" id="correoTI" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-laptop fa-lg"></i> TI 
                                                 </button>
                                             </form>
                                         </div>
@@ -795,6 +782,9 @@
 
     <!-- Modal Accesos Especiales -->
     <?php include 'modalAccesosEspeciales.php'; ?>
+
+    <!-- Modal Acceso a Sistemas -->
+    <?php include 'modalAccesoSistemas.php'; ?>
 
     <!-- Scripts -->
     <!-- Bootstrap core JavaScript-->    
