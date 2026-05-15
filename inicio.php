@@ -374,6 +374,17 @@
                                     </div>
                                 </div>
 
+                                <!-- TICKETS BI -->
+                                <div class="col-md-3 mb-2" id="divTicketsBI" style="display:none">
+                                    <div class="card card-action border-left-primary shadow h-100">
+                                        <div class="card-body text-center">
+                                            <a href="../Tickets/" class="btn btn-outline-primary btn-block">
+                                                <i class="fas fa-ticket-alt fa-lg"></i> Tickets BI
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- CONTROL SGC -->
                                 <div class="col-md-3 mb-2" id="divControlSGC" style="display:none">
                                     <div class="card card-action border-left-primary shadow h-100">
