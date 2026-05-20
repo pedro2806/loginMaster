@@ -1,3 +1,4 @@
+<!-- MODAL PARA GESTIÓN DE EVENTOS -->
 <div class="modal fade" id="modalEvento" tabindex="-1" role="dialog" aria-labelledby="modalEventoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content border-left-primary shadow">
@@ -105,6 +106,7 @@
     </div>
 </div>
 
+<!-- MODAL PARA HISTORIAL DE EVENTOS -->
 <div class="modal fade" id="modalListaEventos" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content border-left-info shadow">
@@ -133,6 +135,7 @@
     </div>
 </div>
 
+<!-- MODAL PARA    -->
 <div class="modal fade" id="modalAsignacion" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content border-left-info shadow">
@@ -189,6 +192,7 @@
     </div>
 </div>
 
+<!-- MODAL PARA ENCUESTA DE USUARIO -->
 <div class="modal fade" id="modalEncuestaUsuuario" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content border-left-info shadow">
@@ -231,8 +235,42 @@
                         <tbody id="cuerpoRegistrosAsistencia" class="small text-dark">
                         </tbody>
                     </table>
-                </div>                
+                </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL REGISTRAR LUGAR - SALA DE JUNTAS -->
+<div class="modal fade" id="modalRegistrarLugarSJ" tabindex="-1" role="dialog" aria-labelledby="modalRegistrarLugarSJLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content border-left-success shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalRegistrarLugarSJLabel"><i class="fas fa-map-marker-alt"></i> Registrar Lugar - Sala de Juntas</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formRegistrarLugarSJ">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Fecha y hora de inicio</label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="lugarSJ_inicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Fecha y hora de fin</label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="lugarSJ_fin" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Motivo / Descripción</label>
+                        <textarea class="form-control form-control-sm" id="lugarSJ_descripcion" rows="3" placeholder="Breve descripción de la reunión..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="registrarLugarSJ()"><i class="fas fa-save"></i> Registrar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -331,6 +369,17 @@ function eliminarAsignacion(id_asig, id_ev) {
     });
 }
 
+// Sincroniza el min/max de los datepickers del formulario de evento.
+// Al cambiar "fecha_inicio", el "fecha_fin" no podrá elegir un valor anterior.
+$(document).on('change', '#formEvento input[name="fecha_inicio"]', function(){
+    var v = $(this).val();
+    var $fin = $('#formEvento input[name="fecha_fin"]');
+    $fin.attr('min', v || '');
+    if (v && $fin.val() && $fin.val() < v) {
+        $fin.val('');
+    }
+});
+
 // --- AL ABRIR UN NUEVO EVENTO ---
 function limpiarModalEvento() {
     $('#id_evento_edit').val(''); 
@@ -346,6 +395,24 @@ function guardarEvento() {
     const form = $('#formEvento');
     if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
 
+    // Validar rango de fechas (cliente)
+    const fInicioStr = $('input[name="fecha_inicio"]', form).val();
+    const fFinStr    = $('input[name="fecha_fin"]',    form).val();
+    const fInicio    = new Date(fInicioStr);
+    const fFin       = new Date(fFinStr);
+    if (isNaN(fInicio.getTime()) || isNaN(fFin.getTime())) {
+        Swal.fire({ icon: 'warning', title: 'Fechas inválidas', text: 'Revisa el formato de las fechas.' });
+        return;
+    }
+    if (fFin <= fInicio) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Rango de fechas inválido',
+            text: 'La fecha de fin debe ser posterior a la fecha de inicio.'
+        });
+        return;
+    }
+
     $('#btnGuardarEvento').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
 
     $.ajax({
@@ -360,7 +427,14 @@ function guardarEvento() {
                 $('#seccionOpciones').fadeIn();
                 $('#btnGuardarEvento').html('<i class="fas fa-check"></i> Actualizar Encabezado').prop('disabled', false);
                 cargarTablaOpciones(res.id);
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error al guardar', text: (res && res.msg) ? res.msg : 'No se pudo guardar el evento.' });
+                $('#btnGuardarEvento').html('<i class="fas fa-save"></i> Guardar Encabezado').prop('disabled', false);
             }
+        },
+        error: function() {
+            Swal.fire({ icon: 'error', title: 'Error de red', text: 'No se pudo contactar al servidor.' });
+            $('#btnGuardarEvento').html('<i class="fas fa-save"></i> Guardar Encabezado').prop('disabled', false);
         }
     });
 }
