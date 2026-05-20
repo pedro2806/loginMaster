@@ -174,6 +174,36 @@ if ($accion === 'marcarLeida') {
     exit;
 }
 
+// Verificar si el usuario tiene gente a su cargo (es jefe)
+if ($accion === 'esJefe') {
+    $noEmpJefe = intval($noEmpleado ?: $id_usuario_Destino);
+    if ($noEmpJefe <= 0) {
+        echo json_encode(['success' => false, 'message' => 'noEmpleado inválido']);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT COUNT(*) AS total
+                            FROM usuarios
+                            WHERE jefe = ? AND estatus = 1");
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'message' => 'Error al preparar consulta']);
+        exit;
+    }
+
+    $stmt->bind_param("i", $noEmpJefe);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $total = isset($row['total']) ? intval($row['total']) : 0;
+    echo json_encode([
+        'success' => true,
+        'esJefe' => $total > 0,
+        'totalSubordinados' => $total
+    ]);
+    exit;
+}
+
 // Función para formatear fechas a formato corto (d/m/Y H:i)
 function formatearFechaCorta($fecha) {
     $fecha = trim((string)$fecha);

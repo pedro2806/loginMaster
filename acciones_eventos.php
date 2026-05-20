@@ -15,6 +15,18 @@ switch ($accion) {
         $descripcion = $_POST['descripcion'] ?? '';
         $id_evento = $_POST['id_evento'] ?? '';
 
+        // Validar rango de fechas
+        $tsInicio = strtotime((string)$f_inicio);
+        $tsFin    = strtotime((string)$f_fin);
+        if ($tsInicio === false || $tsFin === false) {
+            echo json_encode(['status' => 'error', 'msg' => 'Las fechas tienen un formato inválido.']);
+            exit;
+        }
+        if ($tsFin <= $tsInicio) {
+            echo json_encode(['status' => 'error', 'msg' => 'La fecha de fin debe ser posterior a la fecha de inicio.']);
+            exit;
+        }
+
         if (!empty($id_evento)) {
             // Actualizar evento existente
             $sql = "UPDATE enc_eventos SET nombre=?, descripcion=?, tipo=?, fecha_inicio=?, fecha_fin=? WHERE id_evento=?";
