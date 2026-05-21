@@ -371,13 +371,17 @@ function eliminarAsignacion(id_asig, id_ev) {
 
 // Sincroniza el min/max de los datepickers del formulario de evento.
 // Al cambiar "fecha_inicio", el "fecha_fin" no podrá elegir un valor anterior.
-$(document).on('change', '#formEvento input[name="fecha_inicio"]', function(){
-    var v = $(this).val();
-    var $fin = $('#formEvento input[name="fecha_fin"]');
-    $fin.attr('min', v || '');
-    if (v && $fin.val() && $fin.val() < v) {
-        $fin.val('');
-    }
+window.addEventListener('load', function () {
+    if (typeof window.jQuery === 'undefined') return;
+
+    $(document).on('change', '#formEvento input[name="fecha_inicio"]', function(){
+        var v = $(this).val();
+        var $fin = $('#formEvento input[name="fecha_fin"]');
+        $fin.attr('min', v || '');
+        if (v && $fin.val() && $fin.val() < v) {
+            $fin.val('');
+        }
+    });
 });
 
 // --- AL ABRIR UN NUEVO EVENTO ---
