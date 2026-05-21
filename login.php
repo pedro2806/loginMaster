@@ -25,7 +25,7 @@ if ($accion == 'Ingresar') {
     // Usamos prepared statements para evitar SQL Injection
     $sql = "SELECT u.id_usuario, u.usuario, u.nombre, u.noEmpleado, u.rol, u.correo, k.Password_KPI
     FROM usuarios u 
-    INNER JOIN accesos_kpis k ON u.correo = k.Correo
+    LEFT JOIN accesos_kpis k ON u.correo = k.Correo
     WHERE (u.usuario = ? OR u.usuario LIKE CONCAT(?, '@%')) AND u.password = ?";                
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sss", $email, $emailValido, $password);

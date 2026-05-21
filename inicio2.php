@@ -110,6 +110,16 @@
         .profile-card small.text-muted { color: rgba(255,255,255,0.75) !important; }
         .profile-card .list-group-item { color: #fff; }
         .profile-card .fw-semibold { color: #fff; }
+        /* Las stat-box tienen su propio fondo (claro u oscuro según el tema):
+           forzamos que su texto use var(--text) en lugar de heredar el blanco
+           del profile-card, para evitar "texto blanco sobre fondo blanco" en modo claro. */
+        .profile-card .stat-box,
+        .profile-card .stat-box h4,
+        .profile-card .stat-box h5,
+        .profile-card .stat-box h6,
+        .profile-card .stat-box p { color: var(--text); }
+        .profile-card .stat-box p { color: var(--text-muted); }
+        .profile-card .stat-box i.fa-bell { color: var(--text) !important; }
         .profile-avatar {
             width: 90px;
             height: 90px;
@@ -133,13 +143,6 @@
         }
         .stat-box h4, .stat-box h5, .stat-box h6 { margin: 0; font-weight: 600; }
         .stat-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
-        .stat-box.is-success { background: var(--success); color:#fff; border-color: transparent; }
-        .stat-box.is-info    { background: var(--info);    color:#fff; border-color: transparent; }
-        .stat-box.is-warning { background: var(--warning); color:#222; border-color: transparent; }
-        .stat-box.is-danger  { background: var(--danger);  color:#fff; border-color: transparent; }
-        .stat-box.is-accent  { background: var(--accent);  color:#fff; border-color: transparent; }
-        .stat-box.is-success p, .stat-box.is-info p, .stat-box.is-danger p, .stat-box.is-accent p { color: rgba(255,255,255,0.85); }
-        .stat-box.is-warning p { color: rgba(0,0,0,0.7); }
 
         .card-action {
             border: 1px solid var(--border);
@@ -196,6 +199,29 @@
             display: none;
         }
         .nav-tabs-main .nav-link.has-alert .tab-badge { display: inline-block; }
+
+        /* Semáforo de estatus general (Vehículo / Expediente). */
+        .nav-tabs-main .nav-link .tab-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #adb5bd; /* gris por defecto (sin datos) */
+            margin-left: 4px;
+            vertical-align: middle;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        }
+        .nav-tabs-main .nav-link .tab-status.is-green  { background: #28a745; }
+        .nav-tabs-main .nav-link .tab-status.is-yellow { background: #ffc107; }
+        .nav-tabs-main .nav-link .tab-status.is-red    { background: #dc3545; }
+
+        /* Acordeón de vehículos: rota el chevron al colapsar. */
+        #accordionVehiculos .btn[data-toggle="collapse"] .fa-chevron-down {
+            transition: transform 0.2s ease-in-out;
+        }
+        #accordionVehiculos .btn[data-toggle="collapse"].collapsed .fa-chevron-down {
+            transform: rotate(-90deg);
+        }
 
         .theme-toggle {
             display: flex;
@@ -291,58 +317,46 @@
                                 </p>
                                 <ul class="list-group list-group-flush text-start small mb-2" style="background:transparent;">
                                     <li class="list-group-item px-0 py-1 bg-transparent border-0">
+                                        <small class="text-muted fw-bold me-1">Jefe Directo:</small>
+                                        <span id="lblJefe" class="fw-semibold"></span>
+                                    </li>
+                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
                                         <small class="text-muted fw-bold me-1">Área:</small>
                                         <span id="lblArea" class="fw-semibold"></span>
                                     </li>
                                     <li class="list-group-item px-0 py-1 bg-transparent border-0">
-                                        <small class="text-muted fw-bold me-1">Jefe Directo:</small>
-                                        <span id="lblJefe" class="fw-semibold"></span>
+                                        <small class="text-muted fw-bold me-1">Puesto:</small>
+                                        <span id="lblPuesto" class="fw-semibold">—</span>
                                     </li>
                                 </ul>
 
-                                <!-- Fila 1: Fecha Ingreso · Notificaciones -->
+                                <!-- Fila 1: Fecha Ingreso (full width) -->
                                 <div class="row no-gutters">
-                                    <div class="col-7 pr-1">
-                                        <div class="stat-box is-success">
+                                    <div class="col-12">
+                                        <div class="stat-box">
                                             <h6 id="fechaIngreso"></h6>
                                             <p>Fecha de Ingreso</p>
                                         </div>
                                     </div>
+                                </div>
+
+                                <!-- Fila 2: Días Vacaciones · Notificaciones -->
+                                <div class="row no-gutters">
+                                    <div class="col-7 pr-1">
+                                        <div class="stat-box" title="Días de vacaciones disponibles">
+                                            <h6><span id="diasDisp">0</span></h6>
+                                            <p>Días Vacaciones</p>
+                                        </div>
+                                    </div>
                                     <div class="col-5 pl-1">
-                                        <div class="stat-box is-warning d-flex flex-column justify-content-center" style="padding: 0.25rem;">
+                                        <div class="stat-box d-flex flex-column justify-content-center" style="padding: 0.25rem;">
                                             <button class="btn btn-link p-0 position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
-                                                <i class="fas fa-bell fa-lg" style="color:#fff;"></i>
+                                                <i class="fas fa-bell fa-lg" style="color: var(--text);"></i>
                                                 <span id="badgeNotificaciones" class="position-absolute badge rounded-pill bg-danger text-light" style="top:-4px; right:-8px; font-size:.7rem;">0</span>
                                             </button>
                                             <p style="margin-top:.15rem;">Notificaciones</p>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Fila 2: Puesto · Días Vacaciones -->
-                                <div class="row no-gutters">
-                                    <div class="col-7 pr-1">
-                                        <div class="stat-box">
-                                            <h6 id="lblPuesto" style="font-size:.95rem;">—</h6>
-                                            <p>Puesto</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-5 pl-1">
-                                        <div class="stat-box is-info" title="Días de vacaciones disponibles">
-                                            <h6><span id="diasDisp">0</span></h6>
-                                            <p>Días Vacaciones</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Vehículo (se preserva, solo lo movemos abajo) -->
-                                <div class="stat-box is-accent mt-2" id="boxVehiculo">
-                                    <h6 id="vehiculoAsignado" style="color:#fff;"></h6>
-                                    <p>Vehículo asignado</p>
-                                </div>
-                                <div class="stat-box" style="display:none;">
-                                    <h6 id="equipoComputo"></h6>
-                                    <p>Equipo de cómputo</p>
                                 </div>
 
                                 <!-- Botones administrativos (solo empleados permitidos) -->
@@ -370,13 +384,6 @@
                                 </div>
                                 <?php endif; ?>
 
-                                <!-- Toggle tema claro/oscuro: [sol] [switch] [luna] -->
-                                <div class="theme-toggle mt-3" id="themeToggle" role="button" tabindex="0" aria-label="Cambiar tema claro/oscuro">
-                                    <i class="fas fa-sun sun"></i>
-                                    <div class="switch"></div>
-                                    <i class="fas fa-moon moon"></i>
-                                </div>
-
                                 <!-- Botones acción -->
                                 <button class="btn btn-outline-primary btn-block mt-2" data-toggle="modal" data-target="#modalbuzon">
                                     <i class="fas fa-envelope-open-text"></i> Sugerencias
@@ -387,6 +394,13 @@
                                 <a class="btn btn-outline-danger btn-block mt-2" href="#" data-toggle="modal" data-target="#logoutModalN">
                                     <i class="fas fa-sign-out-alt"></i> Salir
                                 </a>
+
+                                <!-- Toggle tema claro/oscuro: [sol] [switch] [luna] -->
+                                <div class="theme-toggle mt-3" id="themeToggle" role="button" tabindex="0" aria-label="Cambiar tema claro/oscuro">
+                                    <i class="fas fa-sun sun"></i>
+                                    <div class="switch"></div>
+                                    <i class="fas fa-moon moon"></i>
+                                </div>
                             </div>
                         </div>
 
@@ -415,6 +429,7 @@
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
                                         <i class="fas fa-folder-open mr-1"></i> Expediente
                                         <span class="tab-badge"></span>
+                                        <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -427,6 +442,7 @@
                                     <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
                                         <i class="fas fa-car mr-1"></i> Vehículo
                                         <span class="tab-badge"></span>
+                                        <span id="statusTabVehiculo" class="tab-status" title="Estatus de vehículo"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -537,23 +553,9 @@
                                                             <i class="fas fa-list fa-lg d-block mb-2"></i> Capacitación
                                                         </a>
                                                         <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-primary" style="flex:0 0 auto;">
-                                                            <i class="fas fa-file-pdf fa-lg"></i>
+                                                            <i class="fas fa-file-pdf fa-lg d-block mb-2"></i> Manual
                                                         </a>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- KPI'S -->
-                                        <div class="col-md-3 mb-3" id="divKPIs" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
-                                                <div class="card-body text-center">
-                                                    <form id="formKPIs" action="../kpis_pbi/indexK.php" method="post">
-                                                        <input type="hidden" name="pass" id="pass" value="">
-                                                        <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-chart-line fa-lg d-block mb-2"></i> KPI's
-                                                        </button>
-                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
@@ -1019,6 +1021,9 @@
         var calendarVacaciones = null;
         var esJefeActual = false;
         var vehiculosDocsCargados = false;
+        // Acumulador del estatus de cada vehículo para alimentar el semáforo del tab.
+        // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total} } }
+        var vehiculosEstado = {};
 
         $(document).ready(function () {
             // ===== Tema claro/oscuro =====
@@ -1041,10 +1046,11 @@
             validaOpciones();
             infoEmpleado();
             verificarEsJefe();
-            obtenerPlaca();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
             registrarNotificacionPlaneacion();
+            // Pre-carga del tab Vehículo para que el semáforo se calcule sin abrirlo.
+            cargarVehiculosDocs();
 
             // Asignar cookies a campos hidden
             const idU   = getCookie('id_usuarioL');
@@ -1071,7 +1077,6 @@
                 if(document.getElementById(c)) document.getElementById(c).value = noEmp;
                 if(document.getElementById(d)) document.getElementById(d).value = corU;
             });
-            if (document.getElementById('pass')) document.getElementById('pass').value = getCookie('UsrKpis');
             if (document.getElementById('noEmpleadoT')) document.getElementById('noEmpleadoT').value = noEmp;
 
             $('.select2').select2({
@@ -1193,7 +1198,6 @@
         }
 
         // ===== Inicialización del calendario de Sala de Juntas =====
-        // Misma configuración que inicio.php (verCalendarioLogin)
         function initCalendarSalaJuntas() {
             var calendarEl = document.getElementById('calendar');
             if (!calendarEl) return;
@@ -1253,9 +1257,6 @@
                 });
             });
         }
-
-        // Alias para compatibilidad con código anterior
-        function verCalendarioLogin() { initCalendarSalaJuntas(); }
 
         // ===== Calendario de Vacaciones (Personal) =====
         function initCalendarVacaciones() {
@@ -1449,15 +1450,13 @@
                 success: function(response) {
                     if (response.status === 'success') {
                         $.each(response.info, function (index, infoUsr) {
-                            $('#antig').text(infoUsr.antiguedad);
                             $('#diasDisp').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
                             $('#diasDispPanel').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
                             $('#diasSolPanel').text(infoUsr.diasSol || 0);
-                            $('#lblArea').text(infoUsr.departamento);
-                            $('#lblJefe').text(infoUsr.jefe);
-                            $('#lblPuesto').text(infoUsr.puesto || infoUsr.puesto || '—');
-                            $('#fechaIngreso').text(infoUsr.fechaIngreso);
-                            $('#diasSol').text(infoUsr.diasSol);
+                            $('#lblArea').text(infoUsr.departamento || '—');
+                            $('#lblJefe').text(infoUsr.jefe || '—');
+                            $('#lblPuesto').text(infoUsr.puesto || '—');
+                            $('#fechaIngreso').text(infoUsr.fechaIngreso || '—');
                             // La info del jefe se resuelve con una acción dedicada en acciones_globales.php
                             // (getInfo no devuelve esJefe). Ver verificarEsJefe().
                         });
@@ -1503,7 +1502,6 @@
                 data: { noEmpleado: getCookie('noEmpleadoL'), correo: getCookie('correoL'), accion: 'ValidarOpciones' },
                 success: function(info) {
                     $.each(info, function (index, infoAccesos) {
-                        $('#antig').text(infoAccesos.antiguedad);
                         if (infoAccesos.estatus == '1') {
                             $('#' + infoAccesos.sistema).show();
                         } else {
@@ -1511,34 +1509,6 @@
                         }
                     });
                 }
-            });
-        }
-
-        // ===== Obtener placa/vehículo =====
-        function obtenerPlaca() {
-            $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
-                type: 'POST', dataType: 'json',
-                data: { accion: 'getPlaca', noEmpleado: getCookie('noEmpleadoL') },
-                success: function(response) {
-                    if (response.success && response.vehiculos && response.vehiculos.length > 0) {
-                        let html = '';
-                        if (response.vehiculos.length === 1) {
-                            let v = response.vehiculos[0];
-                            html = v.placa + '-' + v.modelo + ' <br><a class="btn btn-sm btn-info mt-1" href="TENENCIAS_2026/'+ v.placa +'.pdf" target="_blank">Tenencia 2026 <i class="fas fa-download"></i></a>';
-                        } else {
-                            html = '<ul style="list-style:none;padding-left:0;margin-bottom:0;">';
-                            response.vehiculos.forEach(function(v) {
-                                html += '<li>' + v.placa + '-' + v.modelo + ' <br><a class="btn btn-sm btn-info" href="TENENCIAS_2026/'+ v.placa +'.pdf" target="_blank">Tenencia <i class="fas fa-download"></i></a></li>';
-                            });
-                            html += '</ul>';
-                        }
-                        $('#vehiculoAsignado').html(html);
-                    } else {
-                        $('#vehiculoAsignado').text('Sin vehículo asignado');
-                    }
-                },
-                error: function() { $('#vehiculoAsignado').text('Error al obtener vehículo'); }
             });
         }
 
@@ -1574,18 +1544,22 @@
                 }
 
                 // Renderizar un placeholder por cada vehículo y luego rellenar.
-                var html = '';
-                resp.vehiculos.forEach(function(v){
+                // El primer vehículo se abre por defecto, los demás colapsados.
+                var html = '<div class="accordion" id="accordionVehiculos">';
+                resp.vehiculos.forEach(function(v, idx){
                     var idv = parseInt(v.id_vehiculo, 10) || 0;
-                    html += renderCardVehiculo(idv, v.placa, v.modelo, null);
+                    html += renderCardVehiculo(idv, v.placa, v.modelo, idx === 0);
                 });
+                html += '</div>';
                 $cont.html(html);
 
-                // Pedir documentación de cada vehículo.
+                // Pedir documentación + validaciones de cada vehículo.
                 resp.vehiculos.forEach(function(v){
                     var idv = parseInt(v.id_vehiculo, 10) || 0;
                     if (!idv) return;
                     syncCookieNoEmpleado();
+
+                    // Documentos
                     $.ajax({
                         url: '../ControlVehicular/acciones_qr.php',
                         type: 'POST', dataType: 'json',
@@ -1596,8 +1570,32 @@
                             return;
                         }
                         $('#docsVeh-' + idv).html(renderListaDocs(data));
+                        vehiculosEstado[idv] = vehiculosEstado[idv] || {};
+                        vehiculosEstado[idv].docs = evaluarDocs(data);
+                        actualizarSemaforoVehiculo();
                     }).fail(function(){
                         $('#docsVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error al obtener documentación</p>');
+                    });
+
+                    // Validaciones (checklist + mantenimiento)
+                    $.ajax({
+                        url: '../ControlVehicular/acciones_qr.php',
+                        type: 'POST', dataType: 'json',
+                        data: { accion: 'obtenerValidacionesVehiculo', id_vehiculo: idv }
+                    }).done(function(data){
+                        if (!data || data.error) {
+                            $('#chkVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar el checklist</p>');
+                            $('#mntVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar el mantenimiento</p>');
+                            return;
+                        }
+                        $('#chkVeh-' + idv).html(renderListaChecklist(data));
+                        $('#mntVeh-' + idv).html(renderListaMantenimiento(data));
+                        vehiculosEstado[idv] = vehiculosEstado[idv] || {};
+                        vehiculosEstado[idv].vals = evaluarValidaciones(data);
+                        actualizarSemaforoVehiculo();
+                    }).fail(function(){
+                        $('#chkVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
+                        $('#mntVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                     });
                 });
                 vehiculosDocsCargados = true;
@@ -1606,19 +1604,140 @@
             });
         }
 
-        function renderCardVehiculo(idVeh, placa, modelo, dataDocs) {
+        function renderCardVehiculo(idVeh, placa, modelo, abierto) {
+            var titulo = (placa || '') + (modelo ? ' - ' + modelo : '');
+            var shown   = abierto ? ' show'    : '';
+            var btnCls  = abierto ? ''          : ' collapsed';
+            var spinner = '<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i></div>';
+
             return ''
                 + '<div class="card shadow-sm mb-3" data-vehiculo="' + idVeh + '">'
-                +   '<div class="card-header bg-white py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft) !important; border-color: var(--border);">'
-                +     '<h6 class="m-0 font-weight-bold"><i class="fas fa-car mr-2"></i>Documentación · ' + (placa || '') + (modelo ? ' - ' + modelo : '') + '</h6>'
-                +     '<a href="../ControlVehicular/documentacion?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm fw-semibold">'
-                +       '<i class="fas fa-folder-open mr-1"></i> Actualizar Docs'
-                +     '</a>'
+                +   '<div class="card-header p-0" id="headingV-' + idVeh + '" style="background: var(--card-soft); border-color: var(--border);">'
+                +     '<button class="btn btn-link w-100 text-left py-2 px-3 d-flex align-items-center justify-content-between font-weight-bold' + btnCls + '" '
+                +             'style="color: var(--text); text-decoration:none;" '
+                +             'type="button" data-toggle="collapse" data-target="#collapseV-' + idVeh + '" aria-expanded="' + (abierto ? 'true' : 'false') + '" aria-controls="collapseV-' + idVeh + '">'
+                +       '<span><i class="fas fa-car mr-2"></i>' + titulo + '</span>'
+                +       '<i class="fas fa-chevron-down"></i>'
+                +     '</button>'
                 +   '</div>'
-                +   '<div class="card-body p-0" id="docsVeh-' + idVeh + '">'
-                +     '<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i> Cargando documentos...</div>'
+                +   '<div id="collapseV-' + idVeh + '" class="collapse' + shown + '" aria-labelledby="headingV-' + idVeh + '" data-parent="#accordionVehiculos">'
+                +     '<div class="card-body p-2">'
+                +       '<div class="row no-gutters">'
+                +         '<div class="col-md-4 px-1 mb-2">'
+                +           '<div class="card h-100">'
+                +             '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">'
+                +               '<h6 class="m-0 font-weight-bold small">Documentación</h6>'
+                +               '<a href="../ControlVehicular/documentacion?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Actualizar Docs">'
+                +                 '<i class="fas fa-folder-open"></i>'
+                +               '</a>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="docsVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
+                +         '<div class="col-md-4 px-1 mb-2">'
+                +           '<div class="card h-100">'
+                +             '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">'
+                +               '<h6 class="m-0 font-weight-bold small">Checklist</h6>'
+                +               '<a href="../ControlVehicular/checkVehiculo?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Realizar Checklist">'
+                +                 '<i class="fas fa-clipboard-check"></i>'
+                +               '</a>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="chkVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
+                +         '<div class="col-md-4 px-1 mb-2">'
+                +           '<div class="card h-100">'
+                +             '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">'
+                +               '<h6 class="m-0 font-weight-bold small">Mantenimiento</h6>'
+                +               '<a href="../ControlVehicular/seguimiento_mantenimiento.php" target="_blank" class="btn btn-warning btn-sm" title="Ver Mantenimientos">'
+                +                 '<i class="fas fa-wrench"></i>'
+                +               '</a>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="mntVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
+                +       '</div>'
+                +     '</div>'
                 +   '</div>'
                 + '</div>';
+        }
+
+        // Renderiza solo la lista (sin envoltorio card) — la card y header se crean en renderCardVehiculo.
+        function renderListaChecklist(data) {
+            var subareasOrden = [
+                { campo: 'asientos',          label: 'Asientos' },
+                { campo: 'espejos_ventanas',  label: 'Espejos y ventanas' },
+                { campo: 'estereos_aire',     label: 'Estéreos y aire' },
+                { campo: 'faros',             label: 'Faros' },
+                { campo: 'golpes_exterior',   label: 'Golpes exterior' },
+                { campo: 'limpiaparabrisas',  label: 'Limpiaparabrisas' },
+                { campo: 'limpieza',          label: 'Limpieza' },
+                { campo: 'llantas',           label: 'Llantas' },
+                { campo: 'placas',            label: 'Placas' },
+                { campo: 'puertas_llave',     label: 'Puertas y llave' }
+            ];
+            var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
+            var html = '<ul class="list-group list-group-flush">';
+            subareasOrden.forEach(function(s){
+                var estado = subareas[s.campo] || 'no_revisado';
+                var icono;
+                if (estado === 'ok')        icono = '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>';
+                else if (estado === 'mal')  icono = '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                else                        icono = '<i class="fas fa-minus-circle text-muted fa-fw mr-2"></i>';
+                html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span class="small">' + s.label + '</span></li>';
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function renderListaMantenimiento(data) {
+            var mt = data.mantenimiento || null;
+            if (!mt) return '<p class="text-muted small mb-0 p-3">Sin mantenimiento registrado</p>';
+
+            // REALIZADO implica que ya pasó por autorización Y se ejecutó, por eso cuenta como autorizado.
+            var vobo          = (mt.VoBo_jefe || '').toUpperCase();
+            var realizado     = (vobo === 'REALIZADO');
+            var autorizado    = (vobo === 'AUTORIZADO' || realizado);
+            var sinPendientes = (vobo && vobo !== 'PENDIENTE');
+
+            var labelEstado;
+            if (realizado)                  labelEstado = 'Último mantenimiento realizado';
+            else if (vobo === 'AUTORIZADO') labelEstado = 'Mantenimiento autorizado';
+            else if (vobo === 'PENDIENTE')  labelEstado = 'Mantenimiento esperando autorización';
+            else                            labelEstado = 'Mantenimiento sin estatus' + (vobo ? ' (' + vobo + ')' : '');
+
+            var alDia = false;
+            var labelProx;
+            if (mt.fecha_proxi) {
+                var prox = new Date(mt.fecha_proxi);
+                if (!isNaN(prox.getTime())) {
+                    alDia = (prox >= new Date());
+                    labelProx = 'Próximo mantenimiento (' + mt.fecha_proxi + ')';
+                } else {
+                    labelProx = 'Próximo mantenimiento (sin fecha)';
+                }
+            } else if (realizado) {
+                // Sin próxima fecha capturada pero el último ya se realizó → al día.
+                alDia = true;
+                labelProx = 'Sin próximo mantenimiento programado';
+            } else {
+                labelProx = 'Próximo mantenimiento (sin fecha)';
+            }
+
+            var items = [
+                { ok: autorizado,    label: labelEstado },
+                { ok: sinPendientes, label: 'Sin solicitudes pendientes' },
+                { ok: alDia,         label: labelProx }
+            ];
+            var html = '<ul class="list-group list-group-flush">';
+            items.forEach(function(it){
+                var icono = it.ok
+                    ? '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>'
+                    : '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span class="small">' + it.label + '</span></li>';
+            });
+            html += '</ul>';
+            return html;
         }
 
         function renderListaDocs(v) {
@@ -1642,6 +1761,76 @@
             });
             html += '</ul>';
             return html;
+        }
+
+        // ===== Semáforo del tab Vehículo =====
+        // Cuenta cuántos "items" de validación están OK vs total, por vehículo.
+        // El semáforo agregado determina:
+        //   verde = todo OK
+        //   amarillo = algo registrado pero falta o está vencido
+        //   rojo = nada registrado
+        //   gris (default) = sin vehículos asignados / sin datos aún
+        function evaluarDocs(v) {
+            var docs = ['licencia', 'tarjeta_circulacion', 'refrendo_actual', 'seguro_vehiculo', 'verificacion_vigente'];
+            var total = docs.length;
+            var ok = 0;
+            if (v.fecha_reg_doc) {
+                docs.forEach(function(c){
+                    if (v[c] && v[c] !== 'S/R') ok++;
+                });
+            }
+            return { ok: ok, total: total };
+        }
+
+        function evaluarValidaciones(data) {
+            var total = 0, ok = 0;
+
+            // Checklist (10 subáreas)
+            var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
+            ['asientos','espejos_ventanas','estereos_aire','faros','golpes_exterior',
+             'limpiaparabrisas','limpieza','llantas','placas','puertas_llave'].forEach(function(k){
+                total++;
+                if (subareas[k] === 'ok') ok++;
+            });
+
+            // Mantenimiento (3 items: autorizado, sin pendientes, próximo al día).
+            // Misma semántica que renderListaMantenimiento: REALIZADO cuenta como autorizado
+            // y "sin fecha_proxi tras un REALIZADO" cuenta como al día.
+            var mt = data.mantenimiento || null;
+            total += 3;
+            if (mt) {
+                var vobo = (mt.VoBo_jefe || '').toUpperCase();
+                var realizado = (vobo === 'REALIZADO');
+                if (vobo === 'AUTORIZADO' || realizado) ok++;
+                if (vobo && vobo !== 'PENDIENTE') ok++;
+                if (mt.fecha_proxi) {
+                    var prox = new Date(mt.fecha_proxi);
+                    if (!isNaN(prox.getTime()) && prox >= new Date()) ok++;
+                } else if (realizado) {
+                    ok++;
+                }
+            }
+
+            return { ok: ok, total: total };
+        }
+
+        function actualizarSemaforoVehiculo() {
+            var $dot = $('#statusTabVehiculo');
+            $dot.removeClass('is-green is-yellow is-red');
+
+            var totalAll = 0, okAll = 0, n = 0;
+            Object.keys(vehiculosEstado).forEach(function(idv){
+                n++;
+                var est = vehiculosEstado[idv];
+                if (est.docs) { totalAll += est.docs.total; okAll += est.docs.ok; }
+                if (est.vals) { totalAll += est.vals.total; okAll += est.vals.ok; }
+            });
+
+            if (n === 0 || totalAll === 0) return; // dejar gris por defecto
+
+            if (okAll === totalAll)      $dot.addClass('is-green');
+            else if (okAll === 0)        $dot.addClass('is-red');
+            else                         $dot.addClass('is-yellow');
         }
 
         // ===== Cookies =====
