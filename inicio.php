@@ -365,6 +365,119 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             transform: rotate(-90deg);
         }
 
+        /* ===== Directorio ===== */
+        .directorio-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .directorio-search {
+            position: relative;
+            max-width: 360px;
+            flex: 1 1 260px;
+        }
+        .directorio-search .fa-search {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .directorio-search input {
+            padding-left: 36px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+        }
+        .directorio-search input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 .15rem rgba(5,13,158,.15);
+            outline: none;
+        }
+        .directorio-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: .75rem;
+            background: var(--card-bg);
+            cursor: pointer;
+            height: 100%;
+            transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+        }
+        .directorio-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08);
+            border-color: var(--accent);
+        }
+        .directorio-card .dir-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .directorio-card .dir-name {
+            color: var(--accent);
+            font-weight: 600;
+            margin: 0 0 .15rem 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .directorio-card .dir-meta {
+            font-size: .82rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .directorio-card .dir-mail {
+            display: inline-block;
+            margin-top: .15rem;
+            font-size: .8rem;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .dir-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            letter-spacing: .5px;
+        }
+        .dir-avatar-lg {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 2.4rem;
+            margin: 0 auto;
+            letter-spacing: 1px;
+        }
+        #directorioGrid .empty-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
         .theme-toggle {
             display: flex;
             align-items: center;
@@ -693,6 +806,12 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab">
+                                        <i class="fas fa-address-book mr-1"></i> Directorio
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -1157,6 +1276,26 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     </div>
                                 </div>
 
+                                <!-- ===== TAB 7: DIRECTORIO ===== -->
+                                <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
+                                    <div class="directorio-header">
+                                        <div>
+                                            <h4 class="mb-1" style="color: var(--accent);">Directorio</h4>
+                                            <p class="text-muted mb-0 small">Busca a cualquier compañero por nombre, área, puesto o correo.</p>
+                                        </div>
+                                        <div class="directorio-search">
+                                            <i class="fas fa-search"></i>
+                                            <input type="text" id="directorioBuscar" class="form-control form-control-sm" placeholder="Buscar empleado..." autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div id="directorioGrid" class="row">
+                                        <div class="col-12 empty-state">
+                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                            <p class="mb-0">Cargando directorio...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
 
 
 
@@ -1185,6 +1324,52 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
     </div>
 
     <!-- ============== MODALES (sin cambios) ============== -->
+    <!-- Modal Detalle Directorio (compartido; se rellena por JS al click en una card) -->
+    <div class="modal fade" id="modalDirectorio" tabindex="-1" role="dialog" aria-labelledby="modalDirectorioLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--accent); color: #fff;">
+                    <h5 class="modal-title" id="modalDirectorioLabel">Detalle del empleado</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar" style="text-shadow:none; opacity:.85;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div id="modalDirAvatar" class="dir-avatar-lg mb-2"></div>
+                        <h5 id="modalDirNombre" class="mb-1" style="color: var(--accent);"></h5>
+                        <p id="modalDirPuesto" class="text-muted mb-0"></p>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">No. Empleado</span>
+                            <span id="modalDirNoEmp" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Área</span>
+                            <span id="modalDirArea" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Nave</span>
+                            <span id="modalDirNave" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Teléfono</span>
+                            <span id="modalDirTel" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Correo</span>
+                            <a id="modalDirCorreo" href="#" class="text-truncate" style="max-width:60%;">—</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cambiar Contraseña -->
     <div class="modal fade" id="modalCambiarContrasena" tabindex="-1" role="dialog" aria-labelledby="modalCambiarContrasenaLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -2588,6 +2773,146 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 }
             });
         }
+
+        // ===== Directorio =====
+        var directorioCache = null;
+
+        function dirIniciales(nombre) {
+            if (!nombre) return '?';
+            var partes = String(nombre).trim().split(/\s+/);
+            var ini = (partes[0] || '').charAt(0);
+            if (partes.length > 1) ini += partes[1].charAt(0);
+            return ini.toUpperCase();
+        }
+
+        function dirColor(nombre) {
+            var paleta = ['#050D9E', '#1A6FB3', '#1F8A70', '#C97B0F', '#7E4FB3', '#2E8DA8', '#B23A48'];
+            var s = String(nombre || '?');
+            var h = 0;
+            for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return paleta[h % paleta.length];
+        }
+
+        function dirEscape(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function cargarDirectorio() {
+            if (directorioCache !== null) return;
+            $.post('../incidencias/getInfoLoginMaster.php', {
+                accion: 'listarEmpleados',
+                noEmpleado: 0,
+                correo: ''
+            }).done(function (resp) {
+                try {
+                    var data = typeof resp === 'string' ? JSON.parse(resp) : resp;
+                    if (data && data.status === 'success' && Array.isArray(data.info)) {
+                        directorioCache = data.info;
+                        renderDirectorio(directorioCache);
+                    } else {
+                        directorioCache = [];
+                        $('#directorioGrid').html('<div class="col-12 empty-state">No hay empleados activos para mostrar.</div>');
+                    }
+                } catch (e) {
+                    $('#directorioGrid').html('<div class="col-12 empty-state text-danger">Error al procesar el directorio.</div>');
+                }
+            }).fail(function () {
+                $('#directorioGrid').html('<div class="col-12 empty-state text-danger">No se pudo conectar al servidor.</div>');
+            });
+        }
+
+        function renderDirectorio(lista) {
+            if (!lista || !lista.length) {
+                $('#directorioGrid').html('<div class="col-12 empty-state">No se encontraron resultados.</div>');
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < lista.length; i++) {
+                var e = lista[i];
+                var ini = dirIniciales(e.nombre);
+                var col = dirColor(e.nombre);
+                var nombre = dirEscape(e.nombre || 'Sin nombre');
+                var nave   = dirEscape(e.nave   || '—');
+                var area   = dirEscape(e.area   || '—');
+                var puesto = dirEscape(e.puesto || '—');
+                var correo = dirEscape(e.correo || '');
+                html += '<div class="col-md-6 mb-3">'
+                     +    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
+                     +      '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>'
+                     +      '<div class="dir-info">'
+                     +        '<div class="dir-name">' + nombre + '</div>'
+                     +        '<div class="dir-meta">' + nave + '</div>'
+                     +        '<div class="dir-meta">' + area + '</div>'
+                     +        '<div class="dir-meta">' + puesto + '</div>'
+                     +        (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
+                     +      '</div>'
+                     +    '</div>'
+                     +  '</div>';
+            }
+            $('#directorioGrid').html(html);
+        }
+
+        function abrirModalDirectorio(noEmp) {
+            if (!directorioCache) return;
+            var emp = null;
+            for (var i = 0; i < directorioCache.length; i++) {
+                if (String(directorioCache[i].noEmpleado) === String(noEmp)) { emp = directorioCache[i]; break; }
+            }
+            if (!emp) return;
+            var ini = dirIniciales(emp.nombre);
+            var col = dirColor(emp.nombre);
+            $('#modalDirAvatar').css('background', col).text(ini);
+            $('#modalDirNombre').text(emp.nombre || '—');
+            $('#modalDirPuesto').text(emp.puesto || '—');
+            $('#modalDirNoEmp').text(emp.noEmpleado || '—');
+            $('#modalDirArea').text(emp.area || '—');
+            $('#modalDirNave').text(emp.nave || '—');
+
+            // Teléfono + extensión (aún no en BD; se muestran cuando lleguen).
+            var tel = emp.telefono || '';
+            var ext = emp.extension || '';
+            var telTxt = '—';
+            if (tel && ext)      telTxt = tel + ' ext. ' + ext;
+            else if (tel)        telTxt = tel;
+            else if (ext)        telTxt = 'ext. ' + ext;
+            $('#modalDirTel').text(telTxt);
+
+            if (emp.correo) {
+                $('#modalDirCorreo').text(emp.correo).attr('href', 'mailto:' + emp.correo);
+            } else {
+                $('#modalDirCorreo').text('—').attr('href', '#');
+            }
+            $('#modalDirectorio').modal('show');
+        }
+
+        $(document).on('click', '.directorio-card', function () {
+            abrirModalDirectorio($(this).data('noemp'));
+        });
+
+        $(document).on('input', '#directorioBuscar', function () {
+            if (!directorioCache) return;
+            var q = $(this).val().toLowerCase().trim();
+            if (!q) { renderDirectorio(directorioCache); return; }
+            var filtrado = directorioCache.filter(function (e) {
+                return (e.nombre  || '').toLowerCase().indexOf(q) !== -1
+                    || (e.area    || '').toLowerCase().indexOf(q) !== -1
+                    || (e.nave    || '').toLowerCase().indexOf(q) !== -1
+                    || (e.puesto  || '').toLowerCase().indexOf(q) !== -1
+                    || (e.correo  || '').toLowerCase().indexOf(q) !== -1
+                    || String(e.noEmpleado || '').indexOf(q) !== -1;
+            });
+            renderDirectorio(filtrado);
+        });
+
+        // Soltar el foco antes del cierre para evitar el warning de aria-hidden en Chrome.
+        $('#modalDirectorio').on('hide.bs.modal', function () {
+            if (document.activeElement) document.activeElement.blur();
+        });
+
+        // Carga lazy: la primera vez que se abre el tab.
+        $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
     </script>
 </body>
 
