@@ -1,20 +1,22 @@
 <?php
-    session_start();
-    include '../ControlVehicular/conn.php';
-    if(empty($_COOKIE['noEmpleadoL'])){
-        echo '<script>window.location.assign("index.php")</script>';
-        exit;
-    }
-    $empleadosAdmin = [276, 403, 569, 523, 183];
-    $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosAdmin);
+session_start();
+include '../ControlVehicular/conn.php';
+if (empty($_COOKIE['noEmpleadoL'])) {
+    echo '<script>window.location.assign("index.php")</script>';
+    exit;
+}
+$empleadosAdmin = [276, 403, 569, 523, 183];
+$esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosAdmin);
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>MESS - Panel de Usuario</title>
+    <title>Messbook - Panel de Usuario</title>
+    <link rel="icon" type="image/png" href="../loginMaster/img/fav.png">
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
@@ -33,10 +35,11 @@
             --warning: #e2d522;
             --info: #484cac;
             --danger: #dc3545;
-            --shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+            --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
             --tab-active: #1c83f1;
             --tab-inactive: #e9ecef;
         }
+
         body.theme-dark {
             --bg: #0b1220;
             --card-bg: #121a2b;
@@ -50,15 +53,24 @@
             --warning: #d4b834;
             --info: #6b71d4;
             --danger: #ef4f5e;
-            --shadow: 0 0.5rem 1.25rem rgba(0,0,0,0.45);
+            --shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.45);
             --tab-active: #4dabff;
             --tab-inactive: #1a2438;
         }
-        body { background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: background .2s, color .2s;
+        }
+
         /* Wrapper de sb-admin-2 — su default es #f8f9fc, hay que apagarlo en oscuro */
         body.theme-dark #wrapper,
         body.theme-dark #wrapper #content-wrapper,
-        body.theme-dark #wrapper #content-wrapper #content { background-color: var(--bg) !important; }
+        body.theme-dark #wrapper #content-wrapper #content {
+            background-color: var(--bg) !important;
+        }
+
         body.theme-dark .card,
         body.theme-dark .modal-content,
         body.theme-dark .list-group-item,
@@ -68,33 +80,92 @@
             color: var(--text);
             border-color: var(--border);
         }
-        body.theme-dark .text-muted { color: var(--text-muted) !important; }
-        body.theme-dark .table { color: var(--text); }
-        body.theme-dark .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255,255,255,0.03); }
+
+        body.theme-dark .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        body.theme-dark .table {
+            color: var(--text);
+        }
+
+        body.theme-dark .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
         /* Encabezado / navbar topbar — override del bg-white */
         body.theme-dark .navbar,
         body.theme-dark nav.navbar-light,
         body.theme-dark .navbar.static-top,
         body.theme-dark .bg-white,
-        body.theme-dark .sticky-footer.bg-white { background-color: var(--card-bg) !important; border-color: var(--border) !important; }
-        body.theme-dark .navbar.shadow { box-shadow: 0 .25rem .75rem rgba(0,0,0,.35) !important; }
+        body.theme-dark .sticky-footer.bg-white {
+            background-color: var(--card-bg) !important;
+            border-color: var(--border) !important;
+        }
+
+        body.theme-dark .navbar.shadow {
+            box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .35) !important;
+        }
+
         body.theme-dark .navbar .text-gray-600,
         body.theme-dark .navbar-light .navbar-nav .nav-link,
-        body.theme-dark .navbar .nav-link { color: var(--text) !important; }
-        body.theme-dark .dropdown-menu { background-color: var(--card-bg); border-color: var(--border); }
-        body.theme-dark .dropdown-item { color: var(--text); }
-        body.theme-dark .dropdown-item:hover { background-color: var(--card-soft); color: var(--text); }
-        body.theme-dark .close { color: var(--text); text-shadow: none; }
-        body.theme-dark .modal-header, body.theme-dark .modal-footer { border-color: var(--border); }
-        body.theme-dark .alert-info { background: var(--accent-soft); color: var(--text); border-color: var(--border); }
-        body.theme-dark .alert-primary { background: var(--accent-soft); color: var(--text); border-color: var(--border); }
-        body.theme-dark .form-control:focus { background-color: var(--card-soft); color: var(--text); border-color: var(--accent); }
+        body.theme-dark .navbar .nav-link {
+            color: var(--text) !important;
+        }
+
+        body.theme-dark .dropdown-menu {
+            background-color: var(--card-bg);
+            border-color: var(--border);
+        }
+
+        body.theme-dark .dropdown-item {
+            color: var(--text);
+        }
+
+        body.theme-dark .dropdown-item:hover {
+            background-color: var(--card-soft);
+            color: var(--text);
+        }
+
+        body.theme-dark .close {
+            color: var(--text);
+            text-shadow: none;
+        }
+
+        body.theme-dark .modal-header,
+        body.theme-dark .modal-footer {
+            border-color: var(--border);
+        }
+
+        body.theme-dark .alert-info {
+            background: var(--accent-soft);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        body.theme-dark .alert-primary {
+            background: var(--accent-soft);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        body.theme-dark .form-control:focus {
+            background-color: var(--card-soft);
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
         /* Indicador "días disp / solicitados" del card Mis Vacaciones: blanco en modo oscuro */
         body.theme-dark #diasDispPanel,
         body.theme-dark #diasSolPanel,
-        body.theme-dark #diasDispPanel ~ *,
-        body.theme-dark .card-header .text-dark { color: #fff !important; }
-        body.theme-dark .card-header .text-muted { color: rgba(255,255,255,0.75) !important; }
+        body.theme-dark #diasDispPanel~*,
+        body.theme-dark .card-header .text-dark {
+            color: #fff !important;
+        }
+
+        body.theme-dark .card-header .text-muted {
+            color: rgba(255, 255, 255, 0.75) !important;
+        }
 
         .profile-card {
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
@@ -105,7 +176,11 @@
             margin-bottom: 1rem;
             border: 1px solid var(--border);
         }
-        .profile-card h4 { color: #fff !important; }
+
+        .profile-card h4 {
+            color: #fff !important;
+        }
+
         .profile-card .text-muted,
         .profile-card small.text-muted { color: rgba(255,255,255,0.75) !important; }
         .profile-card .list-group-item { color: #fff; }
@@ -133,6 +208,7 @@
             margin: 0 auto 0.75rem;
             border: 2px solid var(--border);
         }
+
         .stat-box {
             border-radius: 0.5rem;
             padding: 0.5rem;
@@ -140,6 +216,60 @@
             background: var(--card-soft);
             text-align: center;
             border: 1px solid var(--border);
+        }
+
+        .stat-box h4,
+        .stat-box h5,
+        .stat-box h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .stat-box p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .stat-box.is-success {
+            background: var(--success);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .stat-box.is-info {
+            background: var(--info);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .stat-box.is-warning {
+            background: var(--warning);
+            color: #222;
+            border-color: transparent;
+        }
+
+        .stat-box.is-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .stat-box.is-accent {
+            background: var(--accent);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .stat-box.is-success p,
+        .stat-box.is-info p,
+        .stat-box.is-danger p,
+        .stat-box.is-accent p {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .stat-box.is-warning p {
+            color: rgba(0, 0, 0, 0.7);
         }
         .stat-box h4, .stat-box h5, .stat-box h6 { margin: 0; font-weight: 600; }
         .stat-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
@@ -150,14 +280,17 @@
             transition: box-shadow .2s, transform .15s;
             background: var(--card-bg);
         }
+
         .card-action:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
         }
+
         .card-action .btn-outline-primary {
             border-color: var(--border);
             color: var(--text);
         }
+
         .card-action .btn-outline-primary:hover {
             background-color: var(--accent);
             color: #fff;
@@ -168,6 +301,7 @@
             border-bottom: 2px solid var(--border);
             margin-bottom: 1.25rem;
         }
+
         .nav-tabs-main .nav-link {
             border: none;
             border-radius: 0.5rem 0.5rem 0 0;
@@ -176,12 +310,17 @@
             font-weight: 600;
             position: relative;
         }
-        .nav-tabs-main .nav-link:hover { color: var(--accent); }
+
+        .nav-tabs-main .nav-link:hover {
+            color: var(--accent);
+        }
+
         .nav-tabs-main .nav-link.active {
             color: var(--tab-active);
             background: var(--card-bg);
             border-bottom: 3px solid var(--tab-active);
         }
+
         .nav-tabs-main .nav-link .tab-badge {
             position: absolute;
             top: 2px;
@@ -198,7 +337,10 @@
             text-align: center;
             display: none;
         }
-        .nav-tabs-main .nav-link.has-alert .tab-badge { display: inline-block; }
+
+        .nav-tabs-main .nav-link.has-alert .tab-badge {
+            display: inline-block;
+        }
 
         /* Semáforo de estatus general (Vehículo / Expediente). */
         .nav-tabs-main .nav-link .tab-status {
@@ -236,66 +378,167 @@
             margin-bottom: 0.5rem;
             user-select: none;
         }
-        .theme-toggle .sun, .theme-toggle .moon { color: var(--text-muted); font-size: 1rem; }
-        body.theme-light .theme-toggle .sun  { color: #f0a500; }
-        body.theme-dark  .theme-toggle .moon { color: #c5d4ee; }
-        .theme-toggle .switch {
-            width: 40px; height: 22px; background: var(--border); border-radius: 999px;
-            position: relative; transition: background .2s; flex: 0 0 auto;
-        }
-        .theme-toggle .switch::after {
-            content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
-            background: #fff; border-radius: 50%; transition: transform .2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        body.theme-dark .theme-toggle .switch { background: var(--accent); }
-        body.theme-dark .theme-toggle .switch::after { transform: translateX(18px); }
 
-        .fc .fc-list-event-title { font-weight: 600; }
+        .theme-toggle .sun,
+        .theme-toggle .moon {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        body.theme-light .theme-toggle .sun {
+            color: #f0a500;
+        }
+
+        body.theme-dark .theme-toggle .moon {
+            color: #c5d4ee;
+        }
+
+        .theme-toggle .switch {
+            width: 40px;
+            height: 22px;
+            background: var(--border);
+            border-radius: 999px;
+            position: relative;
+            transition: background .2s;
+            flex: 0 0 auto;
+        }
+
+        .theme-toggle .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform .2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        body.theme-dark .theme-toggle .switch {
+            background: var(--accent);
+        }
+
+        body.theme-dark .theme-toggle .switch::after {
+            transform: translateX(18px);
+        }
+
+        .fc .fc-list-event-title {
+            font-weight: 600;
+        }
+
         body.theme-dark .fc-theme-standard td,
         body.theme-dark .fc-theme-standard th,
-        body.theme-dark .fc-theme-standard .fc-scrollgrid { border-color: var(--border); }
+        body.theme-dark .fc-theme-standard .fc-scrollgrid {
+            border-color: var(--border);
+        }
+
         body.theme-dark .fc .fc-list-day-cushion,
-        body.theme-dark .fc .fc-list-empty { background: var(--card-soft); color: var(--text); }
-        body.theme-dark .fc-list-event:hover td { background: var(--card-soft); }
-        body.theme-dark .fc-col-header-cell { background: var(--card-soft); }
+        body.theme-dark .fc .fc-list-empty {
+            background: var(--card-soft);
+            color: var(--text);
+        }
+
+        body.theme-dark .fc-list-event:hover td {
+            background: var(--card-soft);
+        }
+
+        body.theme-dark .fc-col-header-cell {
+            background: var(--card-soft);
+        }
 
         #encuestasAsigandas .btn-outline-primary {
             border-width: 1px;
             border-color: var(--border);
             color: var(--accent);
         }
+
         #encuestasAsigandas .btn-outline-primary:hover {
             background-color: var(--accent-soft);
             border-color: var(--accent);
             color: var(--accent);
         }
 
-        .expediente-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.75rem; }
-        .expediente-card .card-header {
-            background: var(--card-soft); border-bottom: 1px solid var(--border);
-            font-weight: 600; color: var(--text);
+        .expediente-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
         }
-        .expediente-table td, .expediente-table th { border-color: var(--border); vertical-align: middle; }
-        .status-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:.5rem; }
-        .status-dot.ok      { background: var(--success); }
-        .status-dot.warn    { background: var(--warning); }
-        .status-dot.danger  { background: var(--danger);  }
-        .sin-registro { color: var(--danger); font-weight: 600; }
+
+        .expediente-card .card-header {
+            background: var(--card-soft);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .expediente-table td,
+        .expediente-table th {
+            border-color: var(--border);
+            vertical-align: middle;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: .5rem;
+        }
+
+        .status-dot.ok {
+            background: var(--success);
+        }
+
+        .status-dot.warn {
+            background: var(--warning);
+        }
+
+        .status-dot.danger {
+            background: var(--danger);
+        }
+
+        .sin-registro {
+            color: var(--danger);
+            font-weight: 600;
+        }
 
         .notif-panel {
-            background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.75rem;
-            padding: 1rem; min-height: 400px; max-height: 600px; overflow-y: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
         }
+
         .notif-item {
-            padding: 0.75rem; border-bottom: 1px solid var(--border);
-            display: flex; gap: 0.75rem; align-items: flex-start;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
         }
-        .notif-item:last-child { border-bottom: none; }
-        .notif-item .notif-icon { color: var(--accent); font-size: 1.25rem; }
-        .notif-empty { text-align: center; color: var(--text-muted); padding: 2rem 0; }
+
+        .notif-item:last-child {
+            border-bottom: none;
+        }
+
+        .notif-item .notif-icon {
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+
+        .notif-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem 0;
+        }
     </style>
 </head>
+
 <body id="page-top" class="theme-light">
     <div id="wrapper">
         <div id="content-wrapper" class="d-flex flex-column">
@@ -361,27 +604,27 @@
 
                                 <!-- Botones administrativos (solo empleados permitidos) -->
                                 <?php if ($esAdmin): ?>
-                                <div class="mt-3">
-                                    <div class="btn-group btn-group-sm w-100 mb-2" role="group">
-                                        <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
-                                            <i class="fas fa-plus-circle"></i> Evento
-                                        </button>
-                                        <button type="button" class="btn btn-outline-info" onclick="cargarListaEventos()">
-                                            <i class="fas fa-list"></i> Lista
-                                        </button>
+                                    <div class="mt-3">
+                                        <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                                            <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
+                                                <i class="fas fa-plus-circle"></i> Evento
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="cargarListaEventos()">
+                                                <i class="fas fa-list"></i> Lista
+                                            </button>
+                                        </div>
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalRegistrosAsistencia" onclick="abrirModalRegistrosAsistencia('', '')">
+                                                <i class="fas fa-users"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalAccesosEspeciales">
+                                                <i class="fas fa-user-shield"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#modalAccesoSistemas">
+                                                <i class="fas fa-desktop"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="btn-group btn-group-sm w-100" role="group">
-                                        <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalRegistrosAsistencia" onclick="abrirModalRegistrosAsistencia('', '')">
-                                            <i class="fas fa-users"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalAccesosEspeciales">
-                                            <i class="fas fa-user-shield"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#modalAccesoSistemas">
-                                            <i class="fas fa-desktop"></i>
-                                        </button>
-                                    </div>
-                                </div>
                                 <?php endif; ?>
 
                                 <!-- Botones acción -->
@@ -710,10 +953,10 @@
                                                             <div class="btn-group btn-group-sm" role="group">
                                                                 <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar</button>
                                                                 <?php
-                                                                    $usuariosRegistran = array(183, 276, 523, 403);
-                                                                    if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                                                                        echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
-                                                                    }
+                                                                $usuariosRegistran = array(183, 276, 523, 403);
+                                                                if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                                                                    echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
+                                                                }
                                                                 ?>
                                                             </div>
                                                         </div>
@@ -738,10 +981,22 @@
                                                 <div class="card-body p-0">
                                                     <table class="table table-sm mb-0 expediente-table">
                                                         <tbody>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 1</td><td class="text-end">2026-04-01</td></tr>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 2</td><td class="text-end">2025-02-22</td></tr>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 3</td><td class="text-end">2026-05-03</td></tr>
-                                                            <tr><td><span class="status-dot danger"></span>Archivo 4</td><td class="text-end sin-registro">Sin Registro</td></tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
+                                                                <td class="text-end">2026-04-01</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
+                                                                <td class="text-end">2025-02-22</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 3</td>
+                                                                <td class="text-end">2026-05-03</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot danger"></span>Archivo 4</td>
+                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                            </tr>
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -754,10 +1009,22 @@
                                                 <div class="card-body p-0">
                                                     <table class="table table-sm mb-0 expediente-table">
                                                         <tbody>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 1</td><td class="text-end">2026-04-01</td></tr>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 2</td><td class="text-end">2025-02-22</td></tr>
-                                                            <tr><td><span class="status-dot danger"></span>Archivo 3</td><td class="text-end sin-registro">Sin Registro</td></tr>
-                                                            <tr><td><span class="status-dot danger"></span>Archivo 4</td><td class="text-end sin-registro">Sin Registro</td></tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
+                                                                <td class="text-end">2026-04-01</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
+                                                                <td class="text-end">2025-02-22</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot danger"></span>Archivo 3</td>
+                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot danger"></span>Archivo 4</td>
+                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                            </tr>
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -770,10 +1037,22 @@
                                                 <div class="card-body p-0">
                                                     <table class="table table-sm mb-0 expediente-table">
                                                         <tbody>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 1</td><td class="text-end">2026-04-01</td></tr>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 2</td><td class="text-end">2025-02-22</td></tr>
-                                                            <tr><td><span class="status-dot ok"></span>Archivo 3</td><td class="text-end">2026-05-03</td></tr>
-                                                            <tr><td><span class="status-dot warn"></span>Archivo 4</td><td class="text-end">2024-01-01</td></tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
+                                                                <td class="text-end">2026-04-01</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
+                                                                <td class="text-end">2025-02-22</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 3</td>
+                                                                <td class="text-end">2026-05-03</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot warn"></span>Archivo 4</td>
+                                                                <td class="text-end">2024-01-01</td>
+                                                            </tr>
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -828,9 +1107,67 @@
                                     </div>
                                 </div>
 
-                                <!-- ===== TAB 6: KPI'S (vacío - pendiente de contenido) ===== -->
+                                <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
+
+                                    <style>
+                                        /* Solo afecta a este tab */
+                                        #tabKpis {
+                                            padding: 0 !important;
+                                        }
+
+                                        #tabKpis #frameKPIs {
+                                            padding: 0 !important;
+                                            margin: 0 !important;
+                                        }
+
+                                        /* Mata el py-5 de Bootstrap que mete 3rem de padding */
+                                        #tabKpis .py-5 {
+                                            padding-top: 0 !important;
+                                            padding-bottom: 0 !important;
+                                        }
+
+                                        /* Quita margin del spinner si aparece */
+                                        #tabKpis .text-center {
+                                            margin: 0 !important;
+                                        }
+
+                                        #tabKpis .mb-2 {
+                                            margin-bottom: 0 !important;
+                                        }
+
+                                        /* El iframe ocupa todo sin espacio arriba */
+                                        #tabKpis iframe {
+                                            display: block !important;
+                                            width: 100% !important;
+                                            height: calc(100vh - 140px) !important;
+                                            /* Ajusta 140px según altura de tu header de tabs */
+                                            border: none !important;
+                                            margin: 0 !important;
+                                        }
+                                    </style>
+
+                                    <div id="frameKPIs">
+                                        <div class="text-center text-muted py-5">
+                                            <?php
+                                            $passkpis = isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '';
+                                            ?>
+                                            <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo $passkpis; ?>" title="KPIs"></iframe>
+                                        </div>
+                                    </div>
                                 </div>
+
+
+
+
+
+
+
+
+
+
+
+
                             </div>
                         </div>
                     </div>
@@ -913,9 +1250,9 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-primary" onclick="BuzonSugerencias()">Enviar</button>
                         <?php
-                            if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                                echo '<button onclick="verBuzon()" type="button" class="btn btn-info">Ver Sugerencias</button>';
-                            }
+                        if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                            echo '<button onclick="verBuzon()" type="button" class="btn btn-info">Ver Sugerencias</button>';
+                        }
                         ?>
                     </div>
                 </div>
@@ -947,7 +1284,11 @@
                             <table id="TotalTallas" class="table table-striped">
                                 <button id="descargarExcelT" class="btn btn-success" onClick="descargarExcel('TotalTallas')">Descargar Excel</button>
                                 <thead>
-                                    <tr><th>No. Empleado</th><th>Talla</th><th>Sexo</th></tr>
+                                    <tr>
+                                        <th>No. Empleado</th>
+                                        <th>Talla</th>
+                                        <th>Sexo</th>
+                                    </tr>
                                 </thead>
                                 <tbody></tbody>
                             </table>
@@ -956,7 +1297,11 @@
                             <button id="descargarExcelR" class="btn btn-success" onClick="descargarExcel('TotalTallasRegistradas')">Descargar Excel</button>
                             <table id="TotalTallasRegistradas" class="table table-striped">
                                 <thead>
-                                    <tr><th>Talla</th><th>Sexo</th><th>Cantidad</th></tr>
+                                    <tr>
+                                        <th>Talla</th>
+                                        <th>Sexo</th>
+                                        <th>Cantidad</th>
+                                    </tr>
                                 </thead>
                                 <tbody></tbody>
                             </table>
@@ -981,7 +1326,12 @@
                     <table id="TablaSugerencias" class="table table-striped">
                         <button id="descargarExcelS" class="btn btn-success" onClick="descargarExcel('TablaSugerencias')">Descargar Excel</button>
                         <thead>
-                            <tr><th>Empleado</th><th>Tipo</th><th>Comentario</th><th>Fecha</th></tr>
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Tipo</th>
+                                <th>Comentario</th>
+                                <th>Fecha</th>
+                            </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -1027,17 +1377,17 @@
         // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total} } }
         var vehiculosEstado = {};
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             // ===== Tema claro/oscuro =====
             const guardado = localStorage.getItem('mess_theme');
-            if (guardado === 'dark') document.body.classList.replace('theme-light','theme-dark');
-            document.getElementById('themeToggle').addEventListener('click', function(){
+            if (guardado === 'dark') document.body.classList.replace('theme-light', 'theme-dark');
+            document.getElementById('themeToggle').addEventListener('click', function() {
                 if (document.body.classList.contains('theme-dark')) {
-                    document.body.classList.replace('theme-dark','theme-light');
-                    localStorage.setItem('mess_theme','light');
+                    document.body.classList.replace('theme-dark', 'theme-light');
+                    localStorage.setItem('mess_theme', 'light');
                 } else {
-                    document.body.classList.replace('theme-light','theme-dark');
-                    localStorage.setItem('mess_theme','dark');
+                    document.body.classList.replace('theme-light', 'theme-dark');
+                    localStorage.setItem('mess_theme', 'dark');
                 }
                 // Re-renderizar calendarios si están activos para refrescar colores
                 if (calendarSalaJuntas) calendarSalaJuntas.render();
@@ -1055,29 +1405,29 @@
             cargarVehiculosDocs();
 
             // Asignar cookies a campos hidden
-            const idU   = getCookie('id_usuarioL');
-            const nomU  = getCookie('nombredelusuarioL');
+            const idU = getCookie('id_usuarioL');
+            const nomU = getCookie('nombredelusuarioL');
             const noEmp = getCookie('noEmpleadoL');
-            const corU  = getCookie('correoL');
+            const corU = getCookie('correoL');
 
             const sets = [
-                ['id_usuario','nombredelusuario','noEmpleado','correo'],
-                ['id_usuarioCV','nombredelusuarioCV','noEmpleadoCV','correoCV'],
-                ['id_usuarioHR','nombredelusuarioHR','noEmpleadoHR','correoHR'],
-                ['id_usuarioI','nombredelusuarioI','noEmpleadoI','correoI'],
-                ['id_usuarioPla','nombredelusuarioPla','noEmpleadoPla','correoPla'],
-                ['id_usuarioPlaEnt','nombredelusuarioPlaEnt','noEmpleadoPlaEnt','correoPlaEnt'],
-                ['id_usuarioSJ','nombredelusuarioSJ','noEmpleadoSJ','correoSJ'],
-                ['id_usuarioAC','nombredelusuarioAC','noEmpleadoAC','correoAC'],
-                ['id_usuarioPRACT','nombredelusuarioPRACT','noEmpleadoPRACT','correoPRACT'],
-                ['id_usuarioSGC','nombredelusuarioSGC','noEmpleadoSGC','correoSGC']
+                ['id_usuario', 'nombredelusuario', 'noEmpleado', 'correo'],
+                ['id_usuarioCV', 'nombredelusuarioCV', 'noEmpleadoCV', 'correoCV'],
+                ['id_usuarioHR', 'nombredelusuarioHR', 'noEmpleadoHR', 'correoHR'],
+                ['id_usuarioI', 'nombredelusuarioI', 'noEmpleadoI', 'correoI'],
+                ['id_usuarioPla', 'nombredelusuarioPla', 'noEmpleadoPla', 'correoPla'],
+                ['id_usuarioPlaEnt', 'nombredelusuarioPlaEnt', 'noEmpleadoPlaEnt', 'correoPlaEnt'],
+                ['id_usuarioSJ', 'nombredelusuarioSJ', 'noEmpleadoSJ', 'correoSJ'],
+                ['id_usuarioAC', 'nombredelusuarioAC', 'noEmpleadoAC', 'correoAC'],
+                ['id_usuarioPRACT', 'nombredelusuarioPRACT', 'noEmpleadoPRACT', 'correoPRACT'],
+                ['id_usuarioSGC', 'nombredelusuarioSGC', 'noEmpleadoSGC', 'correoSGC']
             ];
-            sets.forEach(function(s){
-                const [a,b,c,d] = s;
-                if(document.getElementById(a)) document.getElementById(a).value = idU;
-                if(document.getElementById(b)) document.getElementById(b).value = nomU;
-                if(document.getElementById(c)) document.getElementById(c).value = noEmp;
-                if(document.getElementById(d)) document.getElementById(d).value = corU;
+            sets.forEach(function(s) {
+                const [a, b, c, d] = s;
+                if (document.getElementById(a)) document.getElementById(a).value = idU;
+                if (document.getElementById(b)) document.getElementById(b).value = nomU;
+                if (document.getElementById(c)) document.getElementById(c).value = noEmp;
+                if (document.getElementById(d)) document.getElementById(d).value = corU;
             });
             if (document.getElementById('noEmpleadoT')) document.getElementById('noEmpleadoT').value = noEmp;
 
@@ -1093,7 +1443,9 @@
 
             // Notificaciones
             cargarNotificaciones(false);
-            setInterval(function(){ cargarNotificaciones(false); }, 5400000); // 1.5h
+            setInterval(function() {
+                cargarNotificaciones(false);
+            }, 5400000); // 1.5h
 
             // Sincronizar el conteo de notificaciones con el badge del tab Avisos.
             // Observa cambios en #badgeNotificaciones (que actualiza funcionesGlobales.js)
@@ -1118,26 +1470,33 @@
 
                 sync(); // Estado inicial
                 var obs = new MutationObserver(sync);
-                obs.observe($src[0], { childList: true, characterData: true, subtree: true });
+                obs.observe($src[0], {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                });
             })();
 
             // Calendario de Sala de Juntas: lazy-init al mostrar el tab
             // (FullCalendar mide 0px si se crea con el contenedor en display:none)
-            $('#tabAgenda-tab').on('shown.bs.tab', function(){
+            $('#tabAgenda-tab').on('shown.bs.tab', function() {
                 if (!calendarSalaJuntas) {
                     initCalendarSalaJuntas();
                 } else {
-                    setTimeout(function(){ calendarSalaJuntas.updateSize(); calendarSalaJuntas.refetchEvents(); }, 50);
+                    setTimeout(function() {
+                        calendarSalaJuntas.updateSize();
+                        calendarSalaJuntas.refetchEvents();
+                    }, 50);
                 }
             });
-            $('#tabPersonal-tab').on('shown.bs.tab', function(){
+            $('#tabPersonal-tab').on('shown.bs.tab', function() {
                 if (!calendarVacaciones) initCalendarVacaciones();
-                setTimeout(function(){
+                setTimeout(function() {
                     if (calendarVacaciones) calendarVacaciones.updateSize();
                 }, 50);
                 cargarPanelNotificaciones();
             });
-            $('#tabVehiculo-tab').on('shown.bs.tab', function(){
+            $('#tabVehiculo-tab').on('shown.bs.tab', function() {
                 if (!vehiculosDocsCargados) cargarVehiculosDocs();
             });
         });
@@ -1157,26 +1516,48 @@
             var descripcion = document.getElementById('lugarSJ_descripcion').value;
 
             if (!finicio || !ffin || !descripcion) {
-                Swal.fire({ icon: 'warning', title: 'Faltan datos', text: 'Completa fecha inicio, fin y motivo.' });
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Faltan datos',
+                    text: 'Completa fecha inicio, fin y motivo.'
+                });
                 return;
             }
             syncCookieNoEmpleado();
 
             $.ajax({
                 url: '../incidencias/SalaDeJuntas/acciones_agendarSala.php',
-                type: 'POST', dataType: 'json',
-                data: { finicio: finicio, ffin: ffin, descripcion: descripcion, accion: 'verificaReserva' },
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    finicio: finicio,
+                    ffin: ffin,
+                    descripcion: descripcion,
+                    accion: 'verificaReserva'
+                },
                 success: function(resp) {
                     if (resp && resp.success === false && finicio >= ffin) {
-                        Swal.fire({ icon: 'warning', title: 'Revisa las fechas', text: 'La hora de inicio debe ser anterior a la de fin.' });
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Revisa las fechas',
+                            text: 'La hora de inicio debe ser anterior a la de fin.'
+                        });
                     } else if (resp && resp.success === false) {
-                        Swal.fire({ icon: 'warning', title: 'Conflicto de horario', text: 'Ya existe una reserva en este horario.' });
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Conflicto de horario',
+                            text: 'Ya existe una reserva en este horario.'
+                        });
                     } else {
                         generarSolicitudSJ(finicio, ffin, descripcion);
                     }
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo verificar la reserva.' });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo verificar la reserva.'
+                    });
                 }
             });
         }
@@ -1185,16 +1566,29 @@
         function generarSolicitudSJ(finicio, ffin, descripcion) {
             $.ajax({
                 url: '../incidencias/SalaDeJuntas/acciones_agendarSala.php',
-                type: 'POST', dataType: 'json',
-                data: { finicio: finicio, ffin: ffin, descripcion: descripcion, accion: 'agregaSolicitud' },
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    finicio: finicio,
+                    ffin: ffin,
+                    descripcion: descripcion,
+                    accion: 'agregaSolicitud'
+                },
                 success: function() {
-                    Swal.fire({ icon: 'success', title: 'Reserva registrada' });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reserva registrada'
+                    });
                     $('#modalRegistrarLugarSJ').modal('hide');
                     $('#formRegistrarLugarSJ')[0].reset();
                     if (calendarSalaJuntas) calendarSalaJuntas.refetchEvents();
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo registrar la reserva.' });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo registrar la reserva.'
+                    });
                 }
             });
         }
@@ -1215,17 +1609,19 @@
                 eventContent: function(info) {
                     var nombreEmpleado = info.event.title;
                     var descripcion = info.event.extendedProps.descripcion || 'Sin descripción';
-                    var idUsuario   = parseInt(info.event.extendedProps.id_usuario, 10) || 0;
-                    var idReserva   = parseInt(info.event.id, 10) || 0;
+                    var idUsuario = parseInt(info.event.extendedProps.id_usuario, 10) || 0;
+                    var idReserva = parseInt(info.event.id, 10) || 0;
 
                     var html = '<div>' + nombreEmpleado + '<br>' + descripcion + '</div>';
                     if (miNoEmp > 0 && idUsuario === miNoEmp && idReserva > 0) {
-                        html += '<button type="button" class="btn btn-sm btn-outline-danger mt-1 py-0 px-2" '
-                              + 'style="font-size:.7rem;" '
-                              + 'onclick="cancelarReservaSJ(' + idReserva + ', event)">'
-                              + '<i class="fas fa-times mr-1"></i>Cancelar</button>';
+                        html += '<button type="button" class="btn btn-sm btn-outline-danger mt-1 py-0 px-2" ' +
+                            'style="font-size:.7rem;" ' +
+                            'onclick="cancelarReservaSJ(' + idReserva + ', event)">' +
+                            '<i class="fas fa-times mr-1"></i>Cancelar</button>';
                     }
-                    return { html: html };
+                    return {
+                        html: html
+                    };
                 }
             });
             calendarSalaJuntas.render();
@@ -1249,13 +1645,26 @@
                 syncCookieNoEmpleado();
                 $.ajax({
                     url: '../incidencias/SalaDeJuntas/acciones_agendarSala.php',
-                    type: 'POST', dataType: 'json',
-                    data: { accion: 'eliminaSolicitud', id: idReserva }
-                }).done(function(){
-                    Swal.fire({ icon: 'success', title: 'Reserva cancelada', timer: 1600, showConfirmButton: false });
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        accion: 'eliminaSolicitud',
+                        id: idReserva
+                    }
+                }).done(function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reserva cancelada',
+                        timer: 1600,
+                        showConfirmButton: false
+                    });
                     if (calendarSalaJuntas) calendarSalaJuntas.refetchEvents();
-                }).fail(function(){
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cancelar la reserva.' });
+                }).fail(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo cancelar la reserva.'
+                    });
                 });
             });
         }
@@ -1269,9 +1678,12 @@
                 initialView: 'dayGridMonth',
                 locale: 'es',
                 height: 500,
-                headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,listMonth' },
-                eventSources: [
-                    {
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                eventSources: [{
                         id: 'propias',
                         color: '#050D9E',
                         borderColor: '#050D9E',
@@ -1279,11 +1691,17 @@
                         events: function(info, successCallback) {
                             $.ajax({
                                 url: '../incidencias/acciones_calendario.php',
-                                type: 'GET', dataType: 'json',
-                                data: { opcion: 'rrhh', ing: noEmp }
-                            }).done(function(resp){
+                                type: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    opcion: 'rrhh',
+                                    ing: noEmp
+                                }
+                            }).done(function(resp) {
                                 successCallback(Array.isArray(resp) ? resp : []);
-                            }).fail(function(){ successCallback([]); });
+                            }).fail(function() {
+                                successCallback([]);
+                            });
                         }
                     },
                     {
@@ -1293,15 +1711,23 @@
                         borderColor: '#F5A623',
                         textColor: '#ffffff',
                         events: function(info, successCallback) {
-                            if (!esJefeActual) { successCallback([]); return; }
+                            if (!esJefeActual) {
+                                successCallback([]);
+                                return;
+                            }
                             syncCookieNoEmpleado();
                             $.ajax({
                                 url: '../incidencias/acciones_calendario.php',
-                                type: 'GET', dataType: 'json',
-                                data: { opcion: 'jefes' }
-                            }).done(function(resp){
+                                type: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    opcion: 'jefes'
+                                }
+                            }).done(function(resp) {
                                 successCallback(Array.isArray(resp) ? resp : []);
-                            }).fail(function(){ successCallback([]); });
+                            }).fail(function() {
+                                successCallback([]);
+                            });
                         }
                     },
                     {
@@ -1311,15 +1737,23 @@
                         borderColor: '#F5A623',
                         textColor: '#ffffff',
                         events: function(info, successCallback) {
-                            if (esJefeActual) { successCallback([]); return; }
+                            if (esJefeActual) {
+                                successCallback([]);
+                                return;
+                            }
                             syncCookieNoEmpleado();
                             $.ajax({
                                 url: '../incidencias/acciones_calendario.php',
-                                type: 'GET', dataType: 'json',
-                                data: { opcion: 'departamento' }
-                            }).done(function(resp){
+                                type: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    opcion: 'departamento'
+                                }
+                            }).done(function(resp) {
                                 successCallback(Array.isArray(resp) ? resp : []);
-                            }).fail(function(){ successCallback([]); });
+                            }).fail(function() {
+                                successCallback([]);
+                            });
                         }
                     }
                 ]
@@ -1331,7 +1765,7 @@
             // Usamos el ID del empleado (debería venir de tu sesión de PHP)
             const id_empleado = <?php echo $_COOKIE['noEmpleadoL']; ?>;
 
-        $.post('acciones_eventos.php', {
+            $.post('acciones_eventos.php', {
                 accion: 'listar_mis_actividades_completas',
                 id_empleado: id_empleado
             }, function(data) {
@@ -1344,8 +1778,8 @@
                         let completado = (ev.tipo === 'asistencia') ? (ev.asignado_confirmado == 1) : (ev.respondido > 0);
 
                         let icono = 'fa-poll';
-                        if(ev.tipo === 'asistencia') icono = 'fa-check-square';
-                        if(ev.tipo === 'votacion') icono = 'fa-heart';
+                        if (ev.tipo === 'asistencia') icono = 'fa-check-square';
+                        if (ev.tipo === 'votacion') icono = 'fa-heart';
 
                         if (completado) {
                             // DISEÑO PARA COMPLETADAS (Deshabilitado y Verde)
@@ -1392,9 +1826,11 @@
             $.ajax({
                 url: 'acciones_globales.php',
                 method: 'POST',
-                data: { accion: 'cargarNotificaciones' },
+                data: {
+                    accion: 'cargarNotificaciones'
+                },
                 dataType: 'json'
-            }).done(function(resp){
+            }).done(function(resp) {
                 if (!resp || !resp.success) {
                     $panel.html('<div class="notif-empty"><i class="fas fa-exclamation-circle fa-2x mb-2 d-block"></i>No se pudieron cargar las notificaciones</div>');
                     return;
@@ -1409,16 +1845,16 @@
 
                 var noEmpleadoL = getCookie('noEmpleadoL') || '';
                 var html = '';
-                lista.forEach(function(n){
-                    var id          = parseInt(n.id, 10) || 0;
-                    var idRegistro  = parseInt(n.id_registro_referencia, 10) || 0;
-                    var sistema     = escapeHtml(n.sistema || 'General');
-                    var archivo     = escapeHtml(n.archivo || '');
-                    var fecha       = escapeHtml(n.fecha_actualizacion || n.fecha || '');
-                    var titulo      = escapeHtml(n.recordar || n.accion || 'Notificación');
-                    var creadoPor   = escapeHtml(n.usuario_actualiza_nombre || '');
-                    var nota        = escapeHtml(n.nota || '');
-                    var iconoClase  = obtenerIconoNotificacion(String(sistema).toLowerCase());
+                lista.forEach(function(n) {
+                    var id = parseInt(n.id, 10) || 0;
+                    var idRegistro = parseInt(n.id_registro_referencia, 10) || 0;
+                    var sistema = escapeHtml(n.sistema || 'General');
+                    var archivo = escapeHtml(n.archivo || '');
+                    var fecha = escapeHtml(n.fecha_actualizacion || n.fecha || '');
+                    var titulo = escapeHtml(n.recordar || n.accion || 'Notificación');
+                    var creadoPor = escapeHtml(n.usuario_actualiza_nombre || '');
+                    var nota = escapeHtml(n.nota || '');
+                    var iconoClase = obtenerIconoNotificacion(String(sistema).toLowerCase());
 
                     html += '<div class="notif-item" data-notificacion-id="' + id + '">';
                     html += '  <i class="' + iconoClase + ' notif-icon mt-1"></i>';
@@ -1438,17 +1874,22 @@
                     html += '</div>';
                 });
                 $panel.html(html);
-            }).fail(function(){
+            }).fail(function() {
                 $panel.html('<div class="notif-empty"><i class="fas fa-exclamation-circle fa-2x mb-2 d-block"></i>Error de conexión</div>');
             });
         }
 
         // ===== INFO EMPLEADO =====
-        function infoEmpleado(){
+        function infoEmpleado() {
             $.ajax({
                 url: '../incidencias/getInfoLoginMaster.php',
-                type: 'POST', dataType: 'json',
-                data: { noEmpleado: getCookie('noEmpleadoL'), correo: getCookie('correoL'), accion: 'getInfo' },
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    correo: getCookie('correoL'),
+                    accion: 'getInfo'
+                },
                 success: function(response) {
                     if (response.status === 'success') {
                         $.each(response.info, function (index, infoUsr) {
@@ -1475,9 +1916,13 @@
             if (!noEmp) return;
             $.ajax({
                 url: 'acciones_globales.php',
-                type: 'POST', dataType: 'json',
-                data: { accion: 'esJefe', noEmpleado: noEmp }
-            }).done(function(resp){
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'esJefe',
+                    noEmpleado: noEmp
+                }
+            }).done(function(resp) {
                 if (resp && resp.success && resp.esJefe === true) {
                     // Es jefe: mostrar "Equipo", ocultar "Departamento" y traer su equipo.
                     esJefeActual = true;
@@ -1485,9 +1930,9 @@
                     $('#leyendaVacacionesDepartamento').addClass('d-none');
                     if (calendarVacaciones) {
                         var srcEquipo = calendarVacaciones.getEventSourceById('equipo');
-                        var srcDept   = calendarVacaciones.getEventSourceById('departamento');
+                        var srcDept = calendarVacaciones.getEventSourceById('departamento');
                         if (srcEquipo) srcEquipo.refetch();
-                        if (srcDept)   srcDept.refetch(); // queda vacía por la guarda en eventSources
+                        if (srcDept) srcDept.refetch(); // queda vacía por la guarda en eventSources
                     }
                 }
                 // Si NO es jefe, se queda el estado por defecto:
@@ -1500,8 +1945,13 @@
         function validaOpciones() {
             $.ajax({
                 url: '../incidencias/getInfoLoginMaster.php',
-                type: 'POST', dataType: 'json',
-                data: { noEmpleado: getCookie('noEmpleadoL'), correo: getCookie('correoL'), accion: 'ValidarOpciones' },
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    correo: getCookie('correoL'),
+                    accion: 'ValidarOpciones'
+                },
                 success: function(info) {
                     $.each(info, function (index, infoAccesos) {
                         if (infoAccesos.estatus == '1') {
@@ -1528,17 +1978,21 @@
 
             $.ajax({
                 url: '../incidencias/validaLoginMaster.php',
-                type: 'POST', dataType: 'json',
-                data: { accion: 'getPlaca', noEmpleado: noEmp }
-            }).done(function(resp){
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'getPlaca',
+                    noEmpleado: noEmp
+                }
+            }).done(function(resp) {
                 if (!resp || !resp.success || !resp.vehiculos || resp.vehiculos.length === 0) {
                     $cont.html(
                         '<div class="card shadow-sm">' +
-                          '<div class="card-body text-center text-muted py-5">' +
-                            '<i class="fas fa-car-side fa-3x mb-3" style="opacity:.4;"></i>' +
-                            '<h6 class="mb-1">Sin vehículo asignado</h6>' +
-                            '<small>No tienes vehículos registrados a tu nombre.</small>' +
-                          '</div>' +
+                        '<div class="card-body text-center text-muted py-5">' +
+                        '<i class="fas fa-car-side fa-3x mb-3" style="opacity:.4;"></i>' +
+                        '<h6 class="mb-1">Sin vehículo asignado</h6>' +
+                        '<small>No tienes vehículos registrados a tu nombre.</small>' +
+                        '</div>' +
                         '</div>'
                     );
                     vehiculosDocsCargados = true;
@@ -1564,9 +2018,13 @@
                     // Documentos
                     $.ajax({
                         url: '../ControlVehicular/acciones_qr.php',
-                        type: 'POST', dataType: 'json',
-                        data: { accion: 'obtenerDatosVehiculo', id_vehiculo: idv }
-                    }).done(function(data){
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            accion: 'obtenerDatosVehiculo',
+                            id_vehiculo: idv
+                        }
+                    }).done(function(data) {
                         if (!data || data.error) {
                             $('#docsVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar la documentación</p>');
                             return;
@@ -1601,7 +2059,7 @@
                     });
                 });
                 vehiculosDocsCargados = true;
-            }).fail(function(){
+            }).fail(function() {
                 $cont.html('<div class="alert alert-danger">No se pudo obtener la información de vehículos.</div>');
             });
         }
@@ -1743,22 +2201,36 @@
         }
 
         function renderListaDocs(v) {
-            var docs = [
-                { campo: 'licencia',             label: 'Licencia' },
-                { campo: 'tarjeta_circulacion',  label: 'T. Circulación' },
-                { campo: 'refrendo_actual',      label: 'Refrendo' },
-                { campo: 'seguro_vehiculo',      label: 'Seguro' },
-                { campo: 'verificacion_vigente', label: 'Verificación' }
+            var docs = [{
+                    campo: 'licencia',
+                    label: 'Licencia'
+                },
+                {
+                    campo: 'tarjeta_circulacion',
+                    label: 'T. Circulación'
+                },
+                {
+                    campo: 'refrendo_actual',
+                    label: 'Refrendo'
+                },
+                {
+                    campo: 'seguro_vehiculo',
+                    label: 'Seguro'
+                },
+                {
+                    campo: 'verificacion_vigente',
+                    label: 'Verificación'
+                }
             ];
             if (!v.fecha_reg_doc) {
                 return '<p class="text-muted small mb-0 p-3">Sin documentación registrada</p>';
             }
             var html = '<ul class="list-group list-group-flush">';
-            docs.forEach(function(d){
+            docs.forEach(function(d) {
                 var tiene = v[d.campo] && v[d.campo] !== 'S/R';
-                var icono = tiene
-                    ? '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>'
-                    : '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                var icono = tiene ?
+                    '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>' :
+                    '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
                 html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span>' + d.label + '</span></li>';
             });
             html += '</ul>';
@@ -1844,26 +2316,51 @@
         }
 
         // ===== Tallas =====
-        function registraTallas(){
+        function registraTallas() {
             $.ajax({
-                url: 'login.php', type: 'POST', dataType: 'json',
-                data: { accion: 'registraTallas', talla: document.getElementById('talla').value, noEmpleado: getCookie('noEmpleadoL') },
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'registraTallas',
+                    talla: document.getElementById('talla').value,
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
                 success: function(response) {
                     if (response.success) {
-                        Swal.fire({ icon: 'success', title: 'Éxito', text: 'Talla actualizada correctamente.' });
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: 'Talla actualizada correctamente.'
+                        });
                         cargarTalla(getCookie('noEmpleadoL'));
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo registrar la talla.' });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo registrar la talla.'
+                        });
                     }
                 },
-                error: function() { Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error en la solicitud.' }); }
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
             });
         }
 
         function cargarTalla(noEmpleadoL) {
             $.ajax({
-                url: 'login.php', type: 'POST', dataType: 'json',
-                data: { accion: 'validaTalla', noEmpleado: noEmpleadoL },
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'validaTalla',
+                    noEmpleado: noEmpleadoL
+                },
                 success: function(response) {
                     if (response.success && response.exists && response.talla) {
                         $('#alertTalla').hide();
@@ -1878,26 +2375,52 @@
         // ===== Buzón de Sugerencias =====
         function BuzonSugerencias() {
             $.ajax({
-                url: 'login.php', type: 'POST', dataType: 'json',
-                data: { accion: 'buzon', tipo: document.getElementById('tipo').value, comentario: document.getElementById('comentario').value, noEmpleado: getCookie('noEmpleadoL') },
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'buzon',
+                    tipo: document.getElementById('tipo').value,
+                    comentario: document.getElementById('comentario').value,
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
                 success: function(response) {
                     if (response.success) {
-                        Swal.fire({ icon: 'success', title: 'Éxito', text: 'Comentario enviado correctamente.' });
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: 'Comentario enviado correctamente.'
+                        });
                         $('#formbuzon')[0].reset();
                         $('#modalbuzon').modal('hide');
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo enviar el comentario.' });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo enviar el comentario.'
+                        });
                     }
                 },
-                error: function() { Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error en la solicitud.' }); }
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
             });
         }
 
         // ===== Cursos =====
         function cargarCursosSeleccionados() {
             $.ajax({
-                url: 'acciones_inicio.php', type: 'POST', dataType: 'json',
-                data: { accion: 'cargar_cursos', noEmpleado: getCookie('noEmpleadoL') },
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'cargar_cursos',
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
                 success: function(response) {
                     if (response.success && response.cursos) {
                         response.cursos.forEach(function(cursoId) {
@@ -1912,20 +2435,40 @@
 
         function guardarAsistenciaCurso() {
             var cursosSeleccionados = [];
-            $('input[name="cursos[]"]:checked').each(function() { cursosSeleccionados.push($(this).val()); });
+            $('input[name="cursos[]"]:checked').each(function() {
+                cursosSeleccionados.push($(this).val());
+            });
             if (cursosSeleccionados.length === 0) {
-                Swal.fire({ icon: 'warning', title: 'Atención', text: 'Debes seleccionar al menos un curso.' });
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención',
+                    text: 'Debes seleccionar al menos un curso.'
+                });
                 return;
             }
             $.ajax({
-                url: 'acciones_inicio.php', type: 'POST', dataType: 'json',
-                data: { accion: 'guardar_asistencia', cursos: cursosSeleccionados, noEmpleado: getCookie('noEmpleadoL') },
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'guardar_asistencia',
+                    cursos: cursosSeleccionados,
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
                 success: function(response) {
                     if (response.success) {
-                        Swal.fire({ icon: 'success', title: 'Asistencia Guardada', text: 'Tu asistencia a los cursos ha sido registrada correctamente.' });
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Asistencia Guardada',
+                            text: 'Tu asistencia a los cursos ha sido registrada correctamente.'
+                        });
                         cargarCursosSeleccionados();
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: response.message || 'No se pudo registrar la asistencia.' });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'No se pudo registrar la asistencia.'
+                        });
                     }
                 }
             });
@@ -1934,17 +2477,26 @@
         // ===== Ver tallas =====
         function VerTallas() {
             $.ajax({
-                url: 'acciones_inicio.php', type: 'POST', dataType: 'json',
-                data: { accion: 'ver_tallas' },
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_tallas'
+                },
                 success: function(response) {
                     if (response.success && response.tallas) {
-                        var tablaBody = $('#TotalTallas tbody'); tablaBody.empty();
+                        var tablaBody = $('#TotalTallas tbody');
+                        tablaBody.empty();
                         response.tallas.forEach(function(t) {
                             tablaBody.append('<tr><td>' + t.noEmpleado + '-' + t.nombre + '</td><td>' + t.talla + '</td><td>' + t.sexo + '</td></tr>');
                         });
                         $('#modalResultadosTallas').modal('show');
                     } else {
-                        Swal.fire({ icon: 'info', title: 'Sin tallas', text: 'No se encontraron tallas en el sistema.' });
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Sin tallas',
+                            text: 'No se encontraron tallas en el sistema.'
+                        });
                     }
                 }
             });
@@ -1952,11 +2504,16 @@
 
         function TotalTallas() {
             $.ajax({
-                url: 'acciones_inicio.php', type: 'POST', dataType: 'json',
-                data: { accion: 'conteo_tallas' },
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'conteo_tallas'
+                },
                 success: function(response) {
                     if (response.success && response.tallas) {
-                        var tablaBody = $('#TotalTallasRegistradas tbody'); tablaBody.empty();
+                        var tablaBody = $('#TotalTallasRegistradas tbody');
+                        tablaBody.empty();
                         response.tallas.forEach(function(t) {
                             tablaBody.append('<tr><td>' + t.talla + '</td><td>' + t.sexo + '</td><td>' + t.cantidad + '</td></tr>');
                         });
@@ -1983,11 +2540,16 @@
 
         function verBuzon() {
             $.ajax({
-                url: 'acciones_inicio.php', type: 'POST', dataType: 'json',
-                data: { accion: 'ver_buzon' },
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_buzon'
+                },
                 success: function(response) {
                     if (response.success && response.buzon) {
-                        var tablaBody = $('#TablaSugerencias tbody'); tablaBody.empty();
+                        var tablaBody = $('#TablaSugerencias tbody');
+                        tablaBody.empty();
                         response.buzon.forEach(function(b) {
                             tablaBody.append('<tr><td>' + b.noEmpleado + '-' + b.nombre + '</td><td>' + b.tipo + '</td><td>' + b.comentario + '</td><td>' + b.fecha_registro + '</td></tr>');
                         });
@@ -1999,9 +2561,11 @@
         }
 
         // ===== Cambiar contraseña =====
-        function cambiarCont(){
+        function cambiarCont() {
             $.ajax({
-                url: 'cambiar_contrasena.php', type: 'POST', dataType: 'json',
+                url: 'cambiar_contrasena.php',
+                type: 'POST',
+                dataType: 'json',
                 data: {
                     accion: 'CambiarPass',
                     contrasena_actual: $('#contrasena_actual').val(),
@@ -2010,13 +2574,21 @@
                 },
                 success: function(response) {
                     $('#modalCambiarContrasena').modal('hide');
-                    Swal.fire({ title: response.message, icon: response.status, draggable: true });
+                    Swal.fire({
+                        title: response.message,
+                        icon: response.status,
+                        draggable: true
+                    });
                 },
                 error: function() {
-                    Swal.fire({ title: "Vuelve a intentar, hubo un problema al actualizar la contraseña!", icon: "warning" });
+                    Swal.fire({
+                        title: "Vuelve a intentar, hubo un problema al actualizar la contraseña!",
+                        icon: "warning"
+                    });
                 }
             });
         }
     </script>
 </body>
+
 </html>
