@@ -425,6 +425,7 @@
                                         <span id="badgeTabAvisos" class="tab-badge"></span>
                                     </button>
                                 </li>
+                                <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
                                         <i class="fas fa-folder-open mr-1"></i> Expediente
@@ -432,6 +433,7 @@
                                         <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
+                                -->
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
                                         <i class="fas fa-user-cog mr-1"></i> Personal
