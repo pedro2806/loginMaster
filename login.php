@@ -20,7 +20,7 @@ if ($accion == 'Ingresar') {
     $datosUsr = [];        
 
     // Busca por usuario O por correo directo
-    $sql = "SELECT u.id_usuario, u.usuario, u.nombre, u.noEmpleado, u.rol, u.correo, u.password, k.Password_KPI
+    $sql = "SELECT u.id_usuario, u.usuario, u.nombre, u.noEmpleado, u.rol, u.correo, u.password, u.foto, k.Password_KPI
     FROM usuarios u 
     LEFT JOIN accesos_kpis k ON u.correo = k.Correo
     WHERE u.usuario = ? OR u.correo = ?";                
@@ -46,6 +46,7 @@ if ($accion == 'Ingresar') {
                 'noEmpleado' => $row['noEmpleado'],
                 'rol' => $row['rol'],
                 'email' => $row['correo'],
+                'foto' => $row['foto'],
                 'kpis' => $row['Password_KPI']
             ];
             
@@ -69,6 +70,7 @@ if ($accion == 'Ingresar') {
                 'noEmpleado' => $row['noEmpleado'],
                 'rol' => $row['rol'],
                 'email' => $row['correo'],
+                'foto' => $row['foto'],
                 'kpis' => $row['Password_KPI']
             ];
             

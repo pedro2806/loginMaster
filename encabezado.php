@@ -1,5 +1,15 @@
+<style>
+     .fb-logo-img {
+            max-width: 320px;
+            width: 100%;
+            margin: 0 0 16px 0;
+            filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            display: block;
+        }
+</style>
+
 <!-- Topbar -->
-<nav class="navbar navbar-expand navbar-light bg-white mb-2 static-top shadow">
+<nav class="navbar navbar-expand navbar-light bg-white mb-2 static-top shadow" style="background-color: #0e2788 !important;">
 
     <!-- Sidebar Toggle (Topbar) -->
     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-1">
@@ -7,13 +17,16 @@
     </button>
 
     <!-- Topbar Navbar -->
-    <ul class="navbar-nav ml-auto" style="height:20px; align-items:center;">
+    <ul class="navbar-nav ml-auto" style="height:60px; align-items:center;">
         <!-- Nav Item - User Information -->
         <li class="nav-item dropdown no-arrow" style="height:20px;">
+           
             <a class="nav-link dropdown-toggle py-1" id="userDropdown" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height:20px; display:flex; align-items:center;">
-                <span class="mr-0 text-gray-600" style="font-size:15px; line-height:1;">
-                    Acceso a los sistemas de MESS Servicios Metrológicos
+                <span class="mr-0 text-gray-600" style="font-size:15px; line-height:1;  color: #fff !important;">
+                  <br> 
+                <img src="../loginMaster/img/messbook_logo3.png" alt="Logo" class="fb-logo-img" style="height: 80px; margin-right: 10px;">
+
                 </span>
             </a>
         </li>
