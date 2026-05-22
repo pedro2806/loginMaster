@@ -284,7 +284,11 @@ html[data-bs-theme="dark"] .profile-card .list-group-item {
       color: var(--text-muted);
       margin: 0 auto 0.75rem;
       border: 2px solid var(--border);
+      background-size: cover;
+      background-position: center center;
+      overflow: hidden;
   }
+  .profile-avatar.has-photo i { display: none; }
 
   .stat-box {
       border-radius: 0.5rem;
@@ -535,6 +539,16 @@ html[data-bs-theme="dark"] .profile-card .list-group-item {
       overflow: hidden;
       text-overflow: ellipsis;
   }
+  .directorio-card .dir-noemp {
+      font-size: .8rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: .35rem;
+  }
+  .directorio-card .dir-noemp-val {
+      font-size: .75rem;
+      color: var(--text);
+  }
 
   .directorio-card .dir-meta {
       font-size: .82rem;
@@ -568,7 +582,11 @@ html[data-bs-theme="dark"] .profile-card .list-group-item {
       font-size: 1.3rem;
       flex-shrink: 0;
       letter-spacing: .5px;
+      background-size: cover;
+      background-position: center center;
+      overflow: hidden;
   }
+  .dir-avatar.has-photo { color: transparent; }
 
   .dir-avatar-lg {
       width: 110px;
@@ -582,12 +600,43 @@ html[data-bs-theme="dark"] .profile-card .list-group-item {
       font-size: 2.4rem;
       margin: 0 auto;
       letter-spacing: 1px;
+      background-size: cover;
+      background-position: center center;
+      overflow: hidden;
   }
+  .dir-avatar-lg.has-photo { color: transparent; }
 
   #directorioGrid .empty-state {
       padding: 3rem 1rem;
       text-align: center;
       color: var(--text-muted);
+  }
+
+  .dir-paginacion {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.75rem 0.25rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 0.5rem;
+  }
+  .dir-paginacion:empty { display: none; }
+  .dir-pag-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+  }
+  .dir-pag-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+  }
+  .dir-pag-actual {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      min-width: 110px;
+      text-align: center;
   }
 
   .theme-toggle {
