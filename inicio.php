@@ -207,6 +207,31 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             color: var(--text-muted);
             margin: 0 auto 0.75rem;
             border: 2px solid var(--border);
+            background-size: cover;
+            background-position: center center;
+            overflow: hidden;
+        }
+        .profile-avatar.has-photo i { display: none; }
+
+        /* Botón institucional naranja outline (Pantone 143 C, ≈ #EAAA00). */
+        .btn-outline-mess-naranja {
+            background-color: transparent;
+            border-color: #EAAA00;
+            color: #EAAA00;
+            font-weight: 600;
+        }
+        .btn-outline-mess-naranja:hover,
+        .btn-outline-mess-naranja:focus {
+            background-color: #EAAA00;
+            border-color: #EAAA00;
+            color: #fff;
+            box-shadow: 0 0 0 .15rem rgba(234,170,0,.25);
+        }
+        .btn-outline-mess-naranja:disabled {
+            background-color: transparent;
+            border-color: #EAAA00;
+            color: #EAAA00;
+            opacity: .65;
         }
 
         .stat-box {
@@ -458,7 +483,11 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             font-size: 1.3rem;
             flex-shrink: 0;
             letter-spacing: .5px;
+            background-size: cover;
+            background-position: center center;
+            overflow: hidden;
         }
+        .dir-avatar.has-photo { color: transparent; }
         .dir-avatar-lg {
             width: 110px;
             height: 110px;
@@ -471,11 +500,41 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             font-size: 2.4rem;
             margin: 0 auto;
             letter-spacing: 1px;
+            background-size: cover;
+            background-position: center center;
+            overflow: hidden;
         }
+        .dir-avatar-lg.has-photo { color: transparent; }
         #directorioGrid .empty-state {
             padding: 3rem 1rem;
             text-align: center;
             color: var(--text-muted);
+        }
+        .dir-paginacion {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem 0.25rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 0.5rem;
+        }
+        .dir-paginacion:empty { display: none; }
+        .dir-pag-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .dir-pag-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dir-pag-actual {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            min-width: 110px;
+            text-align: center;
         }
 
         .theme-toggle {
@@ -741,7 +800,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <?php endif; ?>
 
                                 <!-- Botones acción -->
-                                <button class="btn btn-outline-primary btn-block mt-2" data-toggle="modal" data-target="#modalbuzon">
+                                <button class="btn btn-outline-mess-naranja btn-block mt-2" data-toggle="modal" data-target="#modalbuzon">
                                     <i class="fas fa-envelope-open-text"></i> Sugerencias
                                 </button>
                                 <button class="btn btn-outline-warning btn-block mt-2" data-toggle="modal" data-target="#modalCambiarContrasena">
@@ -1294,6 +1353,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             <p class="mb-0">Cargando directorio...</p>
                                         </div>
                                     </div>
+                                    <div id="directorioPaginacion" class="dir-paginacion"></div>
                                 </div>
 
 
@@ -2085,6 +2145,16 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                             $('#lblJefe').text(infoUsr.jefe || '—');
                             $('#lblPuesto').text(infoUsr.puesto || '—');
                             $('#fechaIngreso').text(infoUsr.fechaIngreso || '—');
+
+                            // Foto en el sidebar (cae al ícono por defecto si no hay foto).
+                            var $avatar = $('.profile-avatar').first();
+                            if (infoUsr.foto) {
+                                $avatar.addClass('has-photo')
+                                       .css('background-image', "url('" + infoUsr.foto + "')");
+                            } else {
+                                $avatar.removeClass('has-photo')
+                                       .css('background-image', 'none');
+                            }
                             // La info del jefe se resuelve con una acción dedicada en acciones_globales.php
                             // (getInfo no devuelve esJefe). Ver verificarEsJefe().
                         });
@@ -2775,7 +2845,10 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         }
 
         // ===== Directorio =====
-        var directorioCache = null;
+        var directorioCache = null;       // lista completa devuelta por el backend
+        var directorioVista = [];         // subset visible (filtrado por buscador o no)
+        var directorioPagina = 1;
+        var DIR_PAGE_SIZE = 10;
 
         function dirIniciales(nombre) {
             if (!nombre) return '?';
@@ -2824,13 +2897,27 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         }
 
         function renderDirectorio(lista) {
-            if (!lista || !lista.length) {
+            directorioVista = lista || [];
+            directorioPagina = 1;
+            pintarPaginaDirectorio();
+        }
+
+        function pintarPaginaDirectorio() {
+            var total = directorioVista.length;
+            if (!total) {
                 $('#directorioGrid').html('<div class="col-12 empty-state">No se encontraron resultados.</div>');
+                $('#directorioPaginacion').empty();
                 return;
             }
+            var totalPaginas = Math.max(1, Math.ceil(total / DIR_PAGE_SIZE));
+            if (directorioPagina > totalPaginas) directorioPagina = totalPaginas;
+            if (directorioPagina < 1) directorioPagina = 1;
+            var start = (directorioPagina - 1) * DIR_PAGE_SIZE;
+            var end   = Math.min(start + DIR_PAGE_SIZE, total);
+
             var html = '';
-            for (var i = 0; i < lista.length; i++) {
-                var e = lista[i];
+            for (var i = start; i < end; i++) {
+                var e = directorioVista[i];
                 var ini = dirIniciales(e.nombre);
                 var col = dirColor(e.nombre);
                 var nombre = dirEscape(e.nombre || 'Sin nombre');
@@ -2838,9 +2925,12 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 var area   = dirEscape(e.area   || '—');
                 var puesto = dirEscape(e.puesto || '—');
                 var correo = dirEscape(e.correo || '');
+                var avatar = e.foto
+                    ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
+                    : '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>';
                 html += '<div class="col-md-6 mb-3">'
                      +    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
-                     +      '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>'
+                     +      avatar
                      +      '<div class="dir-info">'
                      +        '<div class="dir-name">' + nombre + '</div>'
                      +        '<div class="dir-meta">' + nave + '</div>'
@@ -2852,7 +2942,29 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                      +  '</div>';
             }
             $('#directorioGrid').html(html);
+
+            var prevDisabled = directorioPagina === 1 ? 'disabled' : '';
+            var nextDisabled = directorioPagina === totalPaginas ? 'disabled' : '';
+            var ctrl = ''
+                + '<div class="dir-pag-info">Mostrando ' + (start + 1) + '–' + end + ' de ' + total + '</div>'
+                + '<div class="dir-pag-nav">'
+                +   '<button type="button" class="btn btn-sm btn-outline-secondary" id="dirPagPrev" ' + prevDisabled + '>'
+                +     '<i class="fas fa-chevron-left"></i>'
+                +   '</button>'
+                +   '<span class="dir-pag-actual">Página ' + directorioPagina + ' de ' + totalPaginas + '</span>'
+                +   '<button type="button" class="btn btn-sm btn-outline-secondary" id="dirPagNext" ' + nextDisabled + '>'
+                +     '<i class="fas fa-chevron-right"></i>'
+                +   '</button>'
+                + '</div>';
+            $('#directorioPaginacion').html(ctrl);
         }
+
+        $(document).on('click', '#dirPagPrev', function () {
+            if (directorioPagina > 1) { directorioPagina--; pintarPaginaDirectorio(); }
+        });
+        $(document).on('click', '#dirPagNext', function () {
+            directorioPagina++; pintarPaginaDirectorio();
+        });
 
         function abrirModalDirectorio(noEmp) {
             if (!directorioCache) return;
@@ -2863,21 +2975,22 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             if (!emp) return;
             var ini = dirIniciales(emp.nombre);
             var col = dirColor(emp.nombre);
-            $('#modalDirAvatar').css('background', col).text(ini);
+            var $avatar = $('#modalDirAvatar').text(ini);
+            if (emp.foto) {
+                $avatar.addClass('has-photo')
+                       .css({ 'background-color': col, 'background-image': "url('" + emp.foto + "')" });
+            } else {
+                $avatar.removeClass('has-photo')
+                       .css({ 'background-color': col, 'background-image': 'none' });
+            }
             $('#modalDirNombre').text(emp.nombre || '—');
             $('#modalDirPuesto').text(emp.puesto || '—');
             $('#modalDirNoEmp').text(emp.noEmpleado || '—');
             $('#modalDirArea').text(emp.area || '—');
             $('#modalDirNave').text(emp.nave || '—');
 
-            // Teléfono + extensión (aún no en BD; se muestran cuando lleguen).
-            var tel = emp.telefono || '';
-            var ext = emp.extension || '';
-            var telTxt = '—';
-            if (tel && ext)      telTxt = tel + ' ext. ' + ext;
-            else if (tel)        telTxt = tel;
-            else if (ext)        telTxt = 'ext. ' + ext;
-            $('#modalDirTel').text(telTxt);
+            // Teléfono(s): viene ya formateado del backend ("4422908635 ext. 817 / 4423942739").
+            $('#modalDirTel').text(emp.telefono || '—');
 
             if (emp.correo) {
                 $('#modalDirCorreo').text(emp.correo).attr('href', 'mailto:' + emp.correo);
