@@ -34,7 +34,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     <div class="row">
                         <!-- ========== SIDEBAR PERFIL ========== -->
                         <div class="col-xl-3 col-md-4">
-                            <div class="profile-card text-center">
+                            <div class="profile-card text-center">                                                        
                                 <div class="profile-avatar">
                                     <i class="fas fa-user-circle"></i>
                                 </div>
@@ -134,8 +134,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                         </div>
 
                         <!-- ========== CONTENIDO CON TABS ========== -->
-                        <div class="col-xl-9 col-md-8">
-                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist">
+                        <div class="col-xl-9 col-md-8" Style="padding-left: 0px !important">
+                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #0e2788;">
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab">
                                         <i class="fas fa-th-large mr-1"></i> Sistemas
@@ -202,7 +202,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     <div class="row">
                                         <!-- VACACIONES -->
                                         <div class="col-md-3 mb-3" id="divVacaciones" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formVacaciones" method="POST" action="../incidencias/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuario" id="id_usuario" value="">
@@ -220,7 +220,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- CONTROL VEHICULAR -->
                                         <div class="col-md-3 mb-3" id="divControlVehicular" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formControlVehicular" method="POST" action="../ControlVehicular/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
@@ -237,7 +237,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- HORAS EXTRA -->
                                         <div class="col-md-3 mb-3" id="divHorasExtra" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formHorasExtra" method="POST" action="../horasextra/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioHR" id="id_usuarioHR" value="">
@@ -254,7 +254,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- INCIDENCIAS -->
                                         <div class="col-md-3 mb-3" id="divIncidencias" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formIncidencias" method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioI" id="id_usuarioI" value="">
@@ -272,7 +272,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- PLANEACION -->
                                         <div class="col-md-3 mb-3" id="divPlaneacion" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formPlaneacion" method="POST" action="../planeacion/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioPla" id="id_usuarioPla" value="">
@@ -289,7 +289,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- CAPACITACION -->
                                         <div class="col-md-3 mb-3" id="divCapacitacion" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <div class="btn-group w-100" role="group">
                                                         <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary">
@@ -305,7 +305,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- ACTIVOS -->
                                         <div class="col-md-3 mb-3" id="divActivos" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formActivos" method="POST" action="../activos/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioAC" id="id_usuarioAC" value="">
@@ -322,7 +322,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- ENTRADAS EQ -->
                                         <div class="col-md-3 mb-3" id="divEntradasEq" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formEntradasEq" method="POST" action="../planeacion/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioPlaEnt" id="id_usuarioPlaEnt" value="">
@@ -340,7 +340,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- PRACTICANTES -->
                                         <div class="col-md-3 mb-3" id="divPracticantes" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formPracticantes" method="POST" action="../Practicantes/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioPRACT" id="id_usuarioPRACT" value="">
@@ -357,7 +357,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- TICKETS BI -->
                                         <div class="col-md-3 mb-3" id="divTicketsBI" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../Tickets/" class="btn btn-outline-primary btn-block">
                                                         <i class="fas fa-ticket-alt fa-lg d-block mb-2"></i> Tickets BI
@@ -368,7 +368,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                                         <!-- CONTROL SGC -->
                                         <div class="col-md-3 mb-3" id="divControlSGC" style="display:none">
-                                            <div class="card card-action shadow-sm h-100">
+                                            <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <form id="formControlSGC" method="POST" action="../ControlSGC/validaLoginMaster.php">
                                                         <input type="hidden" name="id_usuarioSGC" id="id_usuarioSGC" value="">
@@ -608,42 +608,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
 
-                                    <style>
-                                        /* Solo afecta a este tab */
-                                        #tabKpis {
-                                            padding: 0 !important;
-                                        }
-
-                                        #tabKpis #frameKPIs {
-                                            padding: 0 !important;
-                                            margin: 0 !important;
-                                        }
-
-                                        /* Mata el py-5 de Bootstrap que mete 3rem de padding */
-                                        #tabKpis .py-5 {
-                                            padding-top: 0 !important;
-                                            padding-bottom: 0 !important;
-                                        }
-
-                                        /* Quita margin del spinner si aparece */
-                                        #tabKpis .text-center {
-                                            margin: 0 !important;
-                                        }
-
-                                        #tabKpis .mb-2 {
-                                            margin-bottom: 0 !important;
-                                        }
-
-                                        /* El iframe ocupa todo sin espacio arriba */
-                                        #tabKpis iframe {
-                                            display: block !important;
-                                            width: 100% !important;
-                                            height: calc(100vh - 140px) !important;
-                                            /* Ajusta 140px según altura de tu header de tabs */
-                                            border: none !important;
-                                            margin: 0 !important;
-                                        }
-                                    </style>
+                              
 
                                     <div id="frameKPIs">
                                         <div class="text-center text-muted py-5">
@@ -2401,6 +2366,42 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         // Carga lazy: la primera vez que se abre el tab.
         $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
     </script>
+
+
+
+
+
+<script>
+// Toggle Sidebar - ARREGLADO
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    
+    // Buscar la columna del sidebar - más flexible
+    const sidebarCol = document.querySelector('.row > div:first-child');
+    const contentCol = document.querySelector('.row > div:last-child');
+    
+    if (toggleBtn && sidebarCol && contentCol) {
+        toggleBtn.addEventListener('click', function() {
+            sidebarCol.classList.toggle('sidebar-hidden');
+            contentCol.classList.toggle('sidebar-expanded');
+            
+            // Cambiar icono
+            const icon = toggleBtn.querySelector('i');
+            if (sidebarCol.classList.contains('sidebar-hidden')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-arrow-right');
+            } else {
+                icon.classList.remove('fa-arrow-right');
+                icon.classList.add('fa-bars');
+            }
+        });
+    }
+    
+   
+});
+
+</script>
+
 </body>
 
 </html>
