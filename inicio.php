@@ -602,42 +602,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
 
-                                    <style>
-                                        /* Solo afecta a este tab */
-                                        #tabKpis {
-                                            padding: 0 !important;
-                                        }
-
-                                        #tabKpis #frameKPIs {
-                                            padding: 0 !important;
-                                            margin: 0 !important;
-                                        }
-
-                                        /* Mata el py-5 de Bootstrap que mete 3rem de padding */
-                                        #tabKpis .py-5 {
-                                            padding-top: 0 !important;
-                                            padding-bottom: 0 !important;
-                                        }
-
-                                        /* Quita margin del spinner si aparece */
-                                        #tabKpis .text-center {
-                                            margin: 0 !important;
-                                        }
-
-                                        #tabKpis .mb-2 {
-                                            margin-bottom: 0 !important;
-                                        }
-
-                                        /* El iframe ocupa todo sin espacio arriba */
-                                        #tabKpis iframe {
-                                            display: block !important;
-                                            width: 100% !important;
-                                            height: calc(100vh - 140px) !important;
-                                            /* Ajusta 140px según altura de tu header de tabs */
-                                            border: none !important;
-                                            margin: 0 !important;
-                                        }
-                                    </style>
+                              
 
                                     <div id="frameKPIs">
                                         <div class="text-center text-muted py-5">
