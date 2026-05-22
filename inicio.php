@@ -154,6 +154,12 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         <span id="badgeTabAvisos" class="tab-badge"></span>
                                     </button>
                                 </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabTickets-tab" data-toggle="tab" data-target="#tabTickets" type="button" role="tab">
+                                        <i class="fas fa-ticket-alt mr-1"></i> Tickets
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
                                 <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
@@ -635,6 +641,40 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     <div id="directorioPaginacion" class="dir-paginacion"></div>
                                 </div>
 
+                                <!-- ===== TAB 8: TICKETS (embebido vía iframe a /Tickets/) ===== -->
+                                <div class="tab-pane fade" id="tabTickets" role="tabpanel">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <h4 class="mb-1" style="color: var(--accent);">Tickets</h4>
+                                            <p class="text-muted mb-0 small">Crea solicitudes para el equipo BI y consulta el seguimiento.</p>
+                                        </div>
+                                    </div>
+                                    <ul class="nav nav-tabs" id="subTabsTickets" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="subTabNuevo-tab" data-toggle="tab" data-target="#subTabNuevo" type="button" role="tab">
+                                                <i class="fas fa-plus-circle mr-1"></i> Nuevo Ticket
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="subTabMis-tab" data-toggle="tab" data-target="#subTabMis" type="button" role="tab">
+                                                <i class="fas fa-list mr-1"></i> Mis Tickets
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content pt-2" id="subTabsTicketsContent">
+                                        <div class="tab-pane fade show active" id="subTabNuevo" role="tabpanel">
+                                            <iframe id="iframeTicketsNuevo"
+                                                    data-src="../Tickets/embed_nuevo.php"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
+                                        </div>
+                                        <div class="tab-pane fade" id="subTabMis" role="tabpanel">
+                                            <iframe id="iframeTicketsMis"
+                                                    data-src="../Tickets/embed_mis.php"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+
 
 
 
@@ -1022,6 +1062,25 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             });
             $('#tabVehiculo-tab').on('shown.bs.tab', function() {
                 if (!vehiculosDocsCargados) cargarVehiculosDocs();
+            });
+
+            // Tickets: lazy-load del iframe activo (evita cargar ambos al inicio)
+            function cargarIframeTickets(target) {
+                var $f = $(target);
+                if (!$f.length) return;
+                var src = $f.data('src');
+                if (src && !$f.attr('src')) $f.attr('src', src);
+            }
+            $('#tabTickets-tab').on('shown.bs.tab', function() {
+                // Por defecto la sub-tab activa es "Nuevo Ticket"
+                cargarIframeTickets('#iframeTicketsNuevo');
+            });
+            $('#subTabNuevo-tab').on('shown.bs.tab', function() { cargarIframeTickets('#iframeTicketsNuevo'); });
+            $('#subTabMis-tab').on('shown.bs.tab', function() {
+                cargarIframeTickets('#iframeTicketsMis');
+                // Si ya estaba cargado, refresca la tabla recargando el iframe
+                var $f = $('#iframeTicketsMis');
+                if ($f.attr('src')) $f.attr('src', $f.attr('src'));
             });
         });
 
@@ -2200,7 +2259,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 var ini = dirIniciales(e.nombre);
                 var col = dirColor(e.nombre);
                 var nombre = dirEscape(e.nombre || 'Sin nombre');
-                var nave   = dirEscape(e.nave   || '—');
+                var noEmp  = dirEscape(e.noEmpleado || '');
                 var area   = dirEscape(e.area   || '—');
                 var puesto = dirEscape(e.puesto || '—');
                 var correo = dirEscape(e.correo || '');
@@ -2211,8 +2270,9 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                      +    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
                      +      avatar
                      +      '<div class="dir-info">'
-                     +        '<div class="dir-name">' + nombre + '</div>'
-                     +        '<div class="dir-meta">' + nave + '</div>'
+                     +        '<div class="dir-name">' + nombre
+                     +          (noEmp ? ' <span class="dir-noemp">- noEmpleado: <span class="dir-noemp-val">' + noEmp + '</span></span>' : '')
+                     +        '</div>'
                      +        '<div class="dir-meta">' + area + '</div>'
                      +        '<div class="dir-meta">' + puesto + '</div>'
                      +        (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
