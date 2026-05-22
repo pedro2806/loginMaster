@@ -1,0 +1,868 @@
+  :root {
+      --bg: #f8f9fc;
+      --card-bg: #ffffff;
+      --card-soft: #f8f9fa;
+      --text: #1f2937;
+      --text-muted: #6c757d;
+      --border: #e5e7eb;
+      --accent: #1c83f1;
+      --accent-soft: #eaf3ff;
+      --success: #0fa083;
+      --warning: #e2d522;
+      --info: #484cac;
+      --danger: #dc3545;
+      --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+      --tab-active: #1c83f1;
+      --tab-inactive: #e9ecef;
+  }
+
+  body.theme-dark {
+      --bg: #0b1220;
+      --card-bg: #121a2b;
+      --card-soft: #1a2438;
+      --text: #e6edf7;
+      --text-muted: #9aa7bd;
+      --border: #243049;
+      --accent: #4dabff;
+      --accent-soft: #1a2c44;
+      --success: #1fb892;
+      --warning: #d4b834;
+      --info: #6b71d4;
+      --danger: #ef4f5e;
+      --shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.45);
+      --tab-active: #4dabff;
+      --tab-inactive: #1a2438;
+  }
+
+  body {
+      background: var(--bg);
+      color: var(--text);
+      transition: background .2s, color .2s;
+  }
+
+  /* Wrapper de sb-admin-2 — su default es #f8f9fc, hay que apagarlo en oscuro */
+  body.theme-dark #wrapper,
+  body.theme-dark #wrapper #content-wrapper,
+  body.theme-dark #wrapper #content-wrapper #content {
+      background-color: var(--bg) !important;
+  }
+
+  body.theme-dark .card,
+  body.theme-dark .modal-content,
+  body.theme-dark .list-group-item,
+  body.theme-dark .form-control,
+  body.theme-dark .nav-tabs .nav-link {
+      background-color: var(--card-bg);
+      color: var(--text);
+      border-color: var(--border);
+  }
+
+  body.theme-dark .text-muted {
+      color: var(--text-muted) !important;
+  }
+
+  body.theme-dark .table {
+      color: var(--text);
+  }
+
+  body.theme-dark .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Encabezado / navbar topbar — override del bg-white */
+  body.theme-dark .navbar,
+  body.theme-dark nav.navbar-light,
+  body.theme-dark .navbar.static-top,
+  body.theme-dark .bg-white,
+  body.theme-dark .sticky-footer.bg-white {
+      background-color: var(--card-bg) !important;
+      border-color: var(--border) !important;
+  }
+
+  body.theme-dark .navbar.shadow {
+      box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .35) !important;
+  }
+
+  body.theme-dark .navbar .text-gray-600,
+  body.theme-dark .navbar-light .navbar-nav .nav-link,
+  body.theme-dark .navbar .nav-link {
+      color: var(--text) !important;
+  }
+
+  body.theme-dark .dropdown-menu {
+      background-color: var(--card-bg);
+      border-color: var(--border);
+  }
+
+  body.theme-dark .dropdown-item {
+      color: var(--text);
+  }
+
+  body.theme-dark .dropdown-item:hover {
+      background-color: var(--card-soft);
+      color: var(--text);
+  }
+
+  body.theme-dark .close {
+      color: var(--text);
+      text-shadow: none;
+  }
+
+  body.theme-dark .modal-header,
+  body.theme-dark .modal-footer {
+      border-color: var(--border);
+  }
+
+  body.theme-dark .alert-info {
+      background: var(--accent-soft);
+      color: var(--text);
+      border-color: var(--border);
+  }
+
+  body.theme-dark .alert-primary {
+      background: var(--accent-soft);
+      color: var(--text);
+      border-color: var(--border);
+  }
+
+  body.theme-dark .form-control:focus {
+      background-color: var(--card-soft);
+      color: var(--text);
+      border-color: var(--accent);
+  }
+
+  /* Indicador "días disp / solicitados" del card Mis Vacaciones: blanco en modo oscuro */
+  body.theme-dark #diasDispPanel,
+  body.theme-dark #diasSolPanel,
+  body.theme-dark #diasDispPanel~*,
+  body.theme-dark .card-header .text-dark {
+      color: #fff !important;
+  }
+
+  body.theme-dark .card-header .text-muted {
+      color: rgba(255, 255, 255, 0.75) !important;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* MODO CLARO - gris */
+.profile-card {
+    background: linear-gradient(135deg, #e9ecef 0%, #97a1ab 50%, #abb2b8 100%) !important;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    padding: 1.25rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #adb5bd !important;
+    transition: background 0.3s ease;
+}
+
+/* FUERZA TODO EL TEXTO A NEGRO EN MODO CLARO */
+.profile-card *:not(.btn):not(.list-group-item):not(i):not(.fa):not(.fas):not(.far) {
+    color: #212529 !important;
+}
+
+/* MODO OSCURO - azul */
+body.theme-dark .profile-card,
+html[data-bs-theme="dark"] .profile-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%) !important;
+    border: 1px solid #1e40af !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* FUERZA TODO EL TEXTO A BLANCO EN MODO OSCURO */
+body.theme-dark .profile-card *:not(.btn):not(.list-group-item):not(i):not(.fa):not(.fas):not(.far),
+html[data-bs-theme="dark"] .profile-card *:not(.btn):not(.list-group-item):not(i):not(.fa):not(.fas):not(.far) {
+    color: #fff !important;
+}
+
+/* Botones en modo claro */
+.profile-card .btn,
+.profile-card .list-group-item {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border-color: #ced4da !important;
+}
+
+/* Botones en modo oscuro */
+body.theme-dark .profile-card .btn,
+html[data-bs-theme="dark"] .profile-card .btn,
+body.theme-dark .profile-card .list-group-item,
+html[data-bs-theme="dark"] .profile-card .list-group-item {
+    background-color: rgba(255,255,255,0.15) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.3) !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /*
+  .profile-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+      color: #fff;
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+      padding: 1.25rem 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+  }
+*/
+
+  .profile-card h4 {
+      color: #fff !important;
+  }
+
+  .profile-card .text-muted,
+  .profile-card small.text-muted {
+      color: rgba(255, 255, 255, 0.75) !important;
+  }
+
+  .profile-card .list-group-item {
+      color: #fff;
+  }
+
+  .profile-card .fw-semibold {
+      color: #fff;
+  }
+
+  /* Las stat-box tienen su propio fondo (claro u oscuro según el tema):
+           forzamos que su texto use var(--text) en lugar de heredar el blanco
+           del profile-card, para evitar "texto blanco sobre fondo blanco" en modo claro. */
+  .profile-card .stat-box,
+  .profile-card .stat-box h4,
+  .profile-card .stat-box h5,
+  .profile-card .stat-box h6,
+  .profile-card .stat-box p {
+      color: var(--text);
+  }
+
+  .profile-card .stat-box p {
+      color: var(--text-muted);
+  }
+
+  .profile-card .stat-box i.fa-bell {
+      color: var(--text) !important;
+  }
+
+  .profile-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: var(--card-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      color: var(--text-muted);
+      margin: 0 auto 0.75rem;
+      border: 2px solid var(--border);
+  }
+
+  .stat-box {
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: var(--card-soft);
+      text-align: center;
+      border: 1px solid var(--border);
+  }
+
+  .stat-box h4,
+  .stat-box h5,
+  .stat-box h6 {
+      margin: 0;
+      font-weight: 600;
+  }
+
+  .stat-box p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+  }
+
+  .stat-box.is-success {
+      background: var(--success);
+      color: #fff;
+      border-color: transparent;
+  }
+
+  .stat-box.is-info {
+      background: var(--info);
+      color: #fff;
+      border-color: transparent;
+  }
+
+  .stat-box.is-warning {
+      background: var(--warning);
+      color: #222;
+      border-color: transparent;
+  }
+
+  .stat-box.is-danger {
+      background: var(--danger);
+      color: #fff;
+      border-color: transparent;
+  }
+
+  .stat-box.is-accent {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+  }
+
+  .stat-box.is-success p,
+  .stat-box.is-info p,
+  .stat-box.is-danger p,
+  .stat-box.is-accent p {
+      color: rgba(255, 255, 255, 0.85);
+  }
+
+  .stat-box.is-warning p {
+      color: rgba(0, 0, 0, 0.7);
+  }
+
+  .stat-box h4,
+  .stat-box h5,
+  .stat-box h6 {
+      margin: 0;
+      font-weight: 600;
+  }
+
+  .stat-box p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+  }
+
+  .card-action {
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      transition: box-shadow .2s, transform .15s;
+      background: var(--card-bg);
+  }
+
+  .card-action:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+  }
+
+  .card-action .btn-outline-primary {
+      border-color: var(--border);
+      color: var(--text);
+  }
+
+  .card-action .btn-outline-primary:hover {
+      background-color: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+  }
+
+  .nav-tabs-main {
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.25rem;
+  }
+
+  .nav-tabs-main .nav-link {
+      border: none;
+      border-radius: 0.5rem 0.5rem 0 0;
+      padding: 0.75rem 1.25rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      position: relative;
+  }
+
+  .nav-tabs-main .nav-link:hover {
+      color: var(--accent);
+  }
+
+  .nav-tabs-main .nav-link.active {
+      color: var(--tab-active);
+      background: var(--card-bg);
+      border-bottom: 3px solid var(--tab-active);
+  }
+
+  .nav-tabs-main .nav-link .tab-badge {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      min-width: 10px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 8px;
+      background: var(--danger);
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 700;
+      line-height: 16px;
+      text-align: center;
+      display: none;
+  }
+
+  .nav-tabs-main .nav-link.has-alert .tab-badge {
+      display: inline-block;
+  }
+
+  /* Semáforo de estatus general (Vehículo / Expediente). */
+  .nav-tabs-main .nav-link .tab-status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #adb5bd;
+      /* gris por defecto (sin datos) */
+      margin-left: 4px;
+      vertical-align: middle;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-tabs-main .nav-link .tab-status.is-green {
+      background: #28a745;
+  }
+
+  .nav-tabs-main .nav-link .tab-status.is-yellow {
+      background: #ffc107;
+  }
+
+  .nav-tabs-main .nav-link .tab-status.is-red {
+      background: #dc3545;
+  }
+
+  /* Acordeón de vehículos: rota el chevron al colapsar. */
+  #accordionVehiculos .btn[data-toggle="collapse"] .fa-chevron-down {
+      transition: transform 0.2s ease-in-out;
+  }
+
+  #accordionVehiculos .btn[data-toggle="collapse"].collapsed .fa-chevron-down {
+      transform: rotate(-90deg);
+  }
+
+  /* ===== Directorio ===== */
+  .directorio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+  }
+
+  .directorio-search {
+      position: relative;
+      max-width: 360px;
+      flex: 1 1 260px;
+  }
+
+  .directorio-search .fa-search {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+  }
+
+  .directorio-search input {
+      padding-left: 36px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+  }
+
+  .directorio-search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 .15rem rgba(5, 13, 158, .15);
+      outline: none;
+  }
+
+  .directorio-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      background: var(--card-bg);
+      cursor: pointer;
+      height: 100%;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+
+  .directorio-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08);
+      border-color: var(--accent);
+  }
+
+  .directorio-card .dir-info {
+      flex: 1;
+      min-width: 0;
+  }
+
+  .directorio-card .dir-name {
+      color: var(--accent);
+      font-weight: 600;
+      margin: 0 0 .15rem 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+
+  .directorio-card .dir-meta {
+      font-size: .82rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+
+  .directorio-card .dir-mail {
+      display: inline-block;
+      margin-top: .15rem;
+      font-size: .8rem;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+  }
+
+  .dir-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      letter-spacing: .5px;
+  }
+
+  .dir-avatar-lg {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 2.4rem;
+      margin: 0 auto;
+      letter-spacing: 1px;
+  }
+
+  #directorioGrid .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+  }
+
+  .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: 0.5rem;
+      background: var(--card-soft);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      user-select: none;
+  }
+
+  .theme-toggle .sun,
+  .theme-toggle .moon {
+      color: var(--text-muted);
+      font-size: 1rem;
+  }
+
+  body.theme-light .theme-toggle .sun {
+      color: #f0a500;
+  }
+
+  body.theme-dark .theme-toggle .moon {
+      color: #c5d4ee;
+  }
+
+  .theme-toggle .switch {
+      width: 40px;
+      height: 22px;
+      background: var(--border);
+      border-radius: 999px;
+      position: relative;
+      transition: background .2s;
+      flex: 0 0 auto;
+  }
+
+  .theme-toggle .switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  body.theme-dark .theme-toggle .switch {
+      background: var(--accent);
+  }
+
+  body.theme-dark .theme-toggle .switch::after {
+      transform: translateX(18px);
+  }
+
+  .fc .fc-list-event-title {
+      font-weight: 600;
+  }
+
+  body.theme-dark .fc-theme-standard td,
+  body.theme-dark .fc-theme-standard th,
+  body.theme-dark .fc-theme-standard .fc-scrollgrid {
+      border-color: var(--border);
+  }
+
+  body.theme-dark .fc .fc-list-day-cushion,
+  body.theme-dark .fc .fc-list-empty {
+      background: var(--card-soft);
+      color: var(--text);
+  }
+
+  body.theme-dark .fc-list-event:hover td {
+      background: var(--card-soft);
+  }
+
+  body.theme-dark .fc-col-header-cell {
+      background: var(--card-soft);
+  }
+
+  #encuestasAsigandas .btn-outline-primary {
+      border-width: 1px;
+      border-color: var(--border);
+      color: var(--accent);
+  }
+
+  #encuestasAsigandas .btn-outline-primary:hover {
+      background-color: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+  }
+
+  .expediente-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+  }
+
+  .expediente-card .card-header {
+      background: var(--card-soft);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      color: var(--text);
+  }
+
+  .expediente-table td,
+  .expediente-table th {
+      border-color: var(--border);
+      vertical-align: middle;
+  }
+
+  .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: .5rem;
+  }
+
+  .status-dot.ok {
+      background: var(--success);
+  }
+
+  .status-dot.warn {
+      background: var(--warning);
+  }
+
+  .status-dot.danger {
+      background: var(--danger);
+  }
+
+  .sin-registro {
+      color: var(--danger);
+      font-weight: 600;
+  }
+
+  .notif-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      min-height: 400px;
+      max-height: 600px;
+      overflow-y: auto;
+  }
+
+  .notif-item {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+  }
+
+  .notif-item:last-child {
+      border-bottom: none;
+  }
+
+  .notif-item .notif-icon {
+      color: var(--accent);
+      font-size: 1.25rem;
+  }
+
+  .notif-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem 0;
+  }
+
+
+
+
+
+
+
+  #tabKpis {
+      padding: 0 !important;
+  }
+
+  #tabKpis #frameKPIs {
+      padding: 0 !important;
+      margin: 0 !important;
+  }
+
+  /* Mata el py-5 de Bootstrap que mete 3rem de padding */
+  #tabKpis .py-5 {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+  }
+
+  /* Quita margin del spinner si aparece */
+  #tabKpis .text-center {
+      margin: 0 !important;
+  }
+
+  #tabKpis .mb-2 {
+      margin-bottom: 0 !important;
+  }
+
+  /* El iframe ocupa todo sin espacio arriba */
+  #tabKpis iframe {
+      display: block !important;
+      width: 100% !important;
+      height: calc(100vh - 140px) !important;
+      /* Ajusta 140px según altura de tu header de tabs */
+      border: none !important;
+      margin: 0 !important;
+  }
+
+
+
+
+
+  /* Separa del borde superior */
+  .profile-avatar {
+      padding-top: 35px !important;
+      display: flex !important;
+      justify-content: center !important;
+  }
+
+  /* Wrapper del borde - CLAVE: flex-shrink: 0 */
+  .foto-wrapper {
+      width: 130px !important;
+      height: 130px !important;
+      min-width: 130px !important;
+      min-height: 130px !important;
+      max-width: 130px !important;
+      max-height: 130px !important;
+      border-radius: 50% !important;
+      background: #5b5b5b !important;
+      padding: 5px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+      box-sizing: border-box !important;
+      flex-shrink: 0 !important;
+      /* NO dejar que flex lo estire */
+      flex-grow: 0 !important;
+      /* NO dejar que flex lo estire */
+      aspect-ratio: 1 / 1 !important;
+      overflow: hidden !important;
+      /* Recorta lo que se salga */
+  }
+
+  /* La imagen adentro */
+  .foto-perfil-img {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      object-position: center top !important;
+      display: block !important;
+      border: none !important;
+  }
+
+  /* Ícono cuando no hay foto */
+  .foto-perfil-default {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      background-color: #5b5b5b !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+  }
+
+  .foto-perfil-default i {
+      font-size: 55px !important;
+      color: #6c757d !important;
+  }
+
+  /* Evita que el nombre se pegue */
+  .profile-card h4 {
+      margin-top: 50px !important;
+  }

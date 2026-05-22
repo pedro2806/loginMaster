@@ -844,6 +844,7 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
                         document.cookie = `noEmpleadoL=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `rolL=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `correoL=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `fotoL=${encodeURIComponent(data.foto)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `UsrKpis=${encodeURIComponent(data.kpis)}; expires=${expires}; SameSite=Lax; path=/;`;
                     });
 

@@ -1,10 +1,12 @@
 <?php
-    session_start();
-    include '../ControlVehicular/conn.php';
-    if(empty($_COOKIE['noEmpleadoL'])){
-        echo '<script>window.location.assign("index.php")</script>';
-        exit;
-    }
+session_start();
+include '../incidencias/conn.php';
+if (empty($_COOKIE['noEmpleadoL'])) {
+    echo '<script>window.location.assign("index.php")</script>';
+    exit;
+}
+$empleadosAdmin = [276, 403, 569, 523, 183];
+$esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosAdmin);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -16,57 +18,9 @@
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">    
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="css/loginMaster.css" rel="stylesheet">
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     <style>
-        body { background: #f8f9fc; }
-        .profile-card {
-            background: #fff;
-            border-radius: 1rem;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-            padding: 2rem 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .profile-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #e9ecef;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: #6c757d;
-            margin-bottom: 1rem;
-        }
-        .stat-box {
-            border-radius: 0.2rem;
-            padding: 0.2rem;
-            margin-bottom: 0.2rem;
-            background: #f4f6fb;
-            text-align: center;
-        }
-        .stat-box h4 { margin: 0; font-weight: 600; }
-        .stat-box p { margin: 0; font-size: 0.95rem; color: #6c757d; }
-        .card-action {
-            border: none;
-            border-radius: 0.5rem;
-            transition: box-shadow .2s;
-        }
-        .card-action:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
-        }
-        .fc .fc-list-event-title { font-weight: 600; }
-
-        #encuestasAsigandas .btn-outline-primary {
-            border-width: 1px;
-            border-color: #eaecf4;
-            color: #4e73df;
-        }
-        #encuestasAsigandas .btn-outline-primary:hover {
-            background-color: #f8f9fc;
-            border-color: #4e73df;
-            color: #4e73df;
-        }
     </style>
 </head>
 <body id="page-top">
@@ -76,21 +30,55 @@
                 <?php include 'encabezado.php'; ?>
                 <div class="container-fluid">
                     <div class="row">
-                        <!-- Perfil de Usuario -->
-                        <div class="col-xl-3 col-md-3">
-                                <div class="profile-card text-center ">
-                                    <div class="card shadow-sm border-0" style="background-color: #f8f9fa;">
-                                    <div class="card-body text-start p-3">                                        
-                                        <div class="profile-avatar mb-1 d-block mx-auto">
-                                            <i class="fas fa-user-circle"></i>
-                                        </div>
-                                        
-                                        <h3 class="mb-1 fw-bold" style="color: #1c83f1;">
-                                            <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
-                                        </h3>
-                                        <p class="text-muted mb-3">
-                                            No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
-                                        </p>
+                        <!-- ========== SIDEBAR PERFIL ========== -->
+                        <div class="col-xl-3 col-md-4">
+
+
+                            <div class="profile-card text-center">
+                                <div class="profile-avatar">
+                                    <?php
+                                    $noEmpleado = $_COOKIE['noEmpleadoL'] ?? '';
+                                    $ruta_fotos = '../loginMaster/';
+                                    $archivo_foto = $_COOKIE['fotoL'] ?? '';
+                                    $ruta_completa = $ruta_fotos . $archivo_foto;
+                                    $tiene_foto = file_exists($ruta_completa);
+                                    ?>
+
+                                    <!-- Wrapper que lleva el borde -->
+                                    <div class="foto-wrapper">
+                                        <?php if ($tiene_foto): ?>
+                                            <img src="<?= $ruta_completa ?>?v=<?= time() ?>"
+                                                alt="Foto perfil"
+                                                class="foto-perfil-img">
+                                        <?php else: ?>
+                                            <div class="foto-perfil-default">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+
+                                <h4>
+                                    <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
+                                </h4>
+                                <p>
+                                    No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
+                                </p>
+                                <ul class="list-group list-group-flush text-start small mb-2" style="background:transparent;">
+                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
+                                        <small class="text-muted fw-bold me-1">Jefe Directo:</small>
+                                        <span id="lblJefe" class="fw-semibold"></span>
+                                    </li>
+                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
+                                        <small class="text-muted fw-bold me-1">Área:</small>
+                                        <span id="lblArea" class="fw-semibold"></span>
+                                    </li>
+                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
+                                        <small class="text-muted fw-bold me-1">Puesto:</small>
+                                        <span id="lblPuesto" class="fw-semibold">—</span>
+                                    </li>
+                                </ul>
 
                                         <ul class="list-group list-group-flush text-start">
                                             
@@ -480,6 +468,251 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- ===== TAB 3: AVISOS ===== -->
+                                <div class="tab-pane fade" id="tabAvisos" role="tabpanel">
+                                    <div class="row">
+                                        <!-- Mural / Tablero (solo PDF) -->
+                                        <div class="col-lg-7 mb-4">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-bullhorn mr-2"></i>Mural / Tablero de avisos</h6>
+                                                </div>
+                                                <div class="card-body p-2">
+                                                    <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-MAYO26_compressed.pdf' type="application/pdf" width="100%" height="600px" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Encuestas + Tallas -->
+                                        <div class="col-lg-5 mb-4" id="divCapacitacionCursos">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-poll mr-2"></i>Encuestas / Votaciones</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="encuestasAsigandas"></div>
+                                                    <hr>
+                                                    <!-- Registro de Talla (movido aquí) -->
+                                                    <h6 class="font-weight-bold mb-2"><i class="fas fa-tshirt mr-2"></i>Talla de uniforme</h6>
+                                                    <form method="post">
+                                                        <div class="form-group">
+                                                            <div id="alertTalla" class="alert alert-danger py-2" role="alert" style="font-size:.85rem;">
+                                                                <strong>Importante:</strong> Por favor, registra tu talla.
+                                                            </div>
+                                                            <label for="talla" class="mb-1">Talla:</label>
+                                                            <select class="form-control form-control-sm" id="talla" name="talla" required>
+                                                                <option value="">Seleccione una talla</option>
+                                                                <option value="XS">XS</option>
+                                                                <option value="S">S</option>
+                                                                <option value="M">M</option>
+                                                                <option value="L">L</option>
+                                                                <option value="XL">XL</option>
+                                                            </select>
+                                                            <input type="hidden" name="noEmpleadoT" id="noEmpleadoT" value="">
+                                                        </div>
+                                                        <div class="text-center">
+                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar</button>
+                                                                <?php
+                                                                $usuariosRegistran = array(183, 276, 523, 403);
+                                                                if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                                                                    echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
+                                                                }
+                                                                ?>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===== TAB 4: EXPEDIENTE (shell tentativo) ===== -->
+                                <div class="tab-pane fade" id="tabExpediente" role="tabpanel">
+                                    <div class="alert alert-info" style="background: var(--accent-soft); border-color: var(--border); color: var(--text);">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        <strong>Expediente del empleado</strong> — Estructura tentativa. Los datos se conectarán a la base más adelante.
+                                    </div>
+                                    <div class="row">
+                                        <!-- FUERZA -->
+                                        <div class="col-lg-4 mb-3">
+                                            <div class="expediente-card h-100">
+                                                <div class="card-header">Fuerza</div>
+                                                <div class="card-body p-0">
+                                                    <table class="table table-sm mb-0 expediente-table">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
+                                                                <td class="text-end">2026-04-01</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
+                                                                <td class="text-end">2025-02-22</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 3</td>
+                                                                <td class="text-end">2026-05-03</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot danger"></span>Archivo 4</td>
+                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- MASA -->
+                                        <div class="col-lg-4 mb-3">
+                                            <div class="expediente-card h-100">
+                                                <div class="card-header">Masa</div>
+                                                <div class="card-body p-0">
+                                                    <table class="table table-sm mb-0 expediente-table">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
+                                                                <td class="text-end">2026-04-01</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
+                                                                <td class="text-end">2025-02-22</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot danger"></span>Archivo 3</td>
+                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot danger"></span>Archivo 4</td>
+                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- DUREZA -->
+                                        <div class="col-lg-4 mb-3">
+                                            <div class="expediente-card h-100">
+                                                <div class="card-header">Dureza</div>
+                                                <div class="card-body p-0">
+                                                    <table class="table table-sm mb-0 expediente-table">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
+                                                                <td class="text-end">2026-04-01</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
+                                                                <td class="text-end">2025-02-22</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot ok"></span>Archivo 3</td>
+                                                                <td class="text-end">2026-05-03</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><span class="status-dot warn"></span>Archivo 4</td>
+                                                                <td class="text-end">2024-01-01</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===== TAB 5: PERSONAL ===== -->
+                                <div class="tab-pane fade" id="tabPersonal" role="tabpanel">
+                                    <div class="row">
+                                        <!-- Notificaciones expandidas -->
+                                        <div class="col-lg-5 mb-4">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-bell mr-2"></i>Notificaciones</h6>
+                                                </div>
+                                                <div class="card-body p-0">
+                                                    <div id="panelNotificaciones" class="notif-panel">
+                                                        <div class="notif-empty"><i class="fas fa-bell-slash fa-2x mb-2 d-block"></i>Sin notificaciones</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Calendario de Vacaciones -->
+                                        <div class="col-lg-7 mb-4">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-umbrella-beach mr-2"></i>Mis Vacaciones</h6>
+                                                    <small class="text-muted"><strong class="text-dark"><span id="diasDispPanel">0</span> días disp.</strong> · <strong class="text-dark"><span id="diasSolPanel">0</span> solicitados</strong></small>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="d-flex align-items-center mb-2" style="gap: 0.75rem; font-size:.8rem;">
+                                                        <span><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#050D9E; border-radius:.15rem; vertical-align:middle;"></span>Yo</span>
+                                                        <span id="leyendaVacacionesEquipo" class="d-none"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
+                                                        <span id="leyendaVacacionesDepartamento"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
+                                                    </div>
+                                                    <div id="calendarVacaciones"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===== TAB: VEHÍCULO ===== -->
+                                <div class="tab-pane fade" id="tabVehiculo" role="tabpanel">
+                                    <div id="contenedorVehiculos">
+                                        <div class="text-center text-muted py-5">
+                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                            <p class="mb-0">Cargando información de vehículo...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
+                                <div class="tab-pane fade" id="tabKpis" role="tabpanel">
+
+
+                                    <div id="frameKPIs">
+                                        <div class="text-center text-muted py-5">
+                                            <?php
+                                            $passkpis = isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '';
+                                            ?>
+                                            <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo $passkpis; ?>" title="KPIs"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===== TAB 7: DIRECTORIO ===== -->
+                                <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
+                                    <div class="directorio-header">
+                                        <div>
+                                            <h4 class="mb-1" style="color: var(--accent);">Directorio</h4>
+                                            <p class="text-muted mb-0 small">Busca a cualquier compañero por nombre, área, puesto o correo.</p>
+                                        </div>
+                                        <div class="directorio-search">
+                                            <i class="fas fa-search"></i>
+                                            <input type="text" id="directorioBuscar" class="form-control form-control-sm" placeholder="Buscar empleado..." autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div id="directorioGrid" class="row">
+                                        <div class="col-12 empty-state">
+                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                            <p class="mb-0">Cargando directorio...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+
+
+
+
+
+
+
+
                             </div>
                         </div>
                     </div>
@@ -1545,11 +1778,978 @@
             }, 'json');
         }
 
-        // Para mostrar nombre de archivo en inputs de BS4
-        $('.custom-file-input').on('change', function() {
-            let fileName = $(this).val().split('\\').pop();
-            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        // ===== Panel de notificaciones (Tab Personal) =====
+        function cargarPanelNotificaciones() {
+            var $panel = $('#panelNotificaciones');
+
+            $.ajax({
+                url: 'acciones_globales.php',
+                method: 'POST',
+                data: {
+                    accion: 'cargarNotificaciones'
+                },
+                dataType: 'json'
+            }).done(function(resp) {
+                if (!resp || !resp.success) {
+                    $panel.html('<div class="notif-empty"><i class="fas fa-exclamation-circle fa-2x mb-2 d-block"></i>No se pudieron cargar las notificaciones</div>');
+                    return;
+                }
+
+                var lista = resp.notificaciones || [];
+
+                if (!lista.length) {
+                    $panel.html('<div class="notif-empty"><i class="fas fa-bell-slash fa-2x mb-2 d-block"></i>Sin notificaciones</div>');
+                    return;
+                }
+
+                var noEmpleadoL = getCookie('noEmpleadoL') || '';
+                var html = '';
+                lista.forEach(function(n) {
+                    var id = parseInt(n.id, 10) || 0;
+                    var idRegistro = parseInt(n.id_registro_referencia, 10) || 0;
+                    var sistema = escapeHtml(n.sistema || 'General');
+                    var archivo = escapeHtml(n.archivo || '');
+                    var fecha = escapeHtml(n.fecha_actualizacion || n.fecha || '');
+                    var titulo = escapeHtml(n.recordar || n.accion || 'Notificación');
+                    var creadoPor = escapeHtml(n.usuario_actualiza_nombre || '');
+                    var nota = escapeHtml(n.nota || '');
+                    var iconoClase = obtenerIconoNotificacion(String(sistema).toLowerCase());
+
+                    html += '<div class="notif-item" data-notificacion-id="' + id + '">';
+                    html += '  <i class="' + iconoClase + ' notif-icon mt-1"></i>';
+                    html += '  <div class="flex-grow-1 min-width-0">';
+                    html += '      <div class="d-flex justify-content-between align-items-start">';
+                    html += '          <div>';
+                    html += '              <div class="font-weight-bold" style="font-size:.9rem;">' + titulo + '</div>';
+                    html += (creadoPor ? '              <div class="text-muted" style="font-size:.8rem;">' + creadoPor + '</div>' : '');
+                    html += (nota && nota !== titulo ? '              <div class="text-muted" style="font-size:.8rem;">' + nota + '</div>' : '');
+                    html += '              <div class="text-muted" style="font-size:.75rem;"><i class="far fa-calendar-alt mr-1"></i>' + fecha + ' · <span class="text-uppercase">' + sistema + '</span></div>';
+                    html += '          </div>';
+                    html += '          <button type="button" class="btn btn-sm btn-light border border-success text-success px-2 py-1 ml-2" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + noEmpleadoL + '\')">';
+                    html += '              <i class="fas fa-check fa-sm"></i>';
+                    html += '          </button>';
+                    html += '      </div>';
+                    html += '  </div>';
+                    html += '</div>';
+                });
+                $panel.html(html);
+            }).fail(function() {
+                $panel.html('<div class="notif-empty"><i class="fas fa-exclamation-circle fa-2x mb-2 d-block"></i>Error de conexión</div>');
+            });
+        }
+
+        // ===== INFO EMPLEADO =====
+        function infoEmpleado() {
+            $.ajax({
+                url: '../incidencias/getInfoLoginMaster.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    correo: getCookie('correoL'),
+                    accion: 'getInfo'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $.each(response.info, function(index, infoUsr) {
+                            $('#diasDisp').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
+                            $('#diasDispPanel').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
+                            $('#diasSolPanel').text(infoUsr.diasSol || 0);
+                            $('#lblArea').text(infoUsr.departamento || '—');
+                            $('#lblJefe').text(infoUsr.jefe || '—');
+                            $('#lblPuesto').text(infoUsr.puesto || '—');
+                            $('#fechaIngreso').text(infoUsr.fechaIngreso || '—');
+                            // La info del jefe se resuelve con una acción dedicada en acciones_globales.php
+                            // (getInfo no devuelve esJefe). Ver verificarEsJefe().
+                        });
+                    }
+                }
+            });
+        }
+
+        // ===== ¿El usuario tiene gente a su cargo? =====
+        // Consulta acciones_globales.php?accion=esJefe (cuenta filas en usuarios.jefe = noEmp).
+        // Si es jefe, activa la fuente "equipo" del calendario de vacaciones y muestra la leyenda.
+        function verificarEsJefe() {
+            var noEmp = getCookie('noEmpleadoL') || '';
+            if (!noEmp) return;
+            $.ajax({
+                url: 'acciones_globales.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'esJefe',
+                    noEmpleado: noEmp
+                }
+            }).done(function(resp) {
+                if (resp && resp.success && resp.esJefe === true) {
+                    // Es jefe: mostrar "Equipo", ocultar "Departamento" y traer su equipo.
+                    esJefeActual = true;
+                    $('#leyendaVacacionesEquipo').removeClass('d-none');
+                    $('#leyendaVacacionesDepartamento').addClass('d-none');
+                    if (calendarVacaciones) {
+                        var srcEquipo = calendarVacaciones.getEventSourceById('equipo');
+                        var srcDept = calendarVacaciones.getEventSourceById('departamento');
+                        if (srcEquipo) srcEquipo.refetch();
+                        if (srcDept) srcDept.refetch(); // queda vacía por la guarda en eventSources
+                    }
+                }
+                // Si NO es jefe, se queda el estado por defecto:
+                // leyenda "Departamento" visible, "Equipo" oculta. La fuente
+                // 'departamento' ya carga sola en la primera renderización del calendario.
+            });
+        }
+
+        // ===== VALIDA OPCIONES (qué sistemas se ven) =====
+        function validaOpciones() {
+            $.ajax({
+                url: '../incidencias/getInfoLoginMaster.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    noEmpleado: getCookie('noEmpleadoL'),
+                    correo: getCookie('correoL'),
+                    accion: 'ValidarOpciones'
+                },
+                success: function(info) {
+                    $.each(info, function(index, infoAccesos) {
+                        if (infoAccesos.estatus == '1') {
+                            $('#' + infoAccesos.sistema).show();
+                        } else {
+                            $('#' + infoAccesos.sistema).hide();
+                        }
+                    });
+                }
+            });
+        }
+
+        // ===== Tab Vehículo: semáforo de documentación =====
+        // 1) Obtiene los vehículos del usuario (getPlaca → ../incidencias/validaLoginMaster.php).
+        // 2) Para cada vehículo consulta su documentación (obtenerDatosVehiculo → ../ControlVehicular/acciones_qr.php).
+        // 3) Renderiza una card por vehículo con check verde / cruz roja por documento.
+        function cargarVehiculosDocs() {
+            var $cont = $('#contenedorVehiculos');
+            var noEmp = getCookie('noEmpleadoL') || '';
+            if (!noEmp) {
+                $cont.html('<div class="alert alert-info">No hay sesión válida.</div>');
+                return;
+            }
+
+            $.ajax({
+                url: '../incidencias/validaLoginMaster.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'getPlaca',
+                    noEmpleado: noEmp
+                }
+            }).done(function(resp) {
+                if (!resp || !resp.success || !resp.vehiculos || resp.vehiculos.length === 0) {
+                    $cont.html(
+                        '<div class="card shadow-sm">' +
+                        '<div class="card-body text-center text-muted py-5">' +
+                        '<i class="fas fa-car-side fa-3x mb-3" style="opacity:.4;"></i>' +
+                        '<h6 class="mb-1">Sin vehículo asignado</h6>' +
+                        '<small>No tienes vehículos registrados a tu nombre.</small>' +
+                        '</div>' +
+                        '</div>'
+                    );
+                    vehiculosDocsCargados = true;
+                    return;
+                }
+
+                // Renderizar un placeholder por cada vehículo y luego rellenar.
+                // El primer vehículo se abre por defecto, los demás colapsados.
+                var html = '<div class="accordion" id="accordionVehiculos">';
+                resp.vehiculos.forEach(function(v, idx) {
+                    var idv = parseInt(v.id_vehiculo, 10) || 0;
+                    html += renderCardVehiculo(idv, v.placa, v.modelo, idx === 0);
+                });
+                html += '</div>';
+                $cont.html(html);
+
+                // Pedir documentación + validaciones de cada vehículo.
+                resp.vehiculos.forEach(function(v) {
+                    var idv = parseInt(v.id_vehiculo, 10) || 0;
+                    if (!idv) return;
+                    syncCookieNoEmpleado();
+
+                    // Documentos
+                    $.ajax({
+                        url: '../ControlVehicular/acciones_qr.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            accion: 'obtenerDatosVehiculo',
+                            id_vehiculo: idv
+                        }
+                    }).done(function(data) {
+                        if (!data || data.error) {
+                            $('#docsVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar la documentación</p>');
+                            return;
+                        }
+                        $('#docsVeh-' + idv).html(renderListaDocs(data));
+                        vehiculosEstado[idv] = vehiculosEstado[idv] || {};
+                        vehiculosEstado[idv].docs = evaluarDocs(data);
+                        actualizarSemaforoVehiculo();
+                    }).fail(function() {
+                        $('#docsVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error al obtener documentación</p>');
+                    });
+
+                    // Validaciones (checklist + mantenimiento)
+                    $.ajax({
+                        url: '../ControlVehicular/acciones_qr.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            accion: 'obtenerValidacionesVehiculo',
+                            id_vehiculo: idv
+                        }
+                    }).done(function(data) {
+                        if (!data || data.error) {
+                            $('#chkVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar el checklist</p>');
+                            $('#mntVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar el mantenimiento</p>');
+                            return;
+                        }
+                        $('#chkVeh-' + idv).html(renderListaChecklist(data));
+                        $('#mntVeh-' + idv).html(renderListaMantenimiento(data));
+                        vehiculosEstado[idv] = vehiculosEstado[idv] || {};
+                        vehiculosEstado[idv].vals = evaluarValidaciones(data);
+                        actualizarSemaforoVehiculo();
+                    }).fail(function() {
+                        $('#chkVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
+                        $('#mntVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
+                    });
+                });
+                vehiculosDocsCargados = true;
+            }).fail(function() {
+                $cont.html('<div class="alert alert-danger">No se pudo obtener la información de vehículos.</div>');
+            });
+        }
+
+        function renderCardVehiculo(idVeh, placa, modelo, abierto) {
+            var titulo = (placa || '') + (modelo ? ' - ' + modelo : '');
+            var shown = abierto ? ' show' : '';
+            var btnCls = abierto ? '' : ' collapsed';
+            var spinner = '<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i></div>';
+
+            return '' +
+                '<div class="card shadow-sm mb-3" data-vehiculo="' + idVeh + '">' +
+                '<div class="card-header p-0" id="headingV-' + idVeh + '" style="background: var(--card-soft); border-color: var(--border);">' +
+                '<button class="btn btn-link w-100 text-left py-2 px-3 d-flex align-items-center justify-content-between font-weight-bold' + btnCls + '" ' +
+                'style="color: var(--text); text-decoration:none;" ' +
+                'type="button" data-toggle="collapse" data-target="#collapseV-' + idVeh + '" aria-expanded="' + (abierto ? 'true' : 'false') + '" aria-controls="collapseV-' + idVeh + '">' +
+                '<span><i class="fas fa-car mr-2"></i>' + titulo + '</span>' +
+                '<i class="fas fa-chevron-down"></i>' +
+                '</button>' +
+                '</div>' +
+                '<div id="collapseV-' + idVeh + '" class="collapse' + shown + '" aria-labelledby="headingV-' + idVeh + '" data-parent="#accordionVehiculos">' +
+                '<div class="card-body p-2">' +
+                '<div class="row no-gutters">' +
+                '<div class="col-md-4 px-1 mb-2">' +
+                '<div class="card h-100">' +
+                '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">' +
+                '<h6 class="m-0 font-weight-bold small">Documentación</h6>' +
+                '<a href="../ControlVehicular/documentacion?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Actualizar Docs">' +
+                '<i class="fas fa-folder-open"></i>' +
+                '</a>' +
+                '</div>' +
+                '<div class="card-body p-0" id="docsVeh-' + idVeh + '">' + spinner + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="col-md-4 px-1 mb-2">' +
+                '<div class="card h-100">' +
+                '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">' +
+                '<h6 class="m-0 font-weight-bold small">Checklist</h6>' +
+                '<a href="../ControlVehicular/checkVehiculo?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Realizar Checklist">' +
+                '<i class="fas fa-clipboard-check"></i>' +
+                '</a>' +
+                '</div>' +
+                '<div class="card-body p-0" id="chkVeh-' + idVeh + '">' + spinner + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="col-md-4 px-1 mb-2">' +
+                '<div class="card h-100">' +
+                '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">' +
+                '<h6 class="m-0 font-weight-bold small">Mantenimiento</h6>' +
+                '<a href="../ControlVehicular/seguimiento_mantenimiento.php" target="_blank" class="btn btn-warning btn-sm" title="Ver Mantenimientos">' +
+                '<i class="fas fa-wrench"></i>' +
+                '</a>' +
+                '</div>' +
+                '<div class="card-body p-0" id="mntVeh-' + idVeh + '">' + spinner + '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        }
+
+        // Renderiza solo la lista (sin envoltorio card) — la card y header se crean en renderCardVehiculo.
+        function renderListaChecklist(data) {
+            var subareasOrden = [{
+                    campo: 'asientos',
+                    label: 'Asientos'
+                },
+                {
+                    campo: 'espejos_ventanas',
+                    label: 'Espejos y ventanas'
+                },
+                {
+                    campo: 'estereos_aire',
+                    label: 'Estéreos y aire'
+                },
+                {
+                    campo: 'faros',
+                    label: 'Faros'
+                },
+                {
+                    campo: 'golpes_exterior',
+                    label: 'Golpes exterior'
+                },
+                {
+                    campo: 'limpiaparabrisas',
+                    label: 'Limpiaparabrisas'
+                },
+                {
+                    campo: 'limpieza',
+                    label: 'Limpieza'
+                },
+                {
+                    campo: 'llantas',
+                    label: 'Llantas'
+                },
+                {
+                    campo: 'placas',
+                    label: 'Placas'
+                },
+                {
+                    campo: 'puertas_llave',
+                    label: 'Puertas y llave'
+                }
+            ];
+            var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
+            var html = '<ul class="list-group list-group-flush">';
+            subareasOrden.forEach(function(s) {
+                var estado = subareas[s.campo] || 'no_revisado';
+                var icono;
+                if (estado === 'ok') icono = '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>';
+                else if (estado === 'mal') icono = '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                else icono = '<i class="fas fa-minus-circle text-muted fa-fw mr-2"></i>';
+                html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span class="small">' + s.label + '</span></li>';
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function renderListaMantenimiento(data) {
+            var mt = data.mantenimiento || null;
+            if (!mt) return '<p class="text-muted small mb-0 p-3">Sin mantenimiento registrado</p>';
+
+            // REALIZADO implica que ya pasó por autorización Y se ejecutó, por eso cuenta como autorizado.
+            var vobo = (mt.VoBo_jefe || '').toUpperCase();
+            var realizado = (vobo === 'REALIZADO');
+            var autorizado = (vobo === 'AUTORIZADO' || realizado);
+            var sinPendientes = (vobo && vobo !== 'PENDIENTE');
+
+            var labelEstado;
+            if (realizado) labelEstado = 'Último mantenimiento realizado';
+            else if (vobo === 'AUTORIZADO') labelEstado = 'Mantenimiento autorizado';
+            else if (vobo === 'PENDIENTE') labelEstado = 'Mantenimiento esperando autorización';
+            else labelEstado = 'Mantenimiento sin estatus' + (vobo ? ' (' + vobo + ')' : '');
+
+            var alDia = false;
+            var labelProx;
+            if (mt.fecha_proxi) {
+                var prox = new Date(mt.fecha_proxi);
+                if (!isNaN(prox.getTime())) {
+                    alDia = (prox >= new Date());
+                    labelProx = 'Próximo mantenimiento (' + mt.fecha_proxi + ')';
+                } else {
+                    labelProx = 'Próximo mantenimiento (sin fecha)';
+                }
+            } else if (realizado) {
+                // Sin próxima fecha capturada pero el último ya se realizó → al día.
+                alDia = true;
+                labelProx = 'Sin próximo mantenimiento programado';
+            } else {
+                labelProx = 'Próximo mantenimiento (sin fecha)';
+            }
+
+            var items = [{
+                    ok: autorizado,
+                    label: labelEstado
+                },
+                {
+                    ok: sinPendientes,
+                    label: 'Sin solicitudes pendientes'
+                },
+                {
+                    ok: alDia,
+                    label: labelProx
+                }
+            ];
+            var html = '<ul class="list-group list-group-flush">';
+            items.forEach(function(it) {
+                var icono = it.ok ?
+                    '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>' :
+                    '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span class="small">' + it.label + '</span></li>';
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function renderListaDocs(v) {
+            var docs = [{
+                    campo: 'licencia',
+                    label: 'Licencia'
+                },
+                {
+                    campo: 'tarjeta_circulacion',
+                    label: 'T. Circulación'
+                },
+                {
+                    campo: 'refrendo_actual',
+                    label: 'Refrendo'
+                },
+                {
+                    campo: 'seguro_vehiculo',
+                    label: 'Seguro'
+                },
+                {
+                    campo: 'verificacion_vigente',
+                    label: 'Verificación'
+                }
+            ];
+            if (!v.fecha_reg_doc) {
+                return '<p class="text-muted small mb-0 p-3">Sin documentación registrada</p>';
+            }
+            var html = '<ul class="list-group list-group-flush">';
+            docs.forEach(function(d) {
+                var tiene = v[d.campo] && v[d.campo] !== 'S/R';
+                var icono = tiene ?
+                    '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>' :
+                    '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span>' + d.label + '</span></li>';
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        // ===== Semáforo del tab Vehículo =====
+        // Cuenta cuántos "items" de validación están OK vs total, por vehículo.
+        // El semáforo agregado determina:
+        //   verde = todo OK
+        //   amarillo = algo registrado pero falta o está vencido
+        //   rojo = nada registrado
+        //   gris (default) = sin vehículos asignados / sin datos aún
+        function evaluarDocs(v) {
+            var docs = ['licencia', 'tarjeta_circulacion', 'refrendo_actual', 'seguro_vehiculo', 'verificacion_vigente'];
+            var total = docs.length;
+            var ok = 0;
+            if (v.fecha_reg_doc) {
+                docs.forEach(function(c) {
+                    if (v[c] && v[c] !== 'S/R') ok++;
+                });
+            }
+            return {
+                ok: ok,
+                total: total
+            };
+        }
+
+        function evaluarValidaciones(data) {
+            var total = 0,
+                ok = 0;
+
+            // Checklist (10 subáreas)
+            var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
+            ['asientos', 'espejos_ventanas', 'estereos_aire', 'faros', 'golpes_exterior',
+                'limpiaparabrisas', 'limpieza', 'llantas', 'placas', 'puertas_llave'
+            ].forEach(function(k) {
+                total++;
+                if (subareas[k] === 'ok') ok++;
+            });
+
+            // Mantenimiento (3 items: autorizado, sin pendientes, próximo al día).
+            // Misma semántica que renderListaMantenimiento: REALIZADO cuenta como autorizado
+            // y "sin fecha_proxi tras un REALIZADO" cuenta como al día.
+            var mt = data.mantenimiento || null;
+            total += 3;
+            if (mt) {
+                var vobo = (mt.VoBo_jefe || '').toUpperCase();
+                var realizado = (vobo === 'REALIZADO');
+                if (vobo === 'AUTORIZADO' || realizado) ok++;
+                if (vobo && vobo !== 'PENDIENTE') ok++;
+                if (mt.fecha_proxi) {
+                    var prox = new Date(mt.fecha_proxi);
+                    if (!isNaN(prox.getTime()) && prox >= new Date()) ok++;
+                } else if (realizado) {
+                    ok++;
+                }
+            }
+
+            return {
+                ok: ok,
+                total: total
+            };
+        }
+
+        function actualizarSemaforoVehiculo() {
+            var $dot = $('#statusTabVehiculo');
+            $dot.removeClass('is-green is-yellow is-red');
+
+            var totalAll = 0,
+                okAll = 0,
+                n = 0;
+            Object.keys(vehiculosEstado).forEach(function(idv) {
+                n++;
+                var est = vehiculosEstado[idv];
+                if (est.docs) {
+                    totalAll += est.docs.total;
+                    okAll += est.docs.ok;
+                }
+                if (est.vals) {
+                    totalAll += est.vals.total;
+                    okAll += est.vals.ok;
+                }
+            });
+
+            if (n === 0 || totalAll === 0) return; // dejar gris por defecto
+
+            if (okAll === totalAll) $dot.addClass('is-green');
+            else if (okAll === 0) $dot.addClass('is-red');
+            else $dot.addClass('is-yellow');
+        }
+
+        // ===== Cookies =====
+        function getCookie(name) {
+            let matches = document.cookie.match(new RegExp(
+                "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+            ));
+            return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
+
+        // ===== Tallas =====
+        function registraTallas() {
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'registraTallas',
+                    talla: document.getElementById('talla').value,
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: 'Talla actualizada correctamente.'
+                        });
+                        cargarTalla(getCookie('noEmpleadoL'));
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo registrar la talla.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+
+        function cargarTalla(noEmpleadoL) {
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'validaTalla',
+                    noEmpleado: noEmpleadoL
+                },
+                success: function(response) {
+                    if (response.success && response.exists && response.talla) {
+                        $('#alertTalla').hide();
+                        $('#talla').val(response.talla);
+                    } else {
+                        $('#alertTalla').show();
+                    }
+                }
+            });
+        }
+
+        // ===== Buzón de Sugerencias =====
+        function BuzonSugerencias() {
+            $.ajax({
+                url: 'login.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'buzon',
+                    tipo: document.getElementById('tipo').value,
+                    comentario: document.getElementById('comentario').value,
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: 'Comentario enviado correctamente.'
+                        });
+                        $('#formbuzon')[0].reset();
+                        $('#modalbuzon').modal('hide');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo enviar el comentario.'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error en la solicitud.'
+                    });
+                }
+            });
+        }
+
+        // ===== Cursos =====
+        function cargarCursosSeleccionados() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'cargar_cursos',
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
+                success: function(response) {
+                    if (response.success && response.cursos) {
+                        response.cursos.forEach(function(cursoId) {
+                            $('input[name="cursos[]"][value="' + cursoId.id_voto + '"]').prop('checked', true);
+                            $('#formCursos').hide();
+                            $('#cursosSeleccionados').append('<li>' + cursoId.id_voto + '</li>');
+                        });
+                    }
+                }
+            });
+        }
+
+        function guardarAsistenciaCurso() {
+            var cursosSeleccionados = [];
+            $('input[name="cursos[]"]:checked').each(function() {
+                cursosSeleccionados.push($(this).val());
+            });
+            if (cursosSeleccionados.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención',
+                    text: 'Debes seleccionar al menos un curso.'
+                });
+                return;
+            }
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'guardar_asistencia',
+                    cursos: cursosSeleccionados,
+                    noEmpleado: getCookie('noEmpleadoL')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Asistencia Guardada',
+                            text: 'Tu asistencia a los cursos ha sido registrada correctamente.'
+                        });
+                        cargarCursosSeleccionados();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'No se pudo registrar la asistencia.'
+                        });
+                    }
+                }
+            });
+        }
+
+        // ===== Ver tallas =====
+        function VerTallas() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_tallas'
+                },
+                success: function(response) {
+                    if (response.success && response.tallas) {
+                        var tablaBody = $('#TotalTallas tbody');
+                        tablaBody.empty();
+                        response.tallas.forEach(function(t) {
+                            tablaBody.append('<tr><td>' + t.noEmpleado + '-' + t.nombre + '</td><td>' + t.talla + '</td><td>' + t.sexo + '</td></tr>');
+                        });
+                        $('#modalResultadosTallas').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Sin tallas',
+                            text: 'No se encontraron tallas en el sistema.'
+                        });
+                    }
+                }
+            });
+        }
+
+        function TotalTallas() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'conteo_tallas'
+                },
+                success: function(response) {
+                    if (response.success && response.tallas) {
+                        var tablaBody = $('#TotalTallasRegistradas tbody');
+                        tablaBody.empty();
+                        response.tallas.forEach(function(t) {
+                            tablaBody.append('<tr><td>' + t.talla + '</td><td>' + t.sexo + '</td><td>' + t.cantidad + '</td></tr>');
+                        });
+                        $('#modalResultadosTallas').modal('show');
+                    }
+                }
+            });
+        }
+
+        // ===== Excel =====
+        function descargarExcel(tablaId) {
+            var tabla = document.getElementById(tablaId);
+            var wb = XLSX.utils.book_new();
+            var ws_data = [];
+            for (var i = 0; i < tabla.rows.length; i++) {
+                var row = [];
+                for (var j = 0; j < tabla.rows[i].cells.length; j++) row.push(tabla.rows[i].cells[j].innerText);
+                ws_data.push(row);
+            }
+            var ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, tablaId);
+            XLSX.writeFile(wb, tablaId + '.xlsx');
+        }
+
+        function verBuzon() {
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'ver_buzon'
+                },
+                success: function(response) {
+                    if (response.success && response.buzon) {
+                        var tablaBody = $('#TablaSugerencias tbody');
+                        tablaBody.empty();
+                        response.buzon.forEach(function(b) {
+                            tablaBody.append('<tr><td>' + b.noEmpleado + '-' + b.nombre + '</td><td>' + b.tipo + '</td><td>' + b.comentario + '</td><td>' + b.fecha_registro + '</td></tr>');
+                        });
+                        $('#modalbuzon').modal('hide');
+                        $('#modalVerSugerencias').modal('show');
+                    }
+                }
+            });
+        }
+
+        // ===== Cambiar contraseña =====
+        function cambiarCont() {
+            $.ajax({
+                url: 'cambiar_contrasena.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'CambiarPass',
+                    contrasena_actual: $('#contrasena_actual').val(),
+                    nueva_contrasena: $('#nueva_contrasena').val(),
+                    confirmar_contrasena: $('#confirmar_contrasena').val()
+                },
+                success: function(response) {
+                    $('#modalCambiarContrasena').modal('hide');
+                    Swal.fire({
+                        title: response.message,
+                        icon: response.status,
+                        draggable: true
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        title: "Vuelve a intentar, hubo un problema al actualizar la contraseña!",
+                        icon: "warning"
+                    });
+                }
+            });
+        }
+
+        // ===== Directorio =====
+        var directorioCache = null;
+
+        function dirIniciales(nombre) {
+            if (!nombre) return '?';
+            var partes = String(nombre).trim().split(/\s+/);
+            var ini = (partes[0] || '').charAt(0);
+            if (partes.length > 1) ini += partes[1].charAt(0);
+            return ini.toUpperCase();
+        }
+
+        function dirColor(nombre) {
+            var paleta = ['#050D9E', '#1A6FB3', '#1F8A70', '#C97B0F', '#7E4FB3', '#2E8DA8', '#B23A48'];
+            var s = String(nombre || '?');
+            var h = 0;
+            for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return paleta[h % paleta.length];
+        }
+
+        function dirEscape(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function cargarDirectorio() {
+            if (directorioCache !== null) return;
+            $.post('../incidencias/getInfoLoginMaster.php', {
+                accion: 'listarEmpleados',
+                noEmpleado: 0,
+                correo: ''
+            }).done(function(resp) {
+                try {
+                    var data = typeof resp === 'string' ? JSON.parse(resp) : resp;
+                    if (data && data.status === 'success' && Array.isArray(data.info)) {
+                        directorioCache = data.info;
+                        renderDirectorio(directorioCache);
+                    } else {
+                        directorioCache = [];
+                        $('#directorioGrid').html('<div class="col-12 empty-state">No hay empleados activos para mostrar.</div>');
+                    }
+                } catch (e) {
+                    $('#directorioGrid').html('<div class="col-12 empty-state text-danger">Error al procesar el directorio.</div>');
+                }
+            }).fail(function() {
+                $('#directorioGrid').html('<div class="col-12 empty-state text-danger">No se pudo conectar al servidor.</div>');
+            });
+        }
+
+        function renderDirectorio(lista) {
+            if (!lista || !lista.length) {
+                $('#directorioGrid').html('<div class="col-12 empty-state">No se encontraron resultados.</div>');
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < lista.length; i++) {
+                var e = lista[i];
+                var ini = dirIniciales(e.nombre);
+                var col = dirColor(e.nombre);
+                var nombre = dirEscape(e.nombre || 'Sin nombre');
+                var nave = dirEscape(e.nave || '—');
+                var area = dirEscape(e.area || '—');
+                var puesto = dirEscape(e.puesto || '—');
+                var correo = dirEscape(e.correo || '');
+                html += '<div class="col-md-6 mb-3">' +
+                    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">' +
+                    '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>' +
+                    '<div class="dir-info">' +
+                    '<div class="dir-name">' + nombre + '</div>' +
+                    '<div class="dir-meta">' + nave + '</div>' +
+                    '<div class="dir-meta">' + area + '</div>' +
+                    '<div class="dir-meta">' + puesto + '</div>' +
+                    (correo ? '<span class="dir-mail">' + correo + '</span>' : '') +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+            }
+            $('#directorioGrid').html(html);
+        }
+
+        function abrirModalDirectorio(noEmp) {
+            if (!directorioCache) return;
+            var emp = null;
+            for (var i = 0; i < directorioCache.length; i++) {
+                if (String(directorioCache[i].noEmpleado) === String(noEmp)) {
+                    emp = directorioCache[i];
+                    break;
+                }
+            }
+            if (!emp) return;
+            var ini = dirIniciales(emp.nombre);
+            var col = dirColor(emp.nombre);
+            $('#modalDirAvatar').css('background', col).text(ini);
+            $('#modalDirNombre').text(emp.nombre || '—');
+            $('#modalDirPuesto').text(emp.puesto || '—');
+            $('#modalDirNoEmp').text(emp.noEmpleado || '—');
+            $('#modalDirArea').text(emp.area || '—');
+            $('#modalDirNave').text(emp.nave || '—');
+
+            // Teléfono + extensión (aún no en BD; se muestran cuando lleguen).
+            var tel = emp.telefono || '';
+            var ext = emp.extension || '';
+            var telTxt = '—';
+            if (tel && ext) telTxt = tel + ' ext. ' + ext;
+            else if (tel) telTxt = tel;
+            else if (ext) telTxt = 'ext. ' + ext;
+            $('#modalDirTel').text(telTxt);
+
+            if (emp.correo) {
+                $('#modalDirCorreo').text(emp.correo).attr('href', 'mailto:' + emp.correo);
+            } else {
+                $('#modalDirCorreo').text('—').attr('href', '#');
+            }
+            $('#modalDirectorio').modal('show');
+        }
+
+        $(document).on('click', '.directorio-card', function() {
+            abrirModalDirectorio($(this).data('noemp'));
         });
-</script>
+
+        $(document).on('input', '#directorioBuscar', function() {
+            if (!directorioCache) return;
+            var q = $(this).val().toLowerCase().trim();
+            if (!q) {
+                renderDirectorio(directorioCache);
+                return;
+            }
+            var filtrado = directorioCache.filter(function(e) {
+                return (e.nombre || '').toLowerCase().indexOf(q) !== -1 ||
+                    (e.area || '').toLowerCase().indexOf(q) !== -1 ||
+                    (e.nave || '').toLowerCase().indexOf(q) !== -1 ||
+                    (e.puesto || '').toLowerCase().indexOf(q) !== -1 ||
+                    (e.correo || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(e.noEmpleado || '').indexOf(q) !== -1;
+            });
+            renderDirectorio(filtrado);
+        });
+
+        // Soltar el foco antes del cierre para evitar el warning de aria-hidden en Chrome.
+        $('#modalDirectorio').on('hide.bs.modal', function() {
+            if (document.activeElement) document.activeElement.blur();
+        });
+
+        // Carga lazy: la primera vez que se abre el tab.
+        $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
+    </script>
 </body>
 </html>
