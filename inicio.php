@@ -10,20 +10,22 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>MESS - Panel de Usuario</title>
-    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">    
+    <title>Messbook - Panel de Usuario</title>
+    <link rel="icon" type="image/png" href="../loginMaster/img/fav.png">
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
     <link href="css/loginMaster.css" rel="stylesheet">
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
-    <style>
-    </style>
+  
 </head>
-<body id="page-top">
+
+<body id="page-top" class="theme-light">
     <div id="wrapper">
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
@@ -32,37 +34,14 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     <div class="row">
                         <!-- ========== SIDEBAR PERFIL ========== -->
                         <div class="col-xl-3 col-md-4">
-
-
                             <div class="profile-card text-center">
                                 <div class="profile-avatar">
-                                    <?php
-                                    $noEmpleado = $_COOKIE['noEmpleadoL'] ?? '';
-                                    $ruta_fotos = '../loginMaster/';
-                                    $archivo_foto = $_COOKIE['fotoL'] ?? '';
-                                    $ruta_completa = $ruta_fotos . $archivo_foto;
-                                    $tiene_foto = file_exists($ruta_completa);
-                                    ?>
-
-                                    <!-- Wrapper que lleva el borde -->
-                                    <div class="foto-wrapper">
-                                        <?php if ($tiene_foto): ?>
-                                            <img src="<?= $ruta_completa ?>?v=<?= time() ?>"
-                                                alt="Foto perfil"
-                                                class="foto-perfil-img">
-                                        <?php else: ?>
-                                            <div class="foto-perfil-default">
-                                                <i class="fas fa-user"></i>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+                                    <i class="fas fa-user-circle"></i>
                                 </div>
-
-
-                                <h4>
+                                <h4 class="mb-1 fw-bold" style="color: var(--accent);">
                                     <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
                                 </h4>
-                                <p>
+                                <p class="text-muted mb-2" style="font-size:0.85rem;">
                                     No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
                                 </p>
                                 <ul class="list-group list-group-flush text-start small mb-2" style="background:transparent;">
@@ -80,391 +59,343 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     </li>
                                 </ul>
 
-                                        <ul class="list-group list-group-flush text-start">
-                                            
-                                            <li class="list-group-item px-0 py-1 bg-transparent border-top-0">
-                                                <small class="text-muted fw-bold d-inline-block me-2">Área:</small>
-                                                <span id="lblArea" class="fw-semibold text-dark"></span>
-                                            </li>
-                                            
-                                            <li class="list-group-item px-0 py-1 bg-transparent border-bottom-0">
-                                                <small class="text-muted fw-bold d-inline-block me-2">Jefe Directo:</small>
-                                                <span id="lblJefe" class="fw-semibold text-dark"></span>
-                                            </li>
-                                        </ul>
-
-                                    </div>
-                                </div>
-                                <br>
-                                <div class="row mb-4">
-                                    <?php 
-                                    $empleadosPermitidos = [276, 403, 569, 523, 183];
-                                    
-                                    if (isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosPermitidos)): 
-                                    ?>
-                                        <div class="col-md-12">
-                                            <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Acciones de eventos">
-                                                <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
-                                                    <i class="fas fa-plus-circle"></i> Nuevo evento
-                                                </button>
-                                                
-                                                <button type="button" class="btn btn-outline-info" onclick="cargarListaEventos()">
-                                                    <i class="fas fa-list"></i> Eventos
-                                                </button>                                                
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12 mt-2">
-                                            <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Acciones de eventos">
-                                                <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalRegistrosAsistencia" onclick="abrirModalRegistrosAsistencia('', '')">
-                                                    <i class="fas fa-users"></i> Asistencias
-                                                </button>
-                                                
-                                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalAccesosEspeciales">
-                                                    <i class="fas fa-user-shield"></i> Accesos
-                                                </button>
-
-                                                <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#modalAccesoSistemas">
-                                                    <i class="fas fa-desktop"></i> Sistemas
-                                                </button>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>                              
-                                <div class="row"> 
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: #0fa083ff; ">
-                                            <h6 id="fechaIngreso" name="fechaIngreso" style="color:#fff; margin-bottom: 0.1rem;"></h6>
-                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Fecha de ingreso</p>
-                                        </div>
-                                    </div>
-                                
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: rgb(226, 213, 34);">
-                                            <center>
-                                                <button class="btn btn-link nav-link fw-bold text-dark position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
-                                                    <i class="fas fa-bell text-light"></i>
-                                                    <span id="badgeNotificaciones" class="position-absolute badge rounded-pill bg-danger text-light" style="top: 2px; right: 2px; font-size: .80rem; min-width: 1rem; padding: .2em .35em; line-height: 1; pointer-events: none;">0</span>
-                                                </button>
-                                            </center>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row"> 
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: #0fa083ff;">
-                                            <h6 id="diasDisp" name="diasDisp" style="color:#fff; margin-bottom: 0.1rem;"></h6>
-                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Días Disponibles</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-xl-6 col-md-6">
-                                        <div class="stat-box p-2 mb-2" style="background: #484cacff;">
-                                            <h6 id ="diasSol" name="diasSol" style="color:#fff; margin-bottom: 0.1rem;"></h6>
-                                            <p style="color:#fff; font-size: 0.8rem; margin-bottom: 0;">Dias Solicitados</p>
+                                <!-- Fila 1: Fecha Ingreso (full width) -->
+                                <div class="row no-gutters">
+                                    <div class="col-12">
+                                        <div class="stat-box">
+                                            <h6 id="fechaIngreso"></h6>
+                                            <p>Fecha de Ingreso</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="stat-box mb-1" style="background: #164a98ff;">
-                                    <h5 id ="vehiculoAsignado" name="vehiculoAsignado" style="color:#fff; margin-bottom: 0.1rem"></h5>
-                                    <p style="color:#fff;">Vehículo asignado</p>
+                                <!-- Fila 2: Días Vacaciones · Notificaciones -->
+                                <div class="row no-gutters">
+                                    <div class="col-7 pr-1">
+                                        <div class="stat-box" title="Días de vacaciones disponibles">
+                                            <h6><span id="diasDisp">0</span></h6>
+                                            <p>Días Vacaciones</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-5 pl-1">
+                                        <div class="stat-box d-flex flex-column justify-content-center" style="padding: 0.25rem;">
+                                            <button class="btn btn-link p-0 position-relative" type="button" id="btnNotificaciones" onclick="mostrarNotificacionesFlotantes()">
+                                                <i class="fas fa-bell fa-lg" style="color: var(--text);"></i>
+                                                <span id="badgeNotificaciones" class="position-absolute badge rounded-pill bg-danger text-light" style="top:-4px; right:-8px; font-size:.7rem;">0</span>
+                                            </button>
+                                            <p style="margin-top:.15rem;">Notificaciones</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="stat-box" style="background: #e6fff5; display:none">
-                                    <h5 id ="equipoComputo" name="equipoComputo"></h5>
-                                    <p>Equipo de cómputo</p>
-                                </div>
-                                <br>
-                                <button class="btn btn-outline-primary btn-block mt-3" data-toggle="modal" data-target="#modalbuzon">
-                                    <i class="fas fa-envelope-open-text"></i> Buzón de Sugerencias
+
+                                <!-- Botones administrativos (solo empleados permitidos) -->
+                                <?php if ($esAdmin): ?>
+                                    <div class="mt-3">
+                                        <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                                            <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modalEvento" onclick="limpiarModalEvento()">
+                                                <i class="fas fa-plus-circle"></i> Evento
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="cargarListaEventos()">
+                                                <i class="fas fa-list"></i> Lista
+                                            </button>
+                                        </div>
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalRegistrosAsistencia" onclick="abrirModalRegistrosAsistencia('', '')">
+                                                <i class="fas fa-users"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalAccesosEspeciales">
+                                                <i class="fas fa-user-shield"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#modalAccesoSistemas">
+                                                <i class="fas fa-desktop"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <!-- Botones acción -->
+                                <button class="btn btn-outline-mess-naranja btn-block mt-2" data-toggle="modal" data-target="#modalbuzon">
+                                    <i class="fas fa-envelope-open-text"></i> Sugerencias
                                 </button>
-                                
-                                <button class="btn btn-outline-warning btn-block mt-3" data-toggle="modal" data-target="#modalCambiarContrasena">
-                                    <i class="fas fa-key"></i> Cambiar Contraseña
+                                <button class="btn btn-outline-warning btn-block mt-2" data-toggle="modal" data-target="#modalCambiarContrasena">
+                                    <i class="fas fa-key"></i> Password
                                 </button>
-                                <a class = "btn btn-outline-danger btn-block mt-3" href = "#" data-toggle = "modal" data-target = "#logoutModalN">
-                                    <i class = "fas fa-sign-out-alt fa-sm fa-fw mr-2 text-red-400"></i>
-                                    Salir
+                                <a class="btn btn-outline-danger btn-block mt-2" href="#" data-toggle="modal" data-target="#logoutModalN">
+                                    <i class="fas fa-sign-out-alt"></i> Salir
                                 </a>
-                                <br>
+
+                                <!-- Toggle tema claro/oscuro: [sol] [switch] [luna] -->
+                                <div class="theme-toggle mt-3" id="themeToggle" role="button" tabindex="0" aria-label="Cambiar tema claro/oscuro">
+                                    <i class="fas fa-sun sun"></i>
+                                    <div class="switch"></div>
+                                    <i class="fas fa-moon moon"></i>
+                                </div>
                             </div>
                         </div>
-                        <!-- Accesos rápidos y tablero -->
-                        <div class="col-xl-9 col-md-9">
-                            <div class="row">
-                                <!-- VACACIONES WARNIGN -->
-                                <div class="col-md-3 mb-2" id="divVacaciones" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formVacaciones" method="POST" action="../incidencias/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuario" id="id_usuario" value="">
-                                                <input type="hidden" name="nombredelusuario" id="nombredelusuario" value="">
-                                                <input type="hidden" name="noEmpleado" id="noEmpleado" value="">
-                                                <input type="hidden" name="correo" id="correo" value="">
-                                                <input type="hidden" name="sistema" id="sistema" value="vacaciones">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="far fa-check-square fa-lg"></i> Vacaciones
-                                                </button>                                                
-                                            </form>                                            
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <!-- CONTROL VEHICULAR DANGER -->
-                                <div class="col-md-3 mb-2" id="divControlVehicular" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formControlVehicular" method="POST" action="../ControlVehicular/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
-                                                <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
-                                                <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
-                                                <input type="hidden" name="correoCV" id="correoCV" value="">                                                
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-car fa-lg"></i> Ctrl Vehicular
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                        <!-- ========== CONTENIDO CON TABS ========== -->
+                        <div class="col-xl-9 col-md-8">
+                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab">
+                                        <i class="fas fa-th-large mr-1"></i> Sistemas
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabAgenda-tab" data-toggle="tab" data-target="#tabAgenda" type="button" role="tab">
+                                        <i class="fas fa-calendar-alt mr-1"></i> Sala de Juntas
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabAvisos-tab" data-toggle="tab" data-target="#tabAvisos" type="button" role="tab">
+                                        <i class="fas fa-bullhorn mr-1"></i> Avisos
+                                        <span id="badgeTabAvisos" class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <!--
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
+                                        <i class="fas fa-folder-open mr-1"></i> Expediente
+                                        <span class="tab-badge"></span>
+                                        <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
+                                    </button>
+                                </li>
+                                -->
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
+                                        <i class="fas fa-user-cog mr-1"></i> Personal
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
+                                        <i class="fas fa-car mr-1"></i> Vehículo
+                                        <span class="tab-badge"></span>
+                                        <span id="statusTabVehiculo" class="tab-status" title="Estatus de vehículo"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
+                                        <i class="fas fa-chart-line mr-1"></i> KPI's
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab">
+                                        <i class="fas fa-address-book mr-1"></i> Directorio
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                            </ul>
 
-                                <!-- HORAS EXTRA INFO -->
-                                <div class="col-md-3 mb-2" id="divHorasExtra" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formHorasExtra" method="POST" action="../horasextra/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioHR" id="id_usuarioHR" value="">
-                                                <input type="hidden" name="nombredelusuarioHR" id="nombredelusuarioHR" value="">
-                                                <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
-                                                <input type="hidden" name="correoHR" id="correoHR" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-clock fa-lg"></i> Hrs Extra
-                                                </button>
-                                            </form>
+                            <div class="tab-content" id="mainTabsContent">
+                                <!-- ===== TAB 1: SISTEMAS ===== -->
+                                <div class="tab-pane fade show active" id="tabSistemas" role="tabpanel">
+                                    <div class="row">
+                                        <!-- VACACIONES -->
+                                        <div class="col-md-3 mb-3" id="divVacaciones" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formVacaciones" method="POST" action="../incidencias/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuario" id="id_usuario" value="">
+                                                        <input type="hidden" name="nombredelusuario" id="nombredelusuario" value="">
+                                                        <input type="hidden" name="noEmpleado" id="noEmpleado" value="">
+                                                        <input type="hidden" name="correo" id="correo" value="">
+                                                        <input type="hidden" name="sistema" id="sistema" value="vacaciones">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="far fa-check-square fa-lg d-block mb-2"></i> Vacaciones
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <!-- INCIDENCIAS PRIMARY -->
-                                <div class="col-md-3 mb-2" id="divIncidencias" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formIncidencias" method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioI" id="id_usuarioI" value="">
-                                                <input type="hidden" name="nombredelusuarioI" id="nombredelusuarioI" value="">
-                                                <input type="hidden" name="noEmpleadoI" id="noEmpleadoI" value="">
-                                                <input type="hidden" name="correoI" id="correoI" value="">
-                                                <input type="hidden" name="sistema" id="sistema" value="incidencias">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-list fa-lg"></i> Incidencias
-                                                </button>
-                                            </form>
+                                        <!-- CONTROL VEHICULAR -->
+                                        <div class="col-md-3 mb-3" id="divControlVehicular" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formControlVehicular" method="POST" action="../ControlVehicular/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioCV" id="id_usuarioCV" value="">
+                                                        <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
+                                                        <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
+                                                        <input type="hidden" name="correoCV" id="correoCV" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-car fa-lg d-block mb-2"></i> Ctrl Vehicular
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <!-- PLANEACION DARK -->
-                                <div class="col-md-3 mb-2" id="divPlaneacion" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formPlaneacion" method="POST" action="../planeacion/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioPla" id="id_usuarioPla" value="">
-                                                <input type="hidden" name="nombredelusuarioPla" id="nombredelusuarioPla" value="">
-                                                <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
-                                                <input type="hidden" name="correoPla" id="correoPla" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-calendar fa-lg"></i> Planeación
-                                                </button>
-                                            </form>
+                                        <!-- HORAS EXTRA -->
+                                        <div class="col-md-3 mb-3" id="divHorasExtra" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formHorasExtra" method="POST" action="../horasextra/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioHR" id="id_usuarioHR" value="">
+                                                        <input type="hidden" name="nombredelusuarioHR" id="nombredelusuarioHR" value="">
+                                                        <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
+                                                        <input type="hidden" name="correoHR" id="correoHR" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-clock fa-lg d-block mb-2"></i> Hrs Extra
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <!-- CAPACITACION WARNING -->
-                                <div class="col-md-3 mb-2" id="divCapacitacion" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <div class="btn-group" role="group">
-                                                <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary">
-                                                    <i class="fas fa-list fa-lg"></i> Capacitación
-                                                </a>
-                                                <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-primary">
-                                                    <i class="fas fa-file-pdf fa-lg"></i>
-                                                </a>
+                                        <!-- INCIDENCIAS -->
+                                        <div class="col-md-3 mb-3" id="divIncidencias" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formIncidencias" method="POST" action="../incidencias/incidencias/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioI" id="id_usuarioI" value="">
+                                                        <input type="hidden" name="nombredelusuarioI" id="nombredelusuarioI" value="">
+                                                        <input type="hidden" name="noEmpleadoI" id="noEmpleadoI" value="">
+                                                        <input type="hidden" name="correoI" id="correoI" value="">
+                                                        <input type="hidden" name="sistema" id="sistema" value="incidencias">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-list fa-lg d-block mb-2"></i> Incidencias
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- PLANEACION -->
+                                        <div class="col-md-3 mb-3" id="divPlaneacion" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formPlaneacion" method="POST" action="../planeacion/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioPla" id="id_usuarioPla" value="">
+                                                        <input type="hidden" name="nombredelusuarioPla" id="nombredelusuarioPla" value="">
+                                                        <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
+                                                        <input type="hidden" name="correoPla" id="correoPla" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-calendar fa-lg d-block mb-2"></i> Planeación
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CAPACITACION -->
+                                        <div class="col-md-3 mb-3" id="divCapacitacion" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <div class="btn-group w-100" role="group">
+                                                        <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary">
+                                                            <i class="fas fa-list fa-lg d-block mb-2"></i> Capacitación
+                                                        </a>
+                                                        <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-primary" style="flex:0 0 auto;">
+                                                            <i class="fas fa-file-pdf fa-lg d-block mb-2"></i> Manual
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- ACTIVOS -->
+                                        <div class="col-md-3 mb-3" id="divActivos" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formActivos" method="POST" action="../activos/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioAC" id="id_usuarioAC" value="">
+                                                        <input type="hidden" name="nombredelusuarioAC" id="nombredelusuarioAC" value="">
+                                                        <input type="hidden" name="noEmpleadoAC" id="noEmpleadoAC" value="">
+                                                        <input type="hidden" name="correoAC" id="correoAC" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-box fa-lg d-block mb-2"></i> Activos
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- ENTRADAS EQ -->
+                                        <div class="col-md-3 mb-3" id="divEntradasEq" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formEntradasEq" method="POST" action="../planeacion/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioPlaEnt" id="id_usuarioPlaEnt" value="">
+                                                        <input type="hidden" name="nombredelusuarioPlaEnt" id="nombredelusuarioPlaEnt" value="">
+                                                        <input type="hidden" name="noEmpleadoPlaEnt" id="noEmpleadoPlaEnt" value="">
+                                                        <input type="hidden" name="correoPlaEnt" id="correoPlaEnt" value="">
+                                                        <input type="hidden" name="rutaredireccion" id="campoNuevoValor">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-calendar fa-lg d-block mb-2"></i> Entradas Eq
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- PRACTICANTES -->
+                                        <div class="col-md-3 mb-3" id="divPracticantes" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formPracticantes" method="POST" action="../Practicantes/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioPRACT" id="id_usuarioPRACT" value="">
+                                                        <input type="hidden" name="nombredelusuarioPRACT" id="nombredelusuarioPRACT" value="">
+                                                        <input type="hidden" name="noEmpleadoPRACT" id="noEmpleadoPRACT" value="">
+                                                        <input type="hidden" name="correoPRACT" id="correoPRACT" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-user-clock fa-lg d-block mb-2"></i> Practicantes
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- TICKETS BI -->
+                                        <div class="col-md-3 mb-3" id="divTicketsBI" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <a href="../Tickets/" class="btn btn-outline-primary btn-block">
+                                                        <i class="fas fa-ticket-alt fa-lg d-block mb-2"></i> Tickets BI
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CONTROL SGC -->
+                                        <div class="col-md-3 mb-3" id="divControlSGC" style="display:none">
+                                            <div class="card card-action shadow-sm h-100">
+                                                <div class="card-body text-center">
+                                                    <form id="formControlSGC" method="POST" action="../ControlSGC/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioSGC" id="id_usuarioSGC" value="">
+                                                        <input type="hidden" name="nombredelusuarioSGC" id="nombredelusuarioSGC" value="">
+                                                        <input type="hidden" name="noEmpleadoSGC" id="noEmpleadoSGC" value="">
+                                                        <input type="hidden" name="correoSGC" id="correoSGC" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-check fa-lg d-block mb-2"></i> Control SGC
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- KPI'S DANGER -->
-                                <div class="col-md-3 mb-2" id="divKPIs" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formKPIs" action="../kpis_pbi/indexK.php" method="post">
-                                                <input type="hidden" name="pass" id="pass" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-chart-line fa-lg"></i> KPI's
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- ACTIVOS PRIMARY -->
-                                <div class="col-md-3 mb-2" id="divActivos" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formActivos" method="POST" action="../activos/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioAC" id="id_usuarioAC" value="">
-                                                <input type="hidden" name="nombredelusuarioAC" id="nombredelusuarioAC" value="">
-                                                <input type="hidden" name="noEmpleadoAC" id="noEmpleadoAC" value="">
-                                                <input type="hidden" name="correoAC" id="correoAC" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">                                                    
-                                                    <i class="fas fa-box fa-lg"></i> Activos
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- ENTRADAS EQ DARK -->
-                                <div class="col-md-3 mb-2" id="divEntradasEq" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formEntradasEq" method="POST" action="../planeacion/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioPlaEnt" id="id_usuarioPlaEnt" value="">
-                                                <input type="hidden" name="nombredelusuarioPlaEnt" id="nombredelusuarioPlaEnt" value="">
-                                                <input type="hidden" name="noEmpleadoPlaEnt" id="noEmpleadoPlaEnt" value="">
-                                                <input type="hidden" name="correoPlaEnt" id="correoPlaEnt" value="">
-                                                <input type="hidden" name="rutaredireccion" id="campoNuevoValor">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-calendar fa-lg"></i> Entradas Eq
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- PRACTICANTES -->
-                                <div class="col-md-3 mb-2" id="divPracticantes" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formPracticantes"
-                                            method="POST" action="../Practicantes/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioPRACT" id="id_usuarioPRACT" value="">
-                                                <input type="hidden" name="nombredelusuarioPRACT" id="nombredelusuarioPRACT" value="">
-                                                <input type="hidden" name="noEmpleadoPRACT" id="noEmpleadoPRACT" value="">
-                                                <input type="hidden" name="correoPRACT" id="correoPRACT" value="">
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-user-clock fa-lg"></i> Practicantes
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- TICKETS BI -->
-                                <div class="col-md-3 mb-2" id="divTicketsBI" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <a href="../Tickets/" class="btn btn-outline-primary btn-block">
-                                                <i class="fas fa-ticket-alt fa-lg"></i> Tickets BI
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- CONTROL SGC -->
-                                <div class="col-md-3 mb-2" id="divControlSGC" style="display:none">
-                                    <div class="card card-action border-left-primary shadow h-100">
-                                        <div class="card-body text-center">
-                                            <form id="formControlSGC" method="POST" action="../ControlSGC/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioSGC" id="id_usuarioSGC" value="">
-                                                <input type="hidden" name="nombredelusuarioSGC" id="nombredelusuarioSGC" value="">
-                                                <input type="hidden" name="noEmpleadoSGC" id="noEmpleadoSGC" value="">
-                                                <input type="hidden" name="correoSGC" id="correoSGC" value="">
-                                                <!--<input type="hidden" name="rutaredireccion" id="campoNuevoValor">-->
-                                                <button type="submit" class="btn btn-outline-primary btn-block">
-                                                    <i class="fas fa-check fa-lg"></i> Control SGC
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                            <br>
-                            <div class="row">
-                                <!-- Formulario para Tallas -->
-                                <div class="col-md-4 mb-4">
-                                    <div class="card shadow h-100">
-                                        <div class="card-header bg-secondary text-white py-2">
-                                            <h6 class="m-2 font-weight-bold">Tablero de avisos</h6>
-                                        </div>
-                                        <div class="card-body">                                            
-                                            <form method="post">
-                                                <div class="form-group">
-                                                    <div id="alertTalla" class="alert alert-danger" role="alert">
-                                                        <strong>Importante:</strong> Por favor, registra tu talla de uniforme.
-                                                    </div>
-                                                    <label for="talla">Talla:</label>
-                                                    <select class="form-control" id="talla" name="talla" required>
-                                                        <option value="">Seleccione una talla de uniforme</option>  
-                                                        <option value="XS">XS</option>
-                                                        <option value="S">S</option>
-                                                        <option value="M">M</option>
-                                                        <option value="L">L</option>
-                                                        <option value="XL">XL</option>
-                                                    </select>
-                                                    <input type="hidden" name="noEmpleadoT" id="noEmpleadoT" value="">
-                                                </div>                                                
-                                                <center>
-                                                    <div class="btn-group" role="group" aria-label="Basic example">
-                                                        <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar Talla</button>
-                                                        
-                                                        <?php
-                                                            $usuariosRegistran = array(183, 276, 523, 403);
-                                                            if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                                                                echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
-                                                                //echo '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCarrusel">Ver Fotos y Votar</button>';
-                                                            }
-                                                        ?>
-                                                    </div>
-                                                    
-                                                </center>
-                                            </form>
-                                            <br>
-                                            
-                                            <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-MAYO26_compressed.pdf' type="application/pdf" width="100%" height="300px" />
-                                        </div>
-                                    </div>
-                                </div>                               
-                                <div class="col-md-4 mb-3" id="divCapacitacionCursos">
-                                    <div class="card shadow">                                    
-                                        <div class="card-header bg-primary text-white">
-                                            <h5 class="mb-0">Encuestas/Votaciones/Etc..</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div id="encuestasAsigandas"></div>                                            
-                                        </div>                                    
-                                    </div>                                
-                                </div> 
-                                <!-- Agenda Sala de Juntas -->
-                                <div class="col-md-4 mb-4">
-                                    <div class="card shadow h-100">
-                                        <div class="card-header bg-secondary text-light py-2 d-flex justify-content-between align-items-center">
-                                            <span class="font-weight-bold">Agenda Sala de Juntas</span>
-                                            <form method="POST" action="../incidencias/validaLoginMaster.php">
-                                                <input type="hidden" name="id_usuarioSJ" id="id_usuarioSJ" value="">
-                                                <input type="hidden" name="nombredelusuarioSJ" id="nombredelusuarioSJ" value="">
-                                                <input type="hidden" name="noEmpleadoSJ" id="noEmpleadoSJ" value="">
-                                                <input type="hidden" name="correoSJ" id="correoSJ" value="">
-                                                <input type="hidden" name="sistema" id="sistema" value="saladeJuntas">
-                                                <button type="submit" class="btn btn-success btn-sm">Ir a Sala de Juntas</button>
-                                            </form> 
-                                            
+                                <!-- ===== TAB 2: SALA DE JUNTAS ===== -->
+                                <div class="tab-pane fade" id="tabAgenda" role="tabpanel">
+                                    <div class="card shadow-sm">
+                                        <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--card-soft); border-color: var(--border);">
+                                            <span class="font-weight-bold"><i class="fas fa-calendar-alt mr-2"></i>Agenda Sala de Juntas</span>
+                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modalRegistrarLugarSJ">
+                                                <i class="fas fa-plus-circle mr-1"></i> Registrar Lugar
+                                            </button>
                                         </div>
                                         <div class="card-body">
                                             <div id="calendar"></div>
+                                            <!-- Inputs ocultos que necesitan otras partes del sistema -->
+                                            <input type="hidden" id="id_usuarioSJ" value="">
+                                            <input type="hidden" id="nombredelusuarioSJ" value="">
+                                            <input type="hidden" id="noEmpleadoSJ" value="">
+                                            <input type="hidden" id="correoSJ" value="">
+                                            <input type="hidden" id="sistemaSJ" value="saladeJuntas">
                                         </div>
                                     </div>
                                 </div>
@@ -671,6 +602,42 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
 
+                                    <style>
+                                        /* Solo afecta a este tab */
+                                        #tabKpis {
+                                            padding: 0 !important;
+                                        }
+
+                                        #tabKpis #frameKPIs {
+                                            padding: 0 !important;
+                                            margin: 0 !important;
+                                        }
+
+                                        /* Mata el py-5 de Bootstrap que mete 3rem de padding */
+                                        #tabKpis .py-5 {
+                                            padding-top: 0 !important;
+                                            padding-bottom: 0 !important;
+                                        }
+
+                                        /* Quita margin del spinner si aparece */
+                                        #tabKpis .text-center {
+                                            margin: 0 !important;
+                                        }
+
+                                        #tabKpis .mb-2 {
+                                            margin-bottom: 0 !important;
+                                        }
+
+                                        /* El iframe ocupa todo sin espacio arriba */
+                                        #tabKpis iframe {
+                                            display: block !important;
+                                            width: 100% !important;
+                                            height: calc(100vh - 140px) !important;
+                                            /* Ajusta 140px según altura de tu header de tabs */
+                                            border: none !important;
+                                            margin: 0 !important;
+                                        }
+                                    </style>
 
                                     <div id="frameKPIs">
                                         <div class="text-center text-muted py-5">
@@ -700,6 +667,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             <p class="mb-0">Cargando directorio...</p>
                                         </div>
                                     </div>
+                                    <div id="directorioPaginacion" class="dir-paginacion"></div>
                                 </div>
 
 
@@ -719,7 +687,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 </div>
             </div>
             <!-- Footer -->
-            <footer class="sticky-footer bg-white">
+            <footer class="sticky-footer" style="background: var(--card-bg); border-top: 1px solid var(--border);">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
                         <span>Copyright &copy; MESS <?php echo date("Y"); ?></span>
@@ -728,37 +696,86 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             </footer>
         </div>
     </div>
-    <!-- Modal Cambiar Contraseña -->
-    <div class="modal fade" id="modalCambiarContrasena" tabindex="-1" role="dialog" aria-labelledby="modalCambiarContrasenaLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">            
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalCambiarContrasenaLabel">Cambiar Contraseña</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+
+    <!-- ============== MODALES (sin cambios) ============== -->
+    <!-- Modal Detalle Directorio (compartido; se rellena por JS al click en una card) -->
+    <div class="modal fade" id="modalDirectorio" tabindex="-1" role="dialog" aria-labelledby="modalDirectorioLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--accent); color: #fff;">
+                    <h5 class="modal-title" id="modalDirectorioLabel">Detalle del empleado</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar" style="text-shadow:none; opacity:.85;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div id="modalDirAvatar" class="dir-avatar-lg mb-2"></div>
+                        <h5 id="modalDirNombre" class="mb-1" style="color: var(--accent);"></h5>
+                        <p id="modalDirPuesto" class="text-muted mb-0"></p>
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="contrasena_actual">Contraseña Actual</label>
-                            <input type="password" class="form-control" id="contrasena_actual" name="contrasena_actual" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="nueva_contrasena">Nueva Contraseña</label>
-                            <input type="password" class="form-control" id="nueva_contrasena" name="nueva_contrasena" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="confirmar_contrasena">Confirmar Nueva Contraseña</label>
-                            <input type="password" class="form-control" id="confirmar_contrasena" name="confirmar_contrasena" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" onclick="cambiarCont()">Guardar Cambios</button>
-                    </div>
-                </div>            
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">No. Empleado</span>
+                            <span id="modalDirNoEmp" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Área</span>
+                            <span id="modalDirArea" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Nave</span>
+                            <span id="modalDirNave" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Teléfono</span>
+                            <span id="modalDirTel" class="fw-semibold">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Correo</span>
+                            <a id="modalDirCorreo" href="#" class="text-truncate" style="max-width:60%;">—</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Modal Cambiar Contraseña -->
+    <div class="modal fade" id="modalCambiarContrasena" tabindex="-1" role="dialog" aria-labelledby="modalCambiarContrasenaLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCambiarContrasenaLabel">Cambiar Contraseña</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="contrasena_actual">Contraseña actual</label>
+                        <input type="password" class="form-control" id="contrasena_actual" name="contrasena_actual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nueva_contrasena">Nueva contraseña</label>
+                        <input type="password" class="form-control" id="nueva_contrasena" name="nueva_contrasena" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmar_contrasena">Confirmar nueva contraseña</label>
+                        <input type="password" class="form-control" id="confirmar_contrasena" name="confirmar_contrasena" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="cambiarCont()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Buzon de Sugerencias -->
     <div class="modal fade" id="modalbuzon" tabindex="-1" role="dialog" aria-labelledby="modalbuzonLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -770,181 +787,73 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div id="alertTalla" class="alert alert-primary" role="alert">
-                        <strong>Aviso:</strong> Buzon de sugerencias para RRHH
+                    <div id="alertBuzon" class="alert alert-primary m-3" role="alert">
+                        <strong>Importante:</strong> Aquí puedes dejar tus sugerencias o comentarios. Son anónimos.
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
+                            <label for="tipo">Tipo</label>
                             <select class="form-control" id="tipo" name="tipo" required>
-                                <option value="">Seleccione el tipo de comentario</option>
-                                <option value="Felicitacion">Felicitación</option>
+                                <option value="">Seleccione un tipo</option>
                                 <option value="Sugerencia">Sugerencia</option>
+                                <option value="Comentario">Comentario</option>
                                 <option value="Queja">Queja</option>
                             </select>
-                            <br>
-                            <label for="comentario">Escribe tu comentario:</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="comentario">Comentario</label>
                             <textarea class="form-control" id="comentario" name="comentario" rows="4" required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-info" data-dismiss="modal" onClick="verBuzon()">Ver Buzón</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success" onClick="BuzonSugerencias()">Enviar</button>
+                        <button type="button" class="btn btn-primary" onclick="BuzonSugerencias()">Enviar</button>
+                        <?php
+                        if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                            echo '<button onclick="verBuzon()" type="button" class="btn btn-info">Ver Sugerencias</button>';
+                        }
+                        ?>
                     </div>
                 </div>
             </form>
         </div>
     </div>
-    <!-- Modal Carrusel -->
-    <div class="modal fade" id="modalCarrusel" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Vota por tu foto favorita</h5>
-                    <hr>
-                    <?php
-                        $usuariosRegistran = array(183, 276, 523, 403);
-                        if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                            echo '<button onClick="verVotos()" type="button" class="btn btn-primary" id="btnVerVotos">Ver Votos</button>';
-                        }
-                    ?>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <!-- Carrusel -->
-                    <div id="carouselFotos" class="carousel slide" data-ride="carousel">
-                        <div class="carousel-inner">
-                            <!-- Foto 1 -->
-                            <div class="carousel-item active">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="1">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/1.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 1">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 2 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="2">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/2.jpg" width="100%" height="800" class="d-block w-100" alt="Foto 2">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 3 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="3">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/3.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 3">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 4 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="4">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/4.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 4">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 5 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="5">Votar por esta foto</button>
-                                </center><br>  
-                                <img src="concursoHallowen2025/5.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 5">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 6 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="6">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/6.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 6">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 7 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="7">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/7.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 7">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 8 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="8">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/8.jpg" width="100%" height="800" class="d-block w-100" alt="Foto 8">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 9 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="9">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/9.jpg" width="100%" height="500" class="d-block w-100" alt="Foto 9">
-                                <div class="carousel-caption"></div>
-                            </div>
-                            <!-- Foto 10 -->
-                            <div class="carousel-item">
-                                <center>    
-                                    <button class="btn btn-success votar-btn" data-foto="10">Votar por esta foto</button>
-                                </center><br>
-                                <img src="concursoHallowen2025/10.jpg" width="100%" height="800"class="d-block w-100" alt="Foto 10">
-                                <div class="carousel-caption"></div>
-                            </div>
-                        </div>
-                        <a class="carousel-control-prev" href="#carouselFotos" role="button" data-slide="prev">
-                            <span class="carousel-control-prev-icon"></span>
-                        </a>
-                        <a class="carousel-control-next" href="#carouselFotos" role="button" data-slide="next">
-                            <span class="carousel-control-next-icon"></span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
     <!-- MODAL TABLA RESULTADOS TALLAS -->
     <div class="modal fade" id="modalResultadosTallas" tabindex="-1" role="dialog" aria-labelledby="modalResultadosTallasLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalResultadosTallasLabel">Resultados de Tallas</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <ul class="nav nav-tabs" id="myTab" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active btn-outline-info" type="button" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Tallas Registradas</a>
+                            <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab">Tallas Registradas</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn-outline-info" onClick="TotalTallas()" id="TotalTallasR-tab" data-toggle="tab" href="#TotalTallasR" role="tab" aria-controls="TotalTallasR" aria-selected="false">Total de Tallas</a>
+                            <a class="nav-link" id="TotalTallasR-tab" data-toggle="tab" href="#TotalTallasR" role="tab" onclick="TotalTallas()">Total Tallas</a>
                         </li>
-                    </ul><br>
+                    </ul>
                     <div class="tab-content" id="myTabContent">
-                        <div class="tab-pane fade show active in" id="home" role="tabpanel" aria-labelledby="home-tab">
-                            <!-- Tabla de Tallas Registradas-->
+                        <div class="tab-pane fade show active in" id="home" role="tabpanel">
                             <table id="TotalTallas" class="table table-striped">
                                 <button id="descargarExcelT" class="btn btn-success" onClick="descargarExcel('TotalTallas')">Descargar Excel</button>
                                 <thead>
                                     <tr>
-                                        <th>Nombre</th>
+                                        <th>No. Empleado</th>
                                         <th>Talla</th>
                                         <th>Sexo</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- Los resultados se llenarán aquí mediante AJAX -->
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
-                        <div class="tab-pane fade" id="TotalTallasR" role="tabpanel" aria-labelledby="TotalTallasR-tab">
+                        <div class="tab-pane fade" id="TotalTallasR" role="tabpanel">
                             <button id="descargarExcelR" class="btn btn-success" onClick="descargarExcel('TotalTallasRegistradas')">Descargar Excel</button>
-                            <!-- Tabla de Total de Tallas -->
                             <table id="TotalTallasRegistradas" class="table table-striped">
                                 <thead>
                                     <tr>
@@ -953,9 +862,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         <th>Cantidad</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- Los resultados se llenarán aquí mediante AJAX -->
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
@@ -963,47 +870,20 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             </div>
         </div>
     </div>
-    <!--MODAL RESULTADOS VOTOS -->
-    <div class="modal fade" id="modalResultadosVotos" tabindex="-1" role="dialog" aria-labelledby="modalResultadosVotosLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalResultadosVotosLabel">Resultados de Votos</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Tabla de Resultados de Votos -->
-                    <table id="ResultadosVotos" class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Foto</th>
-                                <th>Votos</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Los resultados se llenarán aquí mediante AJAX -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!--MODAL VER SUGERENCIAS -->
+
+    <!-- MODAL VER SUGERENCIAS -->
     <div class="modal fade" id="modalVerSugerencias" tabindex="-1" role="dialog" aria-labelledby="modalVerSugerenciasLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalVerSugerenciasLabel">Sugerencias Recibidas</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Tabla de Sugerencias -->
                     <table id="TablaSugerencias" class="table table-striped">
-                        <button id="descargarExcelT" class="btn btn-success" onClick="descargarExcel('TablaSugerencias')">Descargar Excel</button>
+                        <button id="descargarExcelS" class="btn btn-success" onClick="descargarExcel('TablaSugerencias')">Descargar Excel</button>
                         <thead>
                             <tr>
                                 <th>Empleado</th>
@@ -1012,15 +892,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <th>Fecha</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Los resultados se llenarán aquí mediante AJAX -->
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal de encuestas -->
     <?php include 'modal.php'; ?>
 
@@ -1030,91 +908,87 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
     <!-- Modal Acceso a Sistemas -->
     <?php include 'modalAccesoSistemas.php'; ?>
 
-    <!-- Scripts -->
-    <!-- Bootstrap core JavaScript-->    
+    <!-- ============== SCRIPTS ============== -->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
-    <script src = "vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
-    <!-- Core plugin JavaScript-->
-    <script src = "vendor/jquery-easing/jquery.easing.min.js"></script>
-    <!-- Custom scripts for all pages-->
-    <script src = "js/sb-admin-2.min.js"></script>
-    <!-- SweetAlert2 -->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="js/sb-admin-2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src = "https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script> 
-    <!-- Descargar Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    
+
     <!-- Funciones Globales -->
     <script src="funcionesGlobales.js"></script>
 
     <script>
-        $(document).ready(function () {           
-            verCalendarioLogin();
+        // Variables globales para calendarios (lazy-init en tabs)
+        var calendarSalaJuntas = null;
+        var calendarVacaciones = null;
+        var esJefeActual = false;
+        var vehiculosDocsCargados = false;
+        // Acumulador del estatus de cada vehículo para alimentar el semáforo del tab.
+        // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total} } }
+        var vehiculosEstado = {};
+
+        $(document).ready(function() {
+            // ===== Tema claro/oscuro =====
+            const guardado = localStorage.getItem('mess_theme');
+            if (guardado === 'dark') document.body.classList.replace('theme-light', 'theme-dark');
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                if (document.body.classList.contains('theme-dark')) {
+                    document.body.classList.replace('theme-dark', 'theme-light');
+                    localStorage.setItem('mess_theme', 'light');
+                } else {
+                    document.body.classList.replace('theme-light', 'theme-dark');
+                    localStorage.setItem('mess_theme', 'dark');
+                }
+                // Re-renderizar calendarios si están activos para refrescar colores
+                if (calendarSalaJuntas) calendarSalaJuntas.render();
+                if (calendarVacaciones) calendarVacaciones.render();
+            });
+
+            // ===== Inicialización original =====
             validaOpciones();
-            infoEmpleado();   
-            obtenerPlaca();
+            infoEmpleado();
+            verificarEsJefe();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
             registrarNotificacionPlaneacion();
-            
-            // Asigna los valores de las cookies a los campos del formulario
-            document.getElementById('id_usuario').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuario').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleado').value = getCookie('noEmpleadoL');
-            document.getElementById('correo').value = getCookie('correoL');
-            
-            document.getElementById('id_usuarioCV').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioCV').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoCV').value = getCookie('noEmpleadoL');
-            document.getElementById('correoCV').value = getCookie('correoL');
+            // Pre-carga del tab Vehículo para que el semáforo se calcule sin abrirlo.
+            cargarVehiculosDocs();
 
-            document.getElementById('id_usuarioHR').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioHR').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoHR').value = getCookie('noEmpleadoL');
-            document.getElementById('correoHR').value = getCookie('correoL');
+            // Asignar cookies a campos hidden
+            const idU = getCookie('id_usuarioL');
+            const nomU = getCookie('nombredelusuarioL');
+            const noEmp = getCookie('noEmpleadoL');
+            const corU = getCookie('correoL');
 
-            document.getElementById('id_usuarioI').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioI').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoI').value = getCookie('noEmpleadoL');
-            document.getElementById('correoI').value = getCookie('correoL');
-
-            document.getElementById('id_usuarioPla').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioPla').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoPla').value = getCookie('noEmpleadoL');
-            document.getElementById('correoPla').value = getCookie('correoL');
-
-            document.getElementById('id_usuarioPlaEnt').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioPlaEnt').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoPlaEnt').value = getCookie('noEmpleadoL');
-            document.getElementById('correoPlaEnt').value = getCookie('correoL');
-
-            document.getElementById('id_usuarioSJ').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioSJ').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoSJ').value = getCookie('noEmpleadoL');
-            document.getElementById('correoSJ').value = getCookie('correoL');
-
-            document.getElementById('id_usuarioAC').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioAC').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoAC').value = getCookie('noEmpleadoL');
-            document.getElementById('correoAC').value = getCookie('correoL');
-
-            document.getElementById('id_usuarioPRACT').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioPRACT').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoPRACT').value = getCookie('noEmpleadoL');
-            document.getElementById('correoPRACT').value = getCookie('correoL');
-
-            document.getElementById('id_usuarioSGC').value = getCookie('id_usuarioL');
-            document.getElementById('nombredelusuarioSGC').value = getCookie('nombredelusuarioL');
-            document.getElementById('noEmpleadoSGC').value = getCookie('noEmpleadoL');
-            document.getElementById('correoSGC').value = getCookie('correoL');
-
-            document.getElementById('pass').value = getCookie('UsrKpis');
+            const sets = [
+                ['id_usuario', 'nombredelusuario', 'noEmpleado', 'correo'],
+                ['id_usuarioCV', 'nombredelusuarioCV', 'noEmpleadoCV', 'correoCV'],
+                ['id_usuarioHR', 'nombredelusuarioHR', 'noEmpleadoHR', 'correoHR'],
+                ['id_usuarioI', 'nombredelusuarioI', 'noEmpleadoI', 'correoI'],
+                ['id_usuarioPla', 'nombredelusuarioPla', 'noEmpleadoPla', 'correoPla'],
+                ['id_usuarioPlaEnt', 'nombredelusuarioPlaEnt', 'noEmpleadoPlaEnt', 'correoPlaEnt'],
+                ['id_usuarioSJ', 'nombredelusuarioSJ', 'noEmpleadoSJ', 'correoSJ'],
+                ['id_usuarioAC', 'nombredelusuarioAC', 'noEmpleadoAC', 'correoAC'],
+                ['id_usuarioPRACT', 'nombredelusuarioPRACT', 'noEmpleadoPRACT', 'correoPRACT'],
+                ['id_usuarioSGC', 'nombredelusuarioSGC', 'noEmpleadoSGC', 'correoSGC']
+            ];
+            sets.forEach(function(s) {
+                const [a, b, c, d] = s;
+                if (document.getElementById(a)) document.getElementById(a).value = idU;
+                if (document.getElementById(b)) document.getElementById(b).value = nomU;
+                if (document.getElementById(c)) document.getElementById(c).value = noEmp;
+                if (document.getElementById(d)) document.getElementById(d).value = corU;
+            });
+            if (document.getElementById('noEmpleadoT')) document.getElementById('noEmpleadoT').value = noEmp;
 
             $('.select2').select2({
                 theme: 'bootstrap4',
@@ -1126,619 +1000,345 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
             cargarMisEncuestas();
 
-            //Notificaciones
-            cargarNotificaciones(false); // Carga inicial de notificaciones sin mostrar flotantes
+            // Notificaciones
+            cargarNotificaciones(false);
             setInterval(function() {
                 cargarNotificaciones(false);
-            }, 5400000); // 1.5 horas
-            
-        });
+            }, 5400000); // 1.5h
 
-    // SE TRAE INFORACION DEL EMPLEADO, DIAS DE VACACIONES, DEPARTAMENTO, JEFE, ETC.        
-        function infoEmpleado(){
-            $.ajax({
-                url: '../incidencias/getInfoLoginMaster.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {                    
-                    noEmpleado: getCookie('noEmpleadoL'),                    
-                    correo: getCookie('correoL'),
-                    accion: 'getInfo'
-                },
-                success: function(response) {
-                    if (response.status === 'success') {
-                        $.each(response.info, function (index, infoUsr) {
-                            $('#antig').text(infoUsr.antiguedad);
-                            $('#diasDisp').text(infoUsr.diasdisponibles - infoUsr.diasSol);
-                            $('#lblArea').text(infoUsr.departamento);
-                            $('#lblJefe').text(infoUsr.jefe);
-                            $('#fechaIngreso').text(infoUsr.fechaIngreso);
-                            $('#diasSol').text(infoUsr.diasSol);
-                        });
+            // Sincronizar el conteo de notificaciones con el badge del tab Avisos.
+            // Observa cambios en #badgeNotificaciones (que actualiza funcionesGlobales.js)
+            // y replica el valor en #badgeTabAvisos sin tocar la función global.
+            (function() {
+                var $src = $('#badgeNotificaciones');
+                var $dst = $('#badgeTabAvisos');
+                var $tab = $('#tabAvisos-tab');
+                if (!$src.length || !$dst.length) return;
+
+                function sync() {
+                    var txt = ($src.text() || '').trim();
+                    var n = parseInt(txt, 10);
+                    if (isNaN(n) || n <= 0) {
+                        $dst.text('');
+                        $tab.removeClass('has-alert');
                     } else {
-                        console.log(response.message); // Muestra error si aplica
+                        $dst.text(n > 99 ? '99+' : n);
+                        $tab.addClass('has-alert');
                     }
                 }
-            });
-            
-        }
 
-    //PARA VALIDAR QUE SISTEMAS SE MUESTRAN EN EL PANEL DE USUARIO
-        function validaOpciones() {
-            $.ajax({
-                url: '../incidencias/getInfoLoginMaster.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {                    
-                    noEmpleado: getCookie('noEmpleadoL'),                    
-                    correo: getCookie('correoL'),
-                    accion: 'ValidarOpciones'
-                },
-                success: function(info) {
-                    $.each(info, function (index, infoAccesos) {                  
-                        $('#antig').text(infoAccesos.antiguedad);
-                        if (infoAccesos.estatus == '1') {
-                            $('#' + infoAccesos.sistema).show();
-                        } else {
-                            $('#' + infoAccesos.sistema).hide();
-                        }
-                    });
-                    
+                sync(); // Estado inicial
+                var obs = new MutationObserver(sync);
+                obs.observe($src[0], {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                });
+            })();
+
+            // Calendario de Sala de Juntas: lazy-init al mostrar el tab
+            // (FullCalendar mide 0px si se crea con el contenedor en display:none)
+            $('#tabAgenda-tab').on('shown.bs.tab', function() {
+                if (!calendarSalaJuntas) {
+                    initCalendarSalaJuntas();
+                } else {
+                    setTimeout(function() {
+                        calendarSalaJuntas.updateSize();
+                        calendarSalaJuntas.refetchEvents();
+                    }, 50);
                 }
             });
+            $('#tabPersonal-tab').on('shown.bs.tab', function() {
+                if (!calendarVacaciones) initCalendarVacaciones();
+                setTimeout(function() {
+                    if (calendarVacaciones) calendarVacaciones.updateSize();
+                }, 50);
+                cargarPanelNotificaciones();
+            });
+            $('#tabVehiculo-tab').on('shown.bs.tab', function() {
+                if (!vehiculosDocsCargados) cargarVehiculosDocs();
+            });
+        });
+
+        // ===== Sala de Juntas =====
+        // El endpoint acciones_agendarSala.php (en /incidencias/) lee $_COOKIE['noEmpleado'],
+        // pero loginMaster setea 'noEmpleadoL'. Replicamos la cookie sin sufijo antes de cada llamada.
+        function syncCookieNoEmpleado() {
+            var v = getCookie('noEmpleadoL');
+            if (v) document.cookie = 'noEmpleado=' + encodeURIComponent(v) + '; path=/; SameSite=Lax';
         }
-        
-    //FUNCION PARA OTENER ID_USUARIO Y PLACA
-        function obtenerPlaca() {
+
+        // Paso 1: verifica que no haya conflicto y que finicio < ffin
+        function registrarLugarSJ() {
+            var finicio = document.getElementById('lugarSJ_inicio').value;
+            var ffin = document.getElementById('lugarSJ_fin').value;
+            var descripcion = document.getElementById('lugarSJ_descripcion').value;
+
+            if (!finicio || !ffin || !descripcion) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Faltan datos',
+                    text: 'Completa fecha inicio, fin y motivo.'
+                });
+                return;
+            }
+            syncCookieNoEmpleado();
+
             $.ajax({
-                url: '../incidencias/validaLoginMaster.php',
+                url: '../incidencias/SalaDeJuntas/acciones_agendarSala.php',
                 type: 'POST',
                 dataType: 'json',
                 data: {
-                    accion: 'getPlaca',
-                    noEmpleado: getCookie('noEmpleadoL')
+                    finicio: finicio,
+                    ffin: ffin,
+                    descripcion: descripcion,
+                    accion: 'verificaReserva'
                 },
-                success: function(response) {
-                    if (response.success && response.vehiculos && response.vehiculos.length > 0) {
-                        let html = '';
-                        
-                        if (response.vehiculos.length === 1) {
-                            // CORRECCIÓN: Acceder a la placa del primer elemento
-                            let v = response.vehiculos[0];
-                            html = v.placa + '-' + v.modelo + ' <br><a class="btn btn-sm btn-info" href="TENENCIAS_2026/'+ v.placa +'.pdf" title="Tenencia 2026 - '+v.placa+'" target="_blank">Tenencia 2026 <i class="fas fa-download"></i></a>';
-                        } else {
-                            html = '<ul style="list-style:none;padding-left:0;margin-bottom:0;">';
-                            response.vehiculos.forEach(function(vehiculo) {
-                                // CORRECCIÓN: Usar vehiculo.placa
-                                html += '<li>' + vehiculo.placa + '-' + vehiculo.modelo + ' <br><a class="btn btn-sm btn-info" href="TENENCIAS_2026/'+ vehiculo.placa +'.pdf" title="Tenencia 2026 - '+vehiculo.placa+'" target="_blank">Tenencia 2026 <i class="fas fa-download"></i></a></li>';
-                            });
-                            html += '</ul>';
-                        }
-                        $('#vehiculoAsignado').html(html);
+                success: function(resp) {
+                    if (resp && resp.success === false && finicio >= ffin) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Revisa las fechas',
+                            text: 'La hora de inicio debe ser anterior a la de fin.'
+                        });
+                    } else if (resp && resp.success === false) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Conflicto de horario',
+                            text: 'Ya existe una reserva en este horario.'
+                        });
                     } else {
-                        $('#vehiculoAsignado').text('Sin vehículo asignado');
+                        generarSolicitudSJ(finicio, ffin, descripcion);
                     }
                 },
                 error: function() {
-                    $('#vehiculoAsignado').text('Error al obtener vehículo');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo verificar la reserva.'
+                    });
                 }
             });
         }
 
-    //FUNCION PARA CARGAR EL CALENDARIO DE LA SALA DE JUNTAS
-        function verCalendarioLogin() {
+        // Paso 2: inserta la reserva
+        function generarSolicitudSJ(finicio, ffin, descripcion) {
+            $.ajax({
+                url: '../incidencias/SalaDeJuntas/acciones_agendarSala.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    finicio: finicio,
+                    ffin: ffin,
+                    descripcion: descripcion,
+                    accion: 'agregaSolicitud'
+                },
+                success: function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reserva registrada'
+                    });
+                    $('#modalRegistrarLugarSJ').modal('hide');
+                    $('#formRegistrarLugarSJ')[0].reset();
+                    if (calendarSalaJuntas) calendarSalaJuntas.refetchEvents();
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo registrar la reserva.'
+                    });
+                }
+            });
+        }
+
+        // ===== Inicialización del calendario de Sala de Juntas =====
+        function initCalendarSalaJuntas() {
             var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
+            if (!calendarEl) return;
+            var miNoEmp = parseInt(getCookie('noEmpleadoL'), 10) || 0;
+            calendarSalaJuntas = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'listWeek',
                 events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
                 editable: false,
                 locale: 'es',
-                height: 450, // Altura fija en px
-                contentHeight: 4550, // Altura del contenido
-                aspectRatio: 2, // Relación de aspecto (ancho/alto)
+                height: 450,
+                contentHeight: 4550,
+                aspectRatio: 2,
                 eventContent: function(info) {
                     var nombreEmpleado = info.event.title;
                     var descripcion = info.event.extendedProps.descripcion || 'Sin descripción';
-                    var displayText = nombreEmpleado + '<br>' + descripcion;
-                    return { html: displayText };
-                }
-            });
-            calendar.render();
-        }
+                    var idUsuario = parseInt(info.event.extendedProps.id_usuario, 10) || 0;
+                    var idReserva = parseInt(info.event.id, 10) || 0;
 
-    //FUNCION PARA OBTENER COOKIES
-        function getCookie(name) {
-            let matches = document.cookie.match(new RegExp(
-                "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-            ));
-            return matches ? decodeURIComponent(matches[1]) : undefined;
-        }
-
-    //FUNCION ENVIAR TALLAS
-        function registraTallas(){
-            var accion = 'registraTallas';
-            var talla = document.getElementById('talla').value;
-            var noEmpleado = getCookie('noEmpleadoL');
-
-            $.ajax({
-                url: 'login.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion : accion,
-                    talla: talla,
-                    noEmpleado: noEmpleado,
-                },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'Talla actualizada correctamente.'
-                        });
-                        cargarTalla(noEmpleado); // Recarga la talla después de registrar
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'No se pudo registrar la talla.'
-                        });
+                    var html = '<div>' + nombreEmpleado + '<br>' + descripcion + '</div>';
+                    if (miNoEmp > 0 && idUsuario === miNoEmp && idReserva > 0) {
+                        html += '<button type="button" class="btn btn-sm btn-outline-danger mt-1 py-0 px-2" ' +
+                            'style="font-size:.7rem;" ' +
+                            'onclick="cancelarReservaSJ(' + idReserva + ', event)">' +
+                            '<i class="fas fa-times mr-1"></i>Cancelar</button>';
                     }
-                },
-                error: function() {
-                    Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Ocurrió un error en la solicitud.'
-                    });
+                    return {
+                        html: html
+                    };
                 }
             });
+            calendarSalaJuntas.render();
         }
 
-    //FUNCION PARA CARGAR TALLA SI YA ESTA REGISTRADA
-        function cargarTalla(noEmpleadoL) {
-            $.ajax({
-                url: 'login.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'validaTalla',
-                    noEmpleado: noEmpleadoL
-                },
-                success: function(response) {
-                    if (response.success && response.exists && response.talla) {
-                        $('#alertTalla').hide(); // Oculta la alerta si la talla ya está registrada
-                        $('#talla').val(response.talla); // Asigna la talla al select
-                    } else {
-                        $('#alertTalla').show(); // Muestra la alerta si no hay talla registrada
-                    }
-                },
-                error: function() {
-                console.error('Error al consultar la talla.');
-                }
-            });
-        }
+        // Cancela una reserva propia de Sala de Juntas (estatus -> 'Cancelada').
+        function cancelarReservaSJ(idReserva, evt) {
+            if (evt && evt.stopPropagation) evt.stopPropagation();
+            if (!idReserva) return;
 
-    //BUZON DE SUGERENCIAS
-        function BuzonSugerencias() {
-            var accion = 'buzon';
-            var tipo = document.getElementById('tipo').value;   
-            var comentario = document.getElementById('comentario').value;
-            var noEmpleado = getCookie('noEmpleadoL');
-
-            $.ajax({
-                url: 'login.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion : accion,
-                    tipo: tipo,
-                    comentario: comentario,
-                    noEmpleado: noEmpleado,
-                },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'Comentario enviado correctamente.'
-                        });
-                        // Limpiar el formulario después de enviar
-                        $('#formbuzon')[0].reset();
-                        $('#modalbuzon').modal('hide'); // Cerrar el modal
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'No se pudo enviar el comentario.'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Ocurrió un error en la solicitud.'
-                    });
-                }
-            });
-            
-        }
-
-    //VOTAR POR FOTO
-        $(document).on('click', '.votar-btn', function() {
-            var id_foto = $(this).data('foto');
-            var noEmpleado = getCookie('noEmpleadoL');
-
-            $.ajax({
-                url: 'login.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accionV: 'votacion',
-                    id_foto: id_foto,
-                    noEmpleado: noEmpleado
-                },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Gracias por tu voto',
-                            text: 'Has votado por la foto ' + id_foto 
-                        });
-                        $('#modalCarrusel').modal('hide'); // Cerrar el modal después de votar
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Atención',
-                            text: response.message || 'Solo se permite un voto por usuario.'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error en la solicitud.'
-                    });
-                }
-            });
-        });
-
-    //FUNCION PARA CARGAR LOS CURSOS SELECCIONADOS
-        function cargarCursosSeleccionados() {
-            var noEmpleado = getCookie('noEmpleadoL');
-
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'cargar_cursos',
-                    noEmpleado: noEmpleado
-                },
-                success: function(response) {
-                    if (response.success && response.cursos) {
-                        response.cursos.forEach(function(cursoId) {
-                            $('input[name="cursos[]"][value="' + cursoId.id_voto + '"]').prop('checked', true);
-                            $('#formCursos').hide();
-                            $('#cursosSeleccionados').append('<li>' + cursoId.id_voto + '</li>');
-                        });
-                    }
-                },
-                error: function() {
-                    console.error('Error al cargar los cursos seleccionados.');
-                }
-            });
-        }
-
-    //FUNCION PARA GUARDAR ASISTENCIA A CURSOS
-        function guardarAsistenciaCurso() {
-            var noEmpleado = getCookie('noEmpleadoL');
-            var cursosSeleccionados = [];
-            $('input[name="cursos[]"]:checked').each(function() {
-                cursosSeleccionados.push($(this).val());
-            });
-
-            if (cursosSeleccionados.length === 0) {
-                Swal.fire({
+            Swal.fire({
                 icon: 'warning',
-                title: 'Atención',
-                text: 'Debes seleccionar al menos un curso.'
+                title: '¿Cancelar reserva?',
+                text: 'Esta acción liberará el horario en la sala.',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cancelar',
+                cancelButtonText: 'No',
+                confirmButtonColor: '#d33'
+            }).then(function(res) {
+                if (!res.isConfirmed) return;
+                syncCookieNoEmpleado();
+                $.ajax({
+                    url: '../incidencias/SalaDeJuntas/acciones_agendarSala.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        accion: 'eliminaSolicitud',
+                        id: idReserva
+                    }
+                }).done(function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reserva cancelada',
+                        timer: 1600,
+                        showConfirmButton: false
+                    });
+                    if (calendarSalaJuntas) calendarSalaJuntas.refetchEvents();
+                }).fail(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo cancelar la reserva.'
+                    });
                 });
-                return;
-            }
-
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                accion: 'guardar_asistencia',
-                cursos: cursosSeleccionados,
-                noEmpleado: noEmpleado
-                },
-                success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                    icon: 'success',
-                    title: 'Asistencia Guardada',
-                    text: 'Tu asistencia a los cursos ha sido registrada correctamente.'
-                    });
-                    cargarCursosSeleccionados(noEmpleado); // Recarga los cursos seleccionados
-                } else {
-                    Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: response.message || 'No se pudo registrar la asistencia.'
-                    });
-                }
-                },
-                error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Ocurrió un error en la solicitud.'
-                });
-                }
             });
         }
 
-    //FUNCION PARA VER TODAS LAS TALLAS REGISTRADAS
-        function VerTallas() {
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'ver_tallas'
+        // ===== Calendario de Vacaciones (Personal) =====
+        function initCalendarVacaciones() {
+            var el = document.getElementById('calendarVacaciones');
+            if (!el) return;
+            var noEmp = getCookie('noEmpleadoL') || '';
+            calendarVacaciones = new FullCalendar.Calendar(el, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                height: 500,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
                 },
-                success: function(response) {
-                    if (response.success && response.tallas) {
-                        var tablaBody = $('#TotalTallas tbody');
-                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
-
-                        response.tallas.forEach(function(talla) {
-                            var fila = '<tr>' +
-                                '<td>' + talla.noEmpleado +  '-' + talla.nombre + '</td>' +
-                                '<td>' + talla.talla + '</td>' +
-                                '<td>' + talla.sexo + '</td>' +
-                                '</tr>';
-                            tablaBody.append(fila);
-                        });
-
-                        // Mostrar el modal después de llenar la tabla
-                        $('#modalResultadosTallas').modal('show');
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'No hay tallas registradas',
-                            text: 'No se encontraron tallas en el sistema.'
-                        });
+                eventSources: [{
+                        id: 'propias',
+                        color: '#050D9E',
+                        borderColor: '#050D9E',
+                        textColor: '#ffffff',
+                        events: function(info, successCallback) {
+                            $.ajax({
+                                url: '../incidencias/acciones_calendario.php',
+                                type: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    opcion: 'rrhh',
+                                    ing: noEmp
+                                }
+                            }).done(function(resp) {
+                                successCallback(Array.isArray(resp) ? resp : []);
+                            }).fail(function() {
+                                successCallback([]);
+                            });
+                        }
+                    },
+                    {
+                        // Jefes: ven a los miembros de su equipo (u.jefe = yo).
+                        id: 'equipo',
+                        color: '#F5A623',
+                        borderColor: '#F5A623',
+                        textColor: '#ffffff',
+                        events: function(info, successCallback) {
+                            if (!esJefeActual) {
+                                successCallback([]);
+                                return;
+                            }
+                            syncCookieNoEmpleado();
+                            $.ajax({
+                                url: '../incidencias/acciones_calendario.php',
+                                type: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    opcion: 'jefes'
+                                }
+                            }).done(function(resp) {
+                                successCallback(Array.isArray(resp) ? resp : []);
+                            }).fail(function() {
+                                successCallback([]);
+                            });
+                        }
+                    },
+                    {
+                        // No-jefes: ven al resto de su departamento (mismo u.departamento).
+                        id: 'departamento',
+                        color: '#F5A623',
+                        borderColor: '#F5A623',
+                        textColor: '#ffffff',
+                        events: function(info, successCallback) {
+                            if (esJefeActual) {
+                                successCallback([]);
+                                return;
+                            }
+                            syncCookieNoEmpleado();
+                            $.ajax({
+                                url: '../incidencias/acciones_calendario.php',
+                                type: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    opcion: 'departamento'
+                                }
+                            }).done(function(resp) {
+                                successCallback(Array.isArray(resp) ? resp : []);
+                            }).fail(function() {
+                                successCallback([]);
+                            });
+                        }
                     }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error en la solicitud.'
-                    });
-                }
+                ]
             });
+            calendarVacaciones.render();
         }
 
-    //VER TOTAL DE TALLAS
-        function TotalTallas() {
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'conteo_tallas'
-                },
-                success: function(response) {
-                    if (response.success && response.tallas) {
-                        var tablaBody = $('#TotalTallasRegistradas tbody');
-                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
-
-                        response.tallas.forEach(function(talla) {
-                            var fila = '<tr>' +
-                                '<td>' + talla.talla + '</td>' +
-                                '<td>' + talla.sexo + '</td>' +
-                                '<td>' + talla.cantidad + '</td>' +
-                                '</tr>';
-                            tablaBody.append(fila);
-                        });
-
-                        // Mostrar el modal después de llenar la tabla
-                        $('#modalResultadosTallas').modal('show');
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'No hay tallas registradas',
-                            text: 'No se encontraron tallas en el sistema.'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error en la solicitud.'
-                    });
-                }
-            });
-        }
-
-    //FUNCION PARA DESCARGAR EXCEL 
-        function descargarExcel(tablaId) {
-            var tabla = document.getElementById(tablaId);
-            var filaInicio = 0; // Iniciar desde la primera fila (índice 0)
-            var filaFin = tabla.rows.length - 1; // Hasta la última fila
-
-            var wb = XLSX.utils.book_new();
-            var ws_data = [];
-
-            for (var i = filaInicio; i <= filaFin; i++) {
-                var row = [];
-                for (var j = 0; j < tabla.rows[i].cells.length; j++) {
-                    row.push(tabla.rows[i].cells[j].innerText);
-                }
-                ws_data.push(row);
-            }
-
-            var ws = XLSX.utils.aoa_to_sheet(ws_data);
-            XLSX.utils.book_append_sheet(wb, ws, tablaId);
-            XLSX.writeFile(wb, tablaId + '.xlsx');
-        }
-
-    //VER VOTOS DEL CARRUSEL
-        function verVotos() {
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'conteo_votos'
-                },
-                success: function(response) {
-                    if (response.success && response.votos) {
-                        var tablaBody = $('#ResultadosVotos tbody');
-                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
-
-                        response.votos.forEach(function(voto) {
-                            var imagenRuta = 'concursoHallowen2025/' + voto.id_foto + '.jpg'; // Ajusta según tu estructura
-                            var fila = '<tr>' +
-                                '<td>' +
-                                    voto.id_foto + '<br>' +
-                                    '<img src="' + imagenRuta + '" alt="Foto ' + voto.id_foto + '" style="width:70px; height:auto; border-radius:4px;">' +
-                                '</td>' +
-                                '<td>' + voto.cantidad + '</td>' +
-                                '</tr>';
-                            tablaBody.append(fila);
-                        });
-
-                        // Mostrar el modal después de llenar la tabla
-                        $('#modalCarrusel').modal('hide');
-                        $('#modalResultadosVotos').modal('show');
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'No hay votos registrados',
-                            text: 'No se encontraron votos en el sistema.'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error en la solicitud.'
-                    });
-                }
-            });
-        }
-
-    //VER BUZON DE SUGERENCIAS
-        function verBuzon() {
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'ver_buzon'
-                },
-                success: function(response) {
-                    if (response.success && response.buzon) {
-                        var tablaBody = $('#TablaSugerencias tbody');
-                        tablaBody.empty(); // Limpiar el cuerpo de la tabla antes de llenarla
-
-                        response.buzon.forEach(function(buzon) {
-                            var fila = '<tr>' +
-                                '<td>' + buzon.noEmpleado + '-' + buzon.nombre + '</td>' +
-                                '<td>' + buzon.tipo + '</td>' +
-                                '<td>' + buzon.comentario + '</td>' +
-                                '<td>' + buzon.fecha_registro + '</td>' +
-                                '</tr>';
-                            tablaBody.append(fila);
-                        });
-
-                        // Mostrar el modal después de llenar la tabla
-                        $('#modalbuzon').modal('hide');
-                        $('#modalVerSugerencias').modal('show');
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'No hay comentarios registrados',
-                            text: 'No se encontraron comentarios en el sistema.'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error en la solicitud.'
-                    });
-                }
-            });
-        }
-    
-    //CAMBIAR CONTRASEÑA
-        function cambiarCont(){
-
-            contrasena_actual = $('#contrasena_actual').val();
-            nueva_contrasena =  $('#nueva_contrasena').val();
-            confirmar_contrasena =  $('#confirmar_contrasena').val();
-            accion = 'CambiarPass';
-
-            $.ajax({
-                url: 'cambiar_contrasena.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: accion,
-                    contrasena_actual: contrasena_actual,
-                    nueva_contrasena: nueva_contrasena,
-                    confirmar_contrasena: confirmar_contrasena
-                },
-                success: function(response) {
-                    $('#modalCambiarContrasena').modal('hide');
-                    Swal.fire({
-                            title: response.message,
-                            icon: response.status,
-                            draggable: true
-                    });
-                },
-                error: function() {                    
-                    Swal.fire({
-                            title: "Vuelve a intentar hubo un  problema al actualizar la contraseña!",
-                            icon: "warning",
-                            draggable: true
-                    })
-                }
-            });
-        }
-        
         function cargarMisEncuestas() {
             // Usamos el ID del empleado (debería venir de tu sesión de PHP)
             const id_empleado = <?php echo $_COOKIE['noEmpleadoL']; ?>;
 
-        $.post('acciones_eventos.php', { 
-                accion: 'listar_mis_actividades_completas', 
-                id_empleado: id_empleado 
+            $.post('acciones_eventos.php', {
+                accion: 'listar_mis_actividades_completas',
+                id_empleado: id_empleado
             }, function(data) {
                 let html = '';
-                
+
                 if (data.length > 0) {
                     data.forEach(ev => {
                         // Lógica para saber si ya completó
                         // Si es asistencia, checamos 'asignado_confirmado'. Si es voto/encuesta, checamos 'respondido'.
                         let completado = (ev.tipo === 'asistencia') ? (ev.asignado_confirmado == 1) : (ev.respondido > 0);
-                        
+
                         let icono = 'fa-poll';
-                        if(ev.tipo === 'asistencia') icono = 'fa-check-square';
-                        if(ev.tipo === 'votacion') icono = 'fa-heart';
+                        if (ev.tipo === 'asistencia') icono = 'fa-check-square';
+                        if (ev.tipo === 'votacion') icono = 'fa-heart';
 
                         if (completado) {
                             // DISEÑO PARA COMPLETADAS (Deshabilitado y Verde)
@@ -1750,14 +1350,14 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             <i class="fas fa-check-circle mr-2"></i> ${ev.nombre}
                                             Fecha del curso: ${ev.fecha_opcion}
                                         </span>
-                                        <span class="badge badge-success px-2">Completado</span>                                
+                                        <span class="badge badge-success px-2">Completado</span>
                                     </div>
                                 </div>
                             </div>`;
                         } else {
                             // DISEÑO PARA PENDIENTES (Botón azul clickable)
                             html += `
-                            <div class="mb-2">                        
+                            <div class="mb-2">
                                 <a type="button" onClick="abrirModalEncuestaUsuuario(${ev.id_evento})" class="btn btn-white btn-block text-left shadow-sm py-2 border-left-primary card-btn-pendiente">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-primary font-weight-bold small">
@@ -1851,7 +1451,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 },
                 success: function(response) {
                     if (response.status === 'success') {
-                        $.each(response.info, function(index, infoUsr) {
+                        $.each(response.info, function (index, infoUsr) {
                             $('#diasDisp').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
                             $('#diasDispPanel').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
                             $('#diasSolPanel').text(infoUsr.diasSol || 0);
@@ -1859,6 +1459,16 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                             $('#lblJefe').text(infoUsr.jefe || '—');
                             $('#lblPuesto').text(infoUsr.puesto || '—');
                             $('#fechaIngreso').text(infoUsr.fechaIngreso || '—');
+
+                            // Foto en el sidebar (cae al ícono por defecto si no hay foto).
+                            var $avatar = $('.profile-avatar').first();
+                            if (infoUsr.foto) {
+                                $avatar.addClass('has-photo')
+                                       .css('background-image', "url('" + infoUsr.foto + "')");
+                            } else {
+                                $avatar.removeClass('has-photo')
+                                       .css('background-image', 'none');
+                            }
                             // La info del jefe se resuelve con una acción dedicada en acciones_globales.php
                             // (getInfo no devuelve esJefe). Ver verificarEsJefe().
                         });
@@ -1912,7 +1522,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     accion: 'ValidarOpciones'
                 },
                 success: function(info) {
-                    $.each(info, function(index, infoAccesos) {
+                    $.each(info, function (index, infoAccesos) {
                         if (infoAccesos.estatus == '1') {
                             $('#' + infoAccesos.sistema).show();
                         } else {
@@ -1961,7 +1571,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 // Renderizar un placeholder por cada vehículo y luego rellenar.
                 // El primer vehículo se abre por defecto, los demás colapsados.
                 var html = '<div class="accordion" id="accordionVehiculos">';
-                resp.vehiculos.forEach(function(v, idx) {
+                resp.vehiculos.forEach(function(v, idx){
                     var idv = parseInt(v.id_vehiculo, 10) || 0;
                     html += renderCardVehiculo(idv, v.placa, v.modelo, idx === 0);
                 });
@@ -1969,7 +1579,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 $cont.html(html);
 
                 // Pedir documentación + validaciones de cada vehículo.
-                resp.vehiculos.forEach(function(v) {
+                resp.vehiculos.forEach(function(v){
                     var idv = parseInt(v.id_vehiculo, 10) || 0;
                     if (!idv) return;
                     syncCookieNoEmpleado();
@@ -1992,20 +1602,16 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                         vehiculosEstado[idv] = vehiculosEstado[idv] || {};
                         vehiculosEstado[idv].docs = evaluarDocs(data);
                         actualizarSemaforoVehiculo();
-                    }).fail(function() {
+                    }).fail(function(){
                         $('#docsVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error al obtener documentación</p>');
                     });
 
                     // Validaciones (checklist + mantenimiento)
                     $.ajax({
                         url: '../ControlVehicular/acciones_qr.php',
-                        type: 'POST',
-                        dataType: 'json',
-                        data: {
-                            accion: 'obtenerValidacionesVehiculo',
-                            id_vehiculo: idv
-                        }
-                    }).done(function(data) {
+                        type: 'POST', dataType: 'json',
+                        data: { accion: 'obtenerValidacionesVehiculo', id_vehiculo: idv }
+                    }).done(function(data){
                         if (!data || data.error) {
                             $('#chkVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar el checklist</p>');
                             $('#mntVeh-' + idv).html('<p class="text-muted small mb-0 p-3">No se pudo cargar el mantenimiento</p>');
@@ -2016,7 +1622,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                         vehiculosEstado[idv] = vehiculosEstado[idv] || {};
                         vehiculosEstado[idv].vals = evaluarValidaciones(data);
                         actualizarSemaforoVehiculo();
-                    }).fail(function() {
+                    }).fail(function(){
                         $('#chkVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                         $('#mntVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                     });
@@ -2029,113 +1635,84 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
         function renderCardVehiculo(idVeh, placa, modelo, abierto) {
             var titulo = (placa || '') + (modelo ? ' - ' + modelo : '');
-            var shown = abierto ? ' show' : '';
-            var btnCls = abierto ? '' : ' collapsed';
+            var shown   = abierto ? ' show'    : '';
+            var btnCls  = abierto ? ''          : ' collapsed';
             var spinner = '<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i></div>';
 
-            return '' +
-                '<div class="card shadow-sm mb-3" data-vehiculo="' + idVeh + '">' +
-                '<div class="card-header p-0" id="headingV-' + idVeh + '" style="background: var(--card-soft); border-color: var(--border);">' +
-                '<button class="btn btn-link w-100 text-left py-2 px-3 d-flex align-items-center justify-content-between font-weight-bold' + btnCls + '" ' +
-                'style="color: var(--text); text-decoration:none;" ' +
-                'type="button" data-toggle="collapse" data-target="#collapseV-' + idVeh + '" aria-expanded="' + (abierto ? 'true' : 'false') + '" aria-controls="collapseV-' + idVeh + '">' +
-                '<span><i class="fas fa-car mr-2"></i>' + titulo + '</span>' +
-                '<i class="fas fa-chevron-down"></i>' +
-                '</button>' +
-                '</div>' +
-                '<div id="collapseV-' + idVeh + '" class="collapse' + shown + '" aria-labelledby="headingV-' + idVeh + '" data-parent="#accordionVehiculos">' +
-                '<div class="card-body p-2">' +
-                '<div class="row no-gutters">' +
-                '<div class="col-md-4 px-1 mb-2">' +
-                '<div class="card h-100">' +
-                '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">' +
-                '<h6 class="m-0 font-weight-bold small">Documentación</h6>' +
-                '<a href="../ControlVehicular/documentacion?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Actualizar Docs">' +
-                '<i class="fas fa-folder-open"></i>' +
-                '</a>' +
-                '</div>' +
-                '<div class="card-body p-0" id="docsVeh-' + idVeh + '">' + spinner + '</div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="col-md-4 px-1 mb-2">' +
-                '<div class="card h-100">' +
-                '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">' +
-                '<h6 class="m-0 font-weight-bold small">Checklist</h6>' +
-                '<a href="../ControlVehicular/checkVehiculo?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Realizar Checklist">' +
-                '<i class="fas fa-clipboard-check"></i>' +
-                '</a>' +
-                '</div>' +
-                '<div class="card-body p-0" id="chkVeh-' + idVeh + '">' + spinner + '</div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="col-md-4 px-1 mb-2">' +
-                '<div class="card h-100">' +
-                '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">' +
-                '<h6 class="m-0 font-weight-bold small">Mantenimiento</h6>' +
-                '<a href="../ControlVehicular/seguimiento_mantenimiento.php" target="_blank" class="btn btn-warning btn-sm" title="Ver Mantenimientos">' +
-                '<i class="fas fa-wrench"></i>' +
-                '</a>' +
-                '</div>' +
-                '<div class="card-body p-0" id="mntVeh-' + idVeh + '">' + spinner + '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
+            return ''
+                + '<div class="card shadow-sm mb-3" data-vehiculo="' + idVeh + '">'
+                +   '<div class="card-header p-0" id="headingV-' + idVeh + '" style="background: var(--card-soft); border-color: var(--border);">'
+                +     '<button class="btn btn-link w-100 text-left py-2 px-3 d-flex align-items-center justify-content-between font-weight-bold' + btnCls + '" '
+                +             'style="color: var(--text); text-decoration:none;" '
+                +             'type="button" data-toggle="collapse" data-target="#collapseV-' + idVeh + '" aria-expanded="' + (abierto ? 'true' : 'false') + '" aria-controls="collapseV-' + idVeh + '">'
+                +       '<span><i class="fas fa-car mr-2"></i>' + titulo + '</span>'
+                +       '<i class="fas fa-chevron-down"></i>'
+                +     '</button>'
+                +   '</div>'
+                +   '<div id="collapseV-' + idVeh + '" class="collapse' + shown + '" aria-labelledby="headingV-' + idVeh + '" data-parent="#accordionVehiculos">'
+                +     '<div class="card-body p-2">'
+                +       '<div class="row no-gutters">'
+                +         '<div class="col-md-4 px-1 mb-2">'
+                +           '<div class="card h-100">'
+                +             '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">'
+                +               '<h6 class="m-0 font-weight-bold small">Documentación</h6>'
+                +               '<a href="../ControlVehicular/documentacion?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Actualizar Docs">'
+                +                 '<i class="fas fa-folder-open"></i>'
+                +               '</a>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="docsVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
+                +         '<div class="col-md-4 px-1 mb-2">'
+                +           '<div class="card h-100">'
+                +             '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">'
+                +               '<h6 class="m-0 font-weight-bold small">Checklist</h6>'
+                +               '<a href="../ControlVehicular/checkVehiculo?v=' + idVeh + '" target="_blank" class="btn btn-warning btn-sm" title="Realizar Checklist">'
+                +                 '<i class="fas fa-clipboard-check"></i>'
+                +               '</a>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="chkVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
+                +         '<div class="col-md-4 px-1 mb-2">'
+                +           '<div class="card h-100">'
+                +             '<div class="card-header py-2 d-flex align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border);">'
+                +               '<h6 class="m-0 font-weight-bold small">Mantenimiento</h6>'
+                +               '<a href="../ControlVehicular/seguimiento_mantenimiento.php" target="_blank" class="btn btn-warning btn-sm" title="Ver Mantenimientos">'
+                +                 '<i class="fas fa-wrench"></i>'
+                +               '</a>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="mntVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
+                +       '</div>'
+                +     '</div>'
+                +   '</div>'
+                + '</div>';
         }
 
         // Renderiza solo la lista (sin envoltorio card) — la card y header se crean en renderCardVehiculo.
         function renderListaChecklist(data) {
-            var subareasOrden = [{
-                    campo: 'asientos',
-                    label: 'Asientos'
-                },
-                {
-                    campo: 'espejos_ventanas',
-                    label: 'Espejos y ventanas'
-                },
-                {
-                    campo: 'estereos_aire',
-                    label: 'Estéreos y aire'
-                },
-                {
-                    campo: 'faros',
-                    label: 'Faros'
-                },
-                {
-                    campo: 'golpes_exterior',
-                    label: 'Golpes exterior'
-                },
-                {
-                    campo: 'limpiaparabrisas',
-                    label: 'Limpiaparabrisas'
-                },
-                {
-                    campo: 'limpieza',
-                    label: 'Limpieza'
-                },
-                {
-                    campo: 'llantas',
-                    label: 'Llantas'
-                },
-                {
-                    campo: 'placas',
-                    label: 'Placas'
-                },
-                {
-                    campo: 'puertas_llave',
-                    label: 'Puertas y llave'
-                }
+            var subareasOrden = [
+                { campo: 'asientos',          label: 'Asientos' },
+                { campo: 'espejos_ventanas',  label: 'Espejos y ventanas' },
+                { campo: 'estereos_aire',     label: 'Estéreos y aire' },
+                { campo: 'faros',             label: 'Faros' },
+                { campo: 'golpes_exterior',   label: 'Golpes exterior' },
+                { campo: 'limpiaparabrisas',  label: 'Limpiaparabrisas' },
+                { campo: 'limpieza',          label: 'Limpieza' },
+                { campo: 'llantas',           label: 'Llantas' },
+                { campo: 'placas',            label: 'Placas' },
+                { campo: 'puertas_llave',     label: 'Puertas y llave' }
             ];
             var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
             var html = '<ul class="list-group list-group-flush">';
-            subareasOrden.forEach(function(s) {
+            subareasOrden.forEach(function(s){
                 var estado = subareas[s.campo] || 'no_revisado';
                 var icono;
-                if (estado === 'ok') icono = '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>';
-                else if (estado === 'mal') icono = '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
-                else icono = '<i class="fas fa-minus-circle text-muted fa-fw mr-2"></i>';
+                if (estado === 'ok')        icono = '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>';
+                else if (estado === 'mal')  icono = '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+                else                        icono = '<i class="fas fa-minus-circle text-muted fa-fw mr-2"></i>';
                 html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span class="small">' + s.label + '</span></li>';
             });
             html += '</ul>';
@@ -2147,16 +1724,16 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             if (!mt) return '<p class="text-muted small mb-0 p-3">Sin mantenimiento registrado</p>';
 
             // REALIZADO implica que ya pasó por autorización Y se ejecutó, por eso cuenta como autorizado.
-            var vobo = (mt.VoBo_jefe || '').toUpperCase();
-            var realizado = (vobo === 'REALIZADO');
-            var autorizado = (vobo === 'AUTORIZADO' || realizado);
+            var vobo          = (mt.VoBo_jefe || '').toUpperCase();
+            var realizado     = (vobo === 'REALIZADO');
+            var autorizado    = (vobo === 'AUTORIZADO' || realizado);
             var sinPendientes = (vobo && vobo !== 'PENDIENTE');
 
             var labelEstado;
-            if (realizado) labelEstado = 'Último mantenimiento realizado';
+            if (realizado)                  labelEstado = 'Último mantenimiento realizado';
             else if (vobo === 'AUTORIZADO') labelEstado = 'Mantenimiento autorizado';
-            else if (vobo === 'PENDIENTE') labelEstado = 'Mantenimiento esperando autorización';
-            else labelEstado = 'Mantenimiento sin estatus' + (vobo ? ' (' + vobo + ')' : '');
+            else if (vobo === 'PENDIENTE')  labelEstado = 'Mantenimiento esperando autorización';
+            else                            labelEstado = 'Mantenimiento sin estatus' + (vobo ? ' (' + vobo + ')' : '');
 
             var alDia = false;
             var labelProx;
@@ -2176,24 +1753,16 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 labelProx = 'Próximo mantenimiento (sin fecha)';
             }
 
-            var items = [{
-                    ok: autorizado,
-                    label: labelEstado
-                },
-                {
-                    ok: sinPendientes,
-                    label: 'Sin solicitudes pendientes'
-                },
-                {
-                    ok: alDia,
-                    label: labelProx
-                }
+            var items = [
+                { ok: autorizado,    label: labelEstado },
+                { ok: sinPendientes, label: 'Sin solicitudes pendientes' },
+                { ok: alDia,         label: labelProx }
             ];
             var html = '<ul class="list-group list-group-flush">';
-            items.forEach(function(it) {
-                var icono = it.ok ?
-                    '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>' :
-                    '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
+            items.forEach(function(it){
+                var icono = it.ok
+                    ? '<i class="fas fa-check-circle text-success fa-fw mr-2"></i>'
+                    : '<i class="fas fa-times-circle text-danger fa-fw mr-2"></i>';
                 html += '<li class="list-group-item d-flex align-items-center py-2">' + icono + '<span class="small">' + it.label + '</span></li>';
             });
             html += '</ul>';
@@ -2249,25 +1818,20 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             var total = docs.length;
             var ok = 0;
             if (v.fecha_reg_doc) {
-                docs.forEach(function(c) {
+                docs.forEach(function(c){
                     if (v[c] && v[c] !== 'S/R') ok++;
                 });
             }
-            return {
-                ok: ok,
-                total: total
-            };
+            return { ok: ok, total: total };
         }
 
         function evaluarValidaciones(data) {
-            var total = 0,
-                ok = 0;
+            var total = 0, ok = 0;
 
             // Checklist (10 subáreas)
             var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
-            ['asientos', 'espejos_ventanas', 'estereos_aire', 'faros', 'golpes_exterior',
-                'limpiaparabrisas', 'limpieza', 'llantas', 'placas', 'puertas_llave'
-            ].forEach(function(k) {
+            ['asientos','espejos_ventanas','estereos_aire','faros','golpes_exterior',
+             'limpiaparabrisas','limpieza','llantas','placas','puertas_llave'].forEach(function(k){
                 total++;
                 if (subareas[k] === 'ok') ok++;
             });
@@ -2290,37 +1854,26 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 }
             }
 
-            return {
-                ok: ok,
-                total: total
-            };
+            return { ok: ok, total: total };
         }
 
         function actualizarSemaforoVehiculo() {
             var $dot = $('#statusTabVehiculo');
             $dot.removeClass('is-green is-yellow is-red');
 
-            var totalAll = 0,
-                okAll = 0,
-                n = 0;
-            Object.keys(vehiculosEstado).forEach(function(idv) {
+            var totalAll = 0, okAll = 0, n = 0;
+            Object.keys(vehiculosEstado).forEach(function(idv){
                 n++;
                 var est = vehiculosEstado[idv];
-                if (est.docs) {
-                    totalAll += est.docs.total;
-                    okAll += est.docs.ok;
-                }
-                if (est.vals) {
-                    totalAll += est.vals.total;
-                    okAll += est.vals.ok;
-                }
+                if (est.docs) { totalAll += est.docs.total; okAll += est.docs.ok; }
+                if (est.vals) { totalAll += est.vals.total; okAll += est.vals.ok; }
             });
 
             if (n === 0 || totalAll === 0) return; // dejar gris por defecto
 
-            if (okAll === totalAll) $dot.addClass('is-green');
-            else if (okAll === 0) $dot.addClass('is-red');
-            else $dot.addClass('is-yellow');
+            if (okAll === totalAll)      $dot.addClass('is-green');
+            else if (okAll === 0)        $dot.addClass('is-red');
+            else                         $dot.addClass('is-yellow');
         }
 
         // ===== Cookies =====
@@ -2606,7 +2159,10 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         }
 
         // ===== Directorio =====
-        var directorioCache = null;
+        var directorioCache = null;       // lista completa devuelta por el backend
+        var directorioVista = [];         // subset visible (filtrado por buscador o no)
+        var directorioPagina = 1;
+        var DIR_PAGE_SIZE = 10;
 
         function dirIniciales(nombre) {
             if (!nombre) return '?';
@@ -2636,7 +2192,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 accion: 'listarEmpleados',
                 noEmpleado: 0,
                 correo: ''
-            }).done(function(resp) {
+            }).done(function (resp) {
                 try {
                     var data = typeof resp === 'string' ? JSON.parse(resp) : resp;
                     if (data && data.status === 'success' && Array.isArray(data.info)) {
@@ -2649,69 +2205,106 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 } catch (e) {
                     $('#directorioGrid').html('<div class="col-12 empty-state text-danger">Error al procesar el directorio.</div>');
                 }
-            }).fail(function() {
+            }).fail(function () {
                 $('#directorioGrid').html('<div class="col-12 empty-state text-danger">No se pudo conectar al servidor.</div>');
             });
         }
 
         function renderDirectorio(lista) {
-            if (!lista || !lista.length) {
+            directorioVista = lista || [];
+            directorioPagina = 1;
+            pintarPaginaDirectorio();
+        }
+
+        function pintarPaginaDirectorio() {
+            var total = directorioVista.length;
+            if (!total) {
                 $('#directorioGrid').html('<div class="col-12 empty-state">No se encontraron resultados.</div>');
+                $('#directorioPaginacion').empty();
                 return;
             }
+            var totalPaginas = Math.max(1, Math.ceil(total / DIR_PAGE_SIZE));
+            if (directorioPagina > totalPaginas) directorioPagina = totalPaginas;
+            if (directorioPagina < 1) directorioPagina = 1;
+            var start = (directorioPagina - 1) * DIR_PAGE_SIZE;
+            var end   = Math.min(start + DIR_PAGE_SIZE, total);
+
             var html = '';
-            for (var i = 0; i < lista.length; i++) {
-                var e = lista[i];
+            for (var i = start; i < end; i++) {
+                var e = directorioVista[i];
                 var ini = dirIniciales(e.nombre);
                 var col = dirColor(e.nombre);
                 var nombre = dirEscape(e.nombre || 'Sin nombre');
-                var nave = dirEscape(e.nave || '—');
-                var area = dirEscape(e.area || '—');
+                var nave   = dirEscape(e.nave   || '—');
+                var area   = dirEscape(e.area   || '—');
                 var puesto = dirEscape(e.puesto || '—');
                 var correo = dirEscape(e.correo || '');
-                html += '<div class="col-md-6 mb-3">' +
-                    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">' +
-                    '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>' +
-                    '<div class="dir-info">' +
-                    '<div class="dir-name">' + nombre + '</div>' +
-                    '<div class="dir-meta">' + nave + '</div>' +
-                    '<div class="dir-meta">' + area + '</div>' +
-                    '<div class="dir-meta">' + puesto + '</div>' +
-                    (correo ? '<span class="dir-mail">' + correo + '</span>' : '') +
-                    '</div>' +
-                    '</div>' +
-                    '</div>';
+                var avatar = e.foto
+                    ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
+                    : '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>';
+                html += '<div class="col-md-6 mb-3">'
+                     +    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
+                     +      avatar
+                     +      '<div class="dir-info">'
+                     +        '<div class="dir-name">' + nombre + '</div>'
+                     +        '<div class="dir-meta">' + nave + '</div>'
+                     +        '<div class="dir-meta">' + area + '</div>'
+                     +        '<div class="dir-meta">' + puesto + '</div>'
+                     +        (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
+                     +      '</div>'
+                     +    '</div>'
+                     +  '</div>';
             }
             $('#directorioGrid').html(html);
+
+            var prevDisabled = directorioPagina === 1 ? 'disabled' : '';
+            var nextDisabled = directorioPagina === totalPaginas ? 'disabled' : '';
+            var ctrl = ''
+                + '<div class="dir-pag-info">Mostrando ' + (start + 1) + '–' + end + ' de ' + total + '</div>'
+                + '<div class="dir-pag-nav">'
+                +   '<button type="button" class="btn btn-sm btn-outline-secondary" id="dirPagPrev" ' + prevDisabled + '>'
+                +     '<i class="fas fa-chevron-left"></i>'
+                +   '</button>'
+                +   '<span class="dir-pag-actual">Página ' + directorioPagina + ' de ' + totalPaginas + '</span>'
+                +   '<button type="button" class="btn btn-sm btn-outline-secondary" id="dirPagNext" ' + nextDisabled + '>'
+                +     '<i class="fas fa-chevron-right"></i>'
+                +   '</button>'
+                + '</div>';
+            $('#directorioPaginacion').html(ctrl);
         }
+
+        $(document).on('click', '#dirPagPrev', function () {
+            if (directorioPagina > 1) { directorioPagina--; pintarPaginaDirectorio(); }
+        });
+        $(document).on('click', '#dirPagNext', function () {
+            directorioPagina++; pintarPaginaDirectorio();
+        });
 
         function abrirModalDirectorio(noEmp) {
             if (!directorioCache) return;
             var emp = null;
             for (var i = 0; i < directorioCache.length; i++) {
-                if (String(directorioCache[i].noEmpleado) === String(noEmp)) {
-                    emp = directorioCache[i];
-                    break;
-                }
+                if (String(directorioCache[i].noEmpleado) === String(noEmp)) { emp = directorioCache[i]; break; }
             }
             if (!emp) return;
             var ini = dirIniciales(emp.nombre);
             var col = dirColor(emp.nombre);
-            $('#modalDirAvatar').css('background', col).text(ini);
+            var $avatar = $('#modalDirAvatar').text(ini);
+            if (emp.foto) {
+                $avatar.addClass('has-photo')
+                       .css({ 'background-color': col, 'background-image': "url('" + emp.foto + "')" });
+            } else {
+                $avatar.removeClass('has-photo')
+                       .css({ 'background-color': col, 'background-image': 'none' });
+            }
             $('#modalDirNombre').text(emp.nombre || '—');
             $('#modalDirPuesto').text(emp.puesto || '—');
             $('#modalDirNoEmp').text(emp.noEmpleado || '—');
             $('#modalDirArea').text(emp.area || '—');
             $('#modalDirNave').text(emp.nave || '—');
 
-            // Teléfono + extensión (aún no en BD; se muestran cuando lleguen).
-            var tel = emp.telefono || '';
-            var ext = emp.extension || '';
-            var telTxt = '—';
-            if (tel && ext) telTxt = tel + ' ext. ' + ext;
-            else if (tel) telTxt = tel;
-            else if (ext) telTxt = 'ext. ' + ext;
-            $('#modalDirTel').text(telTxt);
+            // Teléfono(s): viene ya formateado del backend ("4422908635 ext. 817 / 4423942739").
+            $('#modalDirTel').text(emp.telefono || '—');
 
             if (emp.correo) {
                 $('#modalDirCorreo').text(emp.correo).attr('href', 'mailto:' + emp.correo);
@@ -2721,30 +2314,27 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             $('#modalDirectorio').modal('show');
         }
 
-        $(document).on('click', '.directorio-card', function() {
+        $(document).on('click', '.directorio-card', function () {
             abrirModalDirectorio($(this).data('noemp'));
         });
 
-        $(document).on('input', '#directorioBuscar', function() {
+        $(document).on('input', '#directorioBuscar', function () {
             if (!directorioCache) return;
             var q = $(this).val().toLowerCase().trim();
-            if (!q) {
-                renderDirectorio(directorioCache);
-                return;
-            }
-            var filtrado = directorioCache.filter(function(e) {
-                return (e.nombre || '').toLowerCase().indexOf(q) !== -1 ||
-                    (e.area || '').toLowerCase().indexOf(q) !== -1 ||
-                    (e.nave || '').toLowerCase().indexOf(q) !== -1 ||
-                    (e.puesto || '').toLowerCase().indexOf(q) !== -1 ||
-                    (e.correo || '').toLowerCase().indexOf(q) !== -1 ||
-                    String(e.noEmpleado || '').indexOf(q) !== -1;
+            if (!q) { renderDirectorio(directorioCache); return; }
+            var filtrado = directorioCache.filter(function (e) {
+                return (e.nombre  || '').toLowerCase().indexOf(q) !== -1
+                    || (e.area    || '').toLowerCase().indexOf(q) !== -1
+                    || (e.nave    || '').toLowerCase().indexOf(q) !== -1
+                    || (e.puesto  || '').toLowerCase().indexOf(q) !== -1
+                    || (e.correo  || '').toLowerCase().indexOf(q) !== -1
+                    || String(e.noEmpleado || '').indexOf(q) !== -1;
             });
             renderDirectorio(filtrado);
         });
 
         // Soltar el foco antes del cierre para evitar el warning de aria-hidden en Chrome.
-        $('#modalDirectorio').on('hide.bs.modal', function() {
+        $('#modalDirectorio').on('hide.bs.modal', function () {
             if (document.activeElement) document.activeElement.blur();
         });
 
@@ -2752,4 +2342,5 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
     </script>
 </body>
+
 </html>
