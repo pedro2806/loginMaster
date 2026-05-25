@@ -1041,6 +1041,22 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 });
             })();
 
+            // Breadcrumb del topbar: refleja la pestaña activa
+            var breadcrumbMap = {
+                'tabSistemas-tab':   'Sistemas',
+                'tabAgenda-tab':     'Sala de Juntas',
+                'tabAvisos-tab':     'Avisos',
+                'tabTickets-tab':    'Tickets',
+                'tabPersonal-tab':   'Personal',
+                'tabVehiculo-tab':   'Vehículo',
+                'tabKpis-tab':       "KPI's",
+                'tabDirectorio-tab': 'Directorio'
+            };
+            $('#mainTabs button[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                var label = breadcrumbMap[e.target.id];
+                if (label) $('#breadcrumbCurrent').text(label);
+            });
+
             // Calendario de Sala de Juntas: lazy-init al mostrar el tab
             // (FullCalendar mide 0px si se crea con el contenedor en display:none)
             $('#tabAgenda-tab').on('shown.bs.tab', function() {
@@ -2384,7 +2400,11 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleBtn.addEventListener('click', function() {
             sidebarCol.classList.toggle('sidebar-hidden');
             contentCol.classList.toggle('sidebar-expanded');
-            
+            // Sincroniza la clase al <body> para que el fondo cubra el hueco
+            // a la derecha del header (regla body.sidebar-hidden en loginMaster.css).
+            document.body.classList.toggle('sidebar-hidden',
+                sidebarCol.classList.contains('sidebar-hidden'));
+
             // Cambiar icono
             const icon = toggleBtn.querySelector('i');
             if (sidebarCol.classList.contains('sidebar-hidden')) {
