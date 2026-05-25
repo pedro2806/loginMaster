@@ -48,7 +48,15 @@
         <i class="fa fa-bars"></i>
     </button>
 
-   
+    <!-- Breadcrumb dinámico (se actualiza al cambiar de pestaña en #mainTabs) -->
+    <nav id="appBreadcrumb" class="app-breadcrumb" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><i class="fas fa-home mr-1"></i>Inicio</li>
+            <li class="breadcrumb-item active" id="breadcrumbCurrent" aria-current="page">Sistemas</li>
+        </ol>
+    </nav>
+
+
 
     <!-- Topbar Navbar -->
     <ul class="navbar-nav ml-auto" style="height:60px; align-items:center;">
