@@ -47,6 +47,51 @@ body.sidebar-hidden {
     background: var(--header-gradient) !important;
 }
 
+/* === Breadcrumb del topbar (se actualiza al cambiar de pestaña) === */
+.app-breadcrumb {
+    display: flex;
+    align-items: center;
+    margin-left: 0.25rem;
+}
+.app-breadcrumb .breadcrumb {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+.app-breadcrumb .breadcrumb-item,
+.app-breadcrumb .breadcrumb-item a {
+    color: rgba(255, 255, 255, 0.75) !important;
+    text-decoration: none;
+    font-weight: 500;
+}
+.app-breadcrumb .breadcrumb-item.active {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+.app-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: rgba(255, 255, 255, 0.55);
+    padding: 0 0.5rem;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+/* Cuando el sidebar está oculto, dejar transparentes los wrappers
+   para que el gradient azul del body cubra el hueco a la derecha
+   del header (mismo color que el nav y la profile-card).
+   Se incluyen las variantes con .theme-dark para superar la
+   especificidad de body.theme-dark #wrapper... que vive más abajo. */
+body.sidebar-hidden #wrapper,
+body.sidebar-hidden #wrapper #content-wrapper,
+body.sidebar-hidden #wrapper #content-wrapper #content,
+body.theme-dark.sidebar-hidden #wrapper,
+body.theme-dark.sidebar-hidden #wrapper #content-wrapper,
+body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
+    background-color: transparent !important;
+}
+
 #wrapper, #content-wrapper, #content, .container-fluid, .row {
     padding: 0 !important;
     margin: 0 !important;
@@ -107,10 +152,14 @@ body.sidebar-hidden {
     flex-direction: column;
 }
 
-.col-xl-9.sidebar-expanded, 
-.col-lg-9.sidebar-expanded, 
+.col-xl-9.sidebar-expanded,
+.col-lg-9.sidebar-expanded,
 .col-md-8.sidebar-expanded,
-.col-md-9.sidebar-expanded {
+.col-md-9.sidebar-expanded,
+body.sidebar-hidden .col-xl-9,
+body.sidebar-hidden .col-lg-9,
+body.sidebar-hidden .col-md-8,
+body.sidebar-hidden .col-md-9 {
     max-width: 100% !important;
     flex: 0 0 100% !important;
     padding-left: 0 !important;
@@ -237,7 +286,7 @@ body.theme-dark .card-header .text-muted {
     background: var(--header-gradient) !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    padding: 1.25rem 1rem 0 1rem !important;
+    padding: 0 1rem 0 1rem !important;
     margin: 0 !important;
     border: none !important;
     transition: background 0.3s ease;
@@ -1556,12 +1605,6 @@ body:not(.sidebar-hidden) .sticky-footer {
       padding: 2rem 0;
   }
 
-
-
-
-
-
-
   #tabKpis {
       padding: 0 !important;
   }
@@ -1595,10 +1638,6 @@ body:not(.sidebar-hidden) .sticky-footer {
       border: none !important;
       margin: 0 !important;
   }
-
-
-
-
 
   /* Separa del borde superior */
   .profile-avatar {
@@ -1658,7 +1697,7 @@ body:not(.sidebar-hidden) .sticky-footer {
 
   /* Evita que el nombre se pegue */
   .profile-card h4 {
-      margin-top: 50px !important;
+      margin-top: 0px !important;
   }
 body.sidebar-hidden .sticky-footer {
     margin-left: 0 !important;
