@@ -1100,606 +1100,218 @@ body:not(.sidebar-hidden) .sticky-footer {
     margin-left: 0 !important;
 }
 
-  .stat-box p {
-      margin: 0;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-  }
-
-  .stat-box.is-success {
-      background: var(--success);
-      color: #fff;
-      border-color: transparent;
-  }
-
-  .stat-box.is-info {
-      background: var(--info);
-      color: #fff;
-      border-color: transparent;
-  }
-
-  .stat-box.is-warning {
-      background: var(--warning);
-      color: #222;
-      border-color: transparent;
-  }
-
-  .stat-box.is-danger {
-      background: var(--danger);
-      color: #fff;
-      border-color: transparent;
-  }
-
-  .stat-box.is-accent {
-      background: var(--accent);
-      color: #fff;
-      border-color: transparent;
-  }
-
-  .stat-box.is-success p,
-  .stat-box.is-info p,
-  .stat-box.is-danger p,
-  .stat-box.is-accent p {
-      color: rgba(255, 255, 255, 0.85);
-  }
-
-  .stat-box.is-warning p {
-      color: rgba(0, 0, 0, 0.7);
-  }
-
-  .stat-box h4,
-  .stat-box h5,
-  .stat-box h6 {
-      margin: 0;
-      font-weight: 600;
-  }
-
-  .stat-box p {
-      margin: 0;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-  }
-
-  .card-action {
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-      transition: box-shadow .2s, transform .15s;
-      background: var(--card-bg);
-  }
-
-  .card-action:hover {
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
-      transform: translateY(-2px);
-  }
-
-  .card-action .btn-outline-primary {
-      border-color: var(--border);
-      color: var(--text);
-  }
-
-  .card-action .btn-outline-primary:hover {
-      background-color: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-  }
-
-  .nav-tabs-main {
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 1.25rem;
-  }
-
-  .nav-tabs-main .nav-link {
-      border: none;
-      border-radius: 0.5rem 0.5rem 0 0;
-      padding: 0.75rem 1.25rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      position: relative;
-  }
-
-  .nav-tabs-main .nav-link:hover {
-      color: var(--accent);
-  }
-
-  .nav-tabs-main .nav-link.active {
-      color: var(--tab-active);
-      background: var(--card-bg);
-      border-bottom: 3px solid var(--tab-active);
-  }
-
-  .nav-tabs-main .nav-link .tab-badge {
-      position: absolute;
-      top: 2px;
-      right: 4px;
-      min-width: 10px;
-      height: 16px;
-      padding: 0 5px;
-      border-radius: 8px;
-      background: var(--danger);
-      color: #fff;
-      font-size: .7rem;
-      font-weight: 700;
-      line-height: 16px;
-      text-align: center;
-      display: none;
-  }
-
-  .nav-tabs-main .nav-link.has-alert .tab-badge {
-      display: inline-block;
-  }
-
-  /* Semáforo de estatus general (Vehículo / Expediente). */
-  .nav-tabs-main .nav-link .tab-status {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #adb5bd;
-      /* gris por defecto (sin datos) */
-      margin-left: 4px;
-      vertical-align: middle;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-  }
-
-  .nav-tabs-main .nav-link .tab-status.is-green {
-      background: #28a745;
-  }
-
-  .nav-tabs-main .nav-link .tab-status.is-yellow {
-      background: #ffc107;
-  }
-
-  .nav-tabs-main .nav-link .tab-status.is-red {
-      background: #dc3545;
-  }
-
-  /* Acordeón de vehículos: rota el chevron al colapsar. */
-  #accordionVehiculos .btn[data-toggle="collapse"] .fa-chevron-down {
-      transition: transform 0.2s ease-in-out;
-  }
-
-  #accordionVehiculos .btn[data-toggle="collapse"].collapsed .fa-chevron-down {
-      transform: rotate(-90deg);
-  }
-
-  /* ===== Directorio ===== */
-  .directorio-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-  }
-
-  .directorio-search {
-      position: relative;
-      max-width: 360px;
-      flex: 1 1 260px;
-  }
-
-  .directorio-search .fa-search {
-      position: absolute;
-      top: 50%;
-      left: 12px;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-      pointer-events: none;
-  }
-
-  .directorio-search input {
-      padding-left: 36px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      color: var(--text);
-  }
-
-  .directorio-search input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 .15rem rgba(5, 13, 158, .15);
-      outline: none;
-  }
-
-  .directorio-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      border: 1px solid var(--border);
-      border-radius: .75rem;
-      background: var(--card-bg);
-      cursor: pointer;
-      height: 100%;
-      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-  }
-
-  .directorio-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08);
-      border-color: var(--accent);
-  }
-
-  .directorio-card .dir-info {
-      flex: 1;
-      min-width: 0;
-  }
-
-  .directorio-card .dir-name {
-      color: var(--accent);
-      font-weight: 600;
-      margin: 0 0 .15rem 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-  .directorio-card .dir-noemp {
-      font-size: .8rem;
-      font-weight: 400;
-      color: var(--text-muted);
-      margin-left: .35rem;
-  }
-  .directorio-card .dir-noemp-val {
-      font-size: .75rem;
-      color: var(--text);
-  }
-
-  .directorio-card .dir-meta {
-      font-size: .82rem;
-      color: var(--text-muted);
-      line-height: 1.35;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-
-  .directorio-card .dir-mail {
-      display: inline-block;
-      margin-top: .15rem;
-      font-size: .8rem;
-      color: var(--accent);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-  }
-
-  .dir-avatar {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 1.3rem;
-      flex-shrink: 0;
-      letter-spacing: .5px;
-      background-size: cover;
-      background-position: center center;
-      overflow: hidden;
-  }
-  .dir-avatar.has-photo { color: transparent; }
-
-  .dir-avatar-lg {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 2.4rem;
-      margin: 0 auto;
-      letter-spacing: 1px;
-      background-size: cover;
-      background-position: center center;
-      overflow: hidden;
-  }
-  .dir-avatar-lg.has-photo { color: transparent; }
-
-  #directorioGrid .empty-state {
-      padding: 3rem 1rem;
-      text-align: center;
-      color: var(--text-muted);
-  }
-
-  .dir-paginacion {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      padding: 0.75rem 0.25rem 0;
-      border-top: 1px solid var(--border);
-      margin-top: 0.5rem;
-  }
-  .dir-paginacion:empty { display: none; }
-  .dir-pag-info {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-  }
-  .dir-pag-nav {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-  }
-  .dir-pag-actual {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      min-width: 110px;
-      text-align: center;
-  }
-
-  .theme-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      padding: 0.5rem 0.85rem;
-      border-radius: 0.5rem;
-      background: var(--card-soft);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      margin-bottom: 0.5rem;
-      user-select: none;
-  }
-
-  .theme-toggle .sun,
-  .theme-toggle .moon {
-      color: var(--text-muted);
-      font-size: 1rem;
-  }
-
-  body.theme-light .theme-toggle .sun {
-      color: #f0a500;
-  }
-
-  body.theme-dark .theme-toggle .moon {
-      color: #c5d4ee;
-  }
-
-  .theme-toggle .switch {
-      width: 40px;
-      height: 22px;
-      background: var(--border);
-      border-radius: 999px;
-      position: relative;
-      transition: background .2s;
-      flex: 0 0 auto;
-  }
-
-  .theme-toggle .switch::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 18px;
-      height: 18px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform .2s;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-
-  body.theme-dark .theme-toggle .switch {
-      background: var(--accent);
-  }
-
-  body.theme-dark .theme-toggle .switch::after {
-      transform: translateX(18px);
-  }
-
-  .fc .fc-list-event-title {
-      font-weight: 600;
-  }
-
-  body.theme-dark .fc-theme-standard td,
-  body.theme-dark .fc-theme-standard th,
-  body.theme-dark .fc-theme-standard .fc-scrollgrid {
-      border-color: var(--border);
-  }
-
-  body.theme-dark .fc .fc-list-day-cushion,
-  body.theme-dark .fc .fc-list-empty {
-      background: var(--card-soft);
-      color: var(--text);
-  }
-
-  body.theme-dark .fc-list-event:hover td {
-      background: var(--card-soft);
-  }
-
-  body.theme-dark .fc-col-header-cell {
-      background: var(--card-soft);
-  }
-
-  #encuestasAsigandas .btn-outline-primary {
-      border-width: 1px;
-      border-color: var(--border);
-      color: var(--accent);
-  }
-
-  #encuestasAsigandas .btn-outline-primary:hover {
-      background-color: var(--accent-soft);
-      border-color: var(--accent);
-      color: var(--accent);
-  }
-
-  .expediente-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-  }
-
-  .expediente-card .card-header {
-      background: var(--card-soft);
-      border-bottom: 1px solid var(--border);
-      font-weight: 600;
-      color: var(--text);
-  }
-
-  .expediente-table td,
-  .expediente-table th {
-      border-color: var(--border);
-      vertical-align: middle;
-  }
-
-  .status-dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: .5rem;
-  }
-
-  .status-dot.ok {
-      background: var(--success);
-  }
-
-  .status-dot.warn {
-      background: var(--warning);
-  }
-
-  .status-dot.danger {
-      background: var(--danger);
-  }
-
-  .sin-registro {
-      color: var(--danger);
-      font-weight: 600;
-  }
-
-  .notif-panel {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-      padding: 1rem;
-      min-height: 400px;
-      max-height: 600px;
-      overflow-y: auto;
-  }
-
-  .notif-item {
-      padding: 0.75rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
-  }
-
-  .notif-item:last-child {
-      border-bottom: none;
-  }
-
-  .notif-item .notif-icon {
-      color: var(--accent);
-      font-size: 1.25rem;
-  }
-
-  .notif-empty {
-      text-align: center;
-      color: var(--text-muted);
-      padding: 2rem 0;
-  }
-
-  #tabKpis {
-      padding: 0 !important;
-  }
-
-  #tabKpis #frameKPIs {
-      padding: 0 !important;
-      margin: 0 !important;
-  }
-
-  /* Mata el py-5 de Bootstrap que mete 3rem de padding */
-  #tabKpis .py-5 {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-  }
-
-  /* Quita margin del spinner si aparece */
-  #tabKpis .text-center {
-      margin: 0 !important;
-  }
-
-  #tabKpis .mb-2 {
-      margin-bottom: 0 !important;
-  }
-
-  /* El iframe ocupa todo sin espacio arriba */
-  #tabKpis iframe {
-      display: block !important;
-      width: 100% !important;
-      height: calc(100vh - 140px) !important;
-      /* Ajusta 140px según altura de tu header de tabs */
-      border: none !important;
-      margin: 0 !important;
-  }
-
-  /* Separa del borde superior */
-  .profile-avatar {
-      padding-top: 35px !important;
-      display: flex !important;
-      justify-content: center !important;
-  }
-
-  /* Wrapper del borde - CLAVE: flex-shrink: 0 */
-  .foto-wrapper {
-      width: 130px !important;
-      height: 130px !important;
-      min-width: 130px !important;
-      min-height: 130px !important;
-      max-width: 130px !important;
-      max-height: 130px !important;
-      border-radius: 50% !important;
-      background: #5b5b5b !important;
-      padding: 5px !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-      box-sizing: border-box !important;
-      flex-shrink: 0 !important;
-      /* NO dejar que flex lo estire */
-      flex-grow: 0 !important;
-      /* NO dejar que flex lo estire */
-      aspect-ratio: 1 / 1 !important;
-      overflow: hidden !important;
-      /* Recorta lo que se salga */
-  }
-
-  /* La imagen adentro */
-  .foto-perfil-img {
-      width: 100% !important;
-      height: 100% !important;
-      border-radius: 50% !important;
-      object-fit: cover !important;
-      object-position: center top !important;
-      display: block !important;
-      border: none !important;
-  }
-
-  /* Ícono cuando no hay foto */
-  .foto-perfil-default {
-      width: 100% !important;
-      height: 100% !important;
-      border-radius: 50% !important;
-      background-color: #5b5b5b !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-  }
-
-  .foto-perfil-default i {
-      font-size: 55px !important;
-      color: #6c757d !important;
-  }
-
-  /* Evita que el nombre se pegue */
-  .profile-card h4 {
-      margin-top: 0px !important;
-  }
 body.sidebar-hidden .sticky-footer {
     margin-left: 0 !important;
     width: 100% !important;
+}
+
+/* MEJORA: Reducir tamaño de texto en recuadros de Fecha Ingreso, Días Vacaciones y Notificaciones */
+.profile-card .stat-box {
+    min-height: 70px !important;
+    padding: 0.6rem !important;
+}
+.profile-card .stat-box h4,
+.profile-card .stat-box h5,
+.profile-card .stat-box h6,
+#fechaIngreso {
+    font-size: 1.15rem !important;
+    line-height: 1.2;
+}
+.profile-card .stat-box p {
+    font-size: 0.68rem !important;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+.profile-card .stat-box i {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.15rem;
+}
+
+
+/* FOOTER DEFINITIVO */
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #0e2a9c !important; /* pinta el fondo igual que el footer para matar la rayita */
+}
+
+#wrapper, #content-wrapper {
+    background: var(--bg) !important;
+    min-height: 100vh !important;
+}
+
+#content-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#content {
+    flex: 1 0 auto !important;
+    background: var(--card-bg) !important;
+}
+
+/* FOOTER con degradado invertido para unirse al sidebar */
+footer.sticky-footer,
+.sticky-footer {
+    background: linear-gradient(180deg, #0a1c61 0%, #0e2788 100%) !important;
+    background-image: linear-gradient(180deg, #0a1c61 0%, #0e2788 100%) !important;
+    border-top: none !important;
+    padding: 12px 0 8px !important;
+    margin: 0 !important;
+    margin-top: auto !important;
+    width: 100% !important;
+    flex-shrink: 0;
+    box-shadow: none !important;
+}
+
+
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #0e2788 !important;
+}
+
+footer.sticky-footer .fb-footer-logo {
+    max-height: 66px !important;
+    filter: brightness(0) invert(1) !important; /* ESTE es el que vuelve blanco tu logo azul */
+    opacity: 0.95;
+    display: block;
+    margin: 0 auto 3px;
+}
+
+.fb-footer-links {
+    color: rgba(255,255,255,0.8) !important;
+    font-size: 0.7rem;
+}
+
+
+
+/* ARREGLO SIDEBAR v3 - SOLO columna izquierda, no toca cards */
+#content > .container-fluid > .row {
+    min-height: calc(100vh - 56px);
+    align-items: stretch !important;
+}
+
+/* Solo el primer hijo del row (la columna del perfil) */
+#content > .container-fluid > .row > .col-xl-3,
+#content > .container-fluid > .row > .col-lg-3,
+#content > .container-fluid > .row > .col-md-4,
+#content > .container-fluid > .row > .col-md-3 {
+    background: var(--header-gradient) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-self: stretch !important;
+    padding: 0 !important;
+}
+
+.profile-card {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    background: transparent !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 1rem !important;
+}
+
+.profile-card::after {
+    display: none !important;
+}
+
+/* Asegura que las columnas DENTRO de las cards no se pinten */
+.tab-content .row [class*="col-"],
+.card-body .row [class*="col-"],
+#content .tab-pane .row > [class*="col-"] {
+    background: transparent !important;
+}
+
+
+
+/* REDONDEO EXACTO - solo el contenido de las tabs */
+div#mainTabsContent.tab-content {
+    background: var(--card-bg) !important;
+    border-top-left-radius: 16px !important;
+    border-bottom-left-radius: 16px !important;
+    overflow: hidden !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* Asegura que el contenedor padre no tape la curva */
+#content > .container-fluid {
+    background: transparent !important;
+    padding-left: 0 !important;
+}
+
+/* Las pestañas se quedan cuadradas arriba */
+.nav-tabs-main,
+ul.nav-tabs-main {
+    border-radius: 0 !important;
+    background: var(--card-bg) !important;
+    margin-bottom: 0 !important;
+}
+
+/* En modo oscuro también se ve la curva */
+body.dark-mode div#mainTabsContent.tab-content {
+    background: var(--card-bg) !important;
+}
+
+
+/* SOBREESCRIBE loginMaster.css:326 - fuerza estilo oscuro SIEMPRE */
+body:not(.theme-dark) .profile-card .stat-box,
+body.theme-dark .profile-card .stat-box,
+.profile-card .stat-box {
+    background: rgba(255, 255, 255, 0.08) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(2px);
+}
+
+/* Texto y números dentro */
+body:not(.theme-dark) .profile-card .stat-box *,
+body.theme-dark .profile-card .stat-box * {
+    color: #ffffff !important;
+}
+
+
+/* FUERZA EL TEXTO DENTRO DE LOS 3 STAT-BOX - modo claro y oscuro */
+body:not(.theme-dark) .profile-card .stat-box,
+body:not(.theme-dark) .profile-card .stat-box *,
+body:not(.theme-dark) .profile-card .stat-box small,
+body:not(.theme-dark) .profile-card .stat-box .text-muted,
+body:not(.theme-dark) .profile-card .stat-box p,
+body:not(.theme-dark) .profile-card .stat-box span,
+body:not(.theme-dark) .profile-card .stat-box div,
+body.theme-dark .profile-card .stat-box *,
+.profile-card .stat-box * {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    opacity: 0.92 !important;
+}
+
+/* Los números grandes un poco más brillantes */
+body:not(.theme-dark) .profile-card .stat-box > div:first-child,
+body:not(.theme-dark) .profile-card .stat-box strong {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+
+/* CAMPANA DE NOTIFICACIONES - SIEMPRE BLANCA */
+.profile-card .stat-box i.fa-bell,
+.profile-card .stat-box .fa-bell,
+#btnNotificaciones i,
+button#btnNotificaciones i.fas {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+/* Por si el inline style insiste */
+.profile-card .stat-box i[style*="--text"] {
+    color: #ffffff !important;
 }

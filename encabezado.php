@@ -52,7 +52,7 @@
     <nav id="appBreadcrumb" class="app-breadcrumb" aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><i class="fas fa-home mr-1"></i>Inicio</li>
-            <li class="breadcrumb-item active" id="breadcrumbCurrent" aria-current="page">Sistemas</li>
+            <li class="breadcrumb-item active" id="breadcrumbCurrent" aria-current="page">Mi Espacio</li>
         </ol>
     </nav>
 
