@@ -90,24 +90,73 @@ if ($accion == 'Ingresar') {
 
 // === FUNCIONALIDAD PARA REGISTRAR TALLAS ===
 if ($accionT == 'registraTallas') {
-    // ... resto igual
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    $talla = $_POST['talla'] ?? '';
+
+    $sqlExiste = "SELECT COUNT(*) FROM tallas WHERE noEmpleado = ?";
+    $stmtExiste = $conn->prepare($sqlExiste);
+    $stmtExiste->bind_param("i", $noEmpleado);
+    $stmtExiste->execute();
+    $stmtExiste->bind_result($existe);
+    $stmtExiste->fetch();
+    $stmtExiste->close();
+
+    if ($existe > 0) {
+        $sqlUpdate = "UPDATE tallas SET talla = ?, fecha_captura = NOW() WHERE noEmpleado = ?";
+        $stmtUpdate = $conn->prepare($sqlUpdate);
+        $stmtUpdate->bind_param("si", $talla, $noEmpleado);
+        $success = $stmtUpdate->execute();
+        $stmtUpdate->close();
+    } else {
+        $sqlInsert = "INSERT INTO tallas (talla, prenda, fecha_captura, noEmpleado) VALUES (?, 'Playera', NOW(), ?)";
+        $stmtInsert = $conn->prepare($sqlInsert);
+        $stmtInsert->bind_param("si", $talla, $noEmpleado);
+        $success = $stmtInsert->execute();
+        $stmtInsert->close();
+    }
+
+    echo json_encode(['success' => $success]);
+    $conn->close();
+    exit;
 }
 
 // === VALIDAR TALLA ===
 if ($accionT == 'validaTalla') {
-    // ... resto igual
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+
+    $sqlValidaTalla = "SELECT talla FROM tallas WHERE noEmpleado = ?";
+    $stmt = $conn->prepare($sqlValidaTalla);
+    $stmt->bind_param("i", $noEmpleado);
+    $stmt->execute();
+    $stmt->bind_result($talla);
+
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => true, 'exists' => true, 'talla' => $talla]);
+    } else {
+        echo json_encode(['success' => false]);
+    }
+
+    $stmt->close();
+    $conn->close();
+    exit;
 }
 
 // === BUZON DE SUGERENCIAS ===
 if ($accionT == 'buzon') {
-    // ... resto igual
-}
+    $tipo = $_POST['tipo'] ?? '';
+    $comentario = $_POST['comentario'] ?? '';
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
 
-// === REGISTRAR VOTACION hallowen 2025 ===
-if ($accionV == 'votacion') {
-    // ... resto igual
-}
+    $sqlInsert = "INSERT INTO buzon (noEmpleado, tipo, comentario, fecha_registro) VALUES (?, ?, ?, NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    $stmtInsert->bind_param("iss", $noEmpleado, $tipo, $comentario);
+    $success = $stmtInsert->execute();
+    $stmtInsert->close();
 
+    echo json_encode(['success' => $success]);
+    $conn->close();
+    exit;
+}
 echo json_encode([]);
 $conn->close();
 exit;

@@ -84,10 +84,10 @@ function obtenerIconoNotificacion(sistema) {
     if (sistema.indexOf('incidencia') !== -1) {
         return 'fas fa-exclamation-triangle';
     }
-    if (sistema.indexOf('ctrlVehicular') !== -1) {
+    if (sistema.indexOf('ctrlvehicular') !== -1) {
         return 'fas fa-car';
     }
-    if (sistema.indexOf('entradasEq') !== -1) {
+    if (sistema.indexOf('entradaseq') !== -1) {
         return 'fas fa-users';
     }
     if (sistema.indexOf('planeacion') !== -1) {
@@ -95,6 +95,9 @@ function obtenerIconoNotificacion(sistema) {
     }
     if (sistema.indexOf('activos') !== -1) {
         return 'fas fa-box';
+    }
+    if (sistema.indexOf('ticketsbi') !== -1) {
+        return 'fas fa-ticket-alt';
     }
     return 'fas fa-bell';
 }
@@ -230,6 +233,14 @@ function procesarRedireccionNotificacion(response, idNotificacion, sistema, arch
         return;
     }
 
+    // Caso especial: ticketsBI redirige directo con ?id=<idTicket>.
+    // No tiene sesión PHP propia: usa las cookies *L globales que ya están vivas.
+    if (sistema === 'ticketsBI' && idRegistroInt > 0) {
+        var sepTk = urlDestino.indexOf('?') === -1 ? '?' : '&';
+        window.location.href = urlDestino + sepTk + 'id=' + idRegistroInt;
+        return;
+    }
+
     // Identificar el formulario según el sistema
     if (sistema === 'incidencias') {
         idFormulario = 'formIncidencias';
@@ -305,7 +316,8 @@ function construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro) 
         ctrlVehicular: '/ctrlVehicular/validaLoginNot.php',
         activos: '/activos/validaLoginNot.php',
         horas: '/horas/validaLoginNot.php',
-        practicantes: '/practicantes/validaLoginNot.php'
+        practicantes: '/practicantes/validaLoginNot.php',
+        ticketsBI: '/Tickets/validaLoginNot.php'
     };
     var endpointValidaLogin = endpointsPorSistema[sistema];
 
