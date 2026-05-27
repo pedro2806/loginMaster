@@ -846,6 +846,14 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
                         document.cookie = `correoL=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `fotoL=${encodeURIComponent(data.foto)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `UsrKpis=${encodeURIComponent(data.kpis)}; expires=${expires}; SameSite=Lax; path=/;`;
+
+                        // Cookies para Tickets BI (mismo valor que las *L, sufijo BI)
+                        document.cookie = `id_usuarioBI=${encodeURIComponent(data.id)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `nombredelusuarioBI=${encodeURIComponent(data.nombre)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `noEmpleadoBI=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `rolBI=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `correoBI=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        document.cookie = `fotoBI=${encodeURIComponent(data.foto)}; expires=${expires}; SameSite=Lax; path=/;`;
                     });
 
                     window.location.href = 'inicio';

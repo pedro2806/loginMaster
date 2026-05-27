@@ -151,7 +151,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabAvisos-tab" data-toggle="tab" data-target="#tabAvisos" type="button" role="tab">
                                         <i class="fas fa-bullhorn mr-1"></i> Avisos
-                                        <span id="badgeTabAvisos" class="tab-badge"></span>
+                                        <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -172,7 +172,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
                                         <i class="fas fa-user-cog mr-1"></i> Personal
-                                        <span class="tab-badge"></span>
+                                        <span id="badgeTabPersonal" class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -362,6 +362,23 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                                     <a href="../Tickets/" class="btn btn-outline-primary btn-block">
                                                         <i class="fas fa-ticket-alt fa-lg d-block mb-2"></i> Tickets BI
                                                     </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- GESTION PERSONAL -->
+                                        <div class="col-md-3 mb-3" id="divGestionPersonal" style="display:none">
+                                            <div class="card card-action shadow-sm">
+                                                <div class="card-body text-center">
+                                                    <form id="formGestionPersonal" method="POST" action="../gestionPersonal/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioGP" id="id_usuarioGP" value="">
+                                                        <input type="hidden" name="nombredelusuarioGP" id="nombredelusuarioGP" value="">
+                                                        <input type="hidden" name="noEmpleadoGP" id="noEmpleadoGP" value="">
+                                                        <input type="hidden" name="correoGP" id="correoGP" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-id-card-alt fa-lg d-block mb-2"></i> Gestión Personal
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
@@ -984,7 +1001,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 ['id_usuarioSJ', 'nombredelusuarioSJ', 'noEmpleadoSJ', 'correoSJ'],
                 ['id_usuarioAC', 'nombredelusuarioAC', 'noEmpleadoAC', 'correoAC'],
                 ['id_usuarioPRACT', 'nombredelusuarioPRACT', 'noEmpleadoPRACT', 'correoPRACT'],
-                ['id_usuarioSGC', 'nombredelusuarioSGC', 'noEmpleadoSGC', 'correoSGC']
+                ['id_usuarioSGC', 'nombredelusuarioSGC', 'noEmpleadoSGC', 'correoSGC'],
+                ['id_usuarioGP', 'nombredelusuarioGP', 'noEmpleadoGP', 'correoGP']
             ];
             sets.forEach(function(s) {
                 const [a, b, c, d] = s;
@@ -1011,13 +1029,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 cargarNotificaciones(false);
             }, 5400000); // 1.5h
 
-            // Sincronizar el conteo de notificaciones con el badge del tab Avisos.
+            // Sincronizar el conteo de notificaciones con el badge del tab Personal.
             // Observa cambios en #badgeNotificaciones (que actualiza funcionesGlobales.js)
-            // y replica el valor en #badgeTabAvisos sin tocar la función global.
+            // y replica el valor en #badgeTabPersonal sin tocar la función global.
             (function() {
                 var $src = $('#badgeNotificaciones');
-                var $dst = $('#badgeTabAvisos');
-                var $tab = $('#tabAvisos-tab');
+                var $dst = $('#badgeTabPersonal');
+                var $tab = $('#tabPersonal-tab');
                 if (!$src.length || !$dst.length) return;
 
                 function sync() {
