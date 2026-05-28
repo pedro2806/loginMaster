@@ -15,7 +15,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Messbook - Panel de Usuario</title>
+    <title>Messbook - Inicio</title>
     <link rel="icon" type="image/png" href="../loginMaster/img/fav.png">
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
@@ -47,7 +47,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     </p>
                                     <div class="profile-info small mb-2">
                                         <div class="profile-info-row" title="Jefe Directo">
-                                            <i class="fas fa-user-tie profile-info-icon" style="color: white !important" aria-hidden="true"></i>
+                                            <i class="fas fa-sitemap profile-info-icon" style="color: white !important" aria-hidden="true"></i>
                                             <span class="sr-only">Jefe Directo:</span>
                                             <span id="lblJefe" class="fw-semibold"></span>
                                         </div>
@@ -807,13 +807,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             <form id="formbuzon" method="POST">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalbuzonLabel">Buzón de Sugerencias</h5>
+                        <h5 class="modal-title" id="modalbuzonLabel">Buzón de Sugerencias RRHH</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div id="alertBuzon" class="alert alert-primary m-3" role="alert">
-                        <strong>Importante:</strong> Aquí puedes dejar tus sugerencias o comentarios. Son anónimos.
+                        <strong>Importante:</strong> Aquí puedes dejar tus sugerencias o comentarios sobre cualquier ambito de la empresa.<br>Ser&aacute;n consultados por RRHH
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
@@ -827,12 +827,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                         </div>
                         <div class="form-group">
                             <label for="comentario">Comentario</label>
-                            <textarea class="form-control" id="comentario" name="comentario" rows="4" required></textarea>
+                            <textarea class="form-control" id="comentario" name="comentario" minlength="4" rows="4" required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-primary" onclick="BuzonSugerencias()">Enviar</button>
+                    
                         <?php
                         if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
                             echo '<button onclick="verBuzon()" type="button" class="btn btn-info">Ver Sugerencias</button>';
@@ -2750,6 +2751,10 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
         // ===== Buzón de Sugerencias =====
         function BuzonSugerencias() {
+
+            const form = document.getElementById('formbuzon');
+
+            if(form.checkValidity()){
             $.ajax({
                 url: 'login.php',
                 type: 'POST',
@@ -2785,6 +2790,9 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     });
                 }
             });
+            } else {
+                form.reportValidity();
+            }
         }
 
         // ===== Cursos =====
