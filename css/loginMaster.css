@@ -771,6 +771,99 @@ body.theme-dark .profile-card .stat-box i {
     color: var(--text-muted);
 }
 
+/* ===== Activos (vista rápida, tab loginMaster) ===== */
+.activos-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    margin-left: 0 !important;
+    padding-left: 12px;
+}
+
+#contenedorActivos .empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.card-activo {
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    background: var(--card-bg);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.card-activo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08);
+    border-color: var(--accent);
+}
+
+.activo-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.activo-tipo {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    line-height: 1.1;
+}
+
+.activo-desc {
+    font-weight: 600;
+    color: var(--text);
+    font-size: .95rem;
+    line-height: 1.2;
+    margin-top: 2px;
+    word-break: break-word;
+}
+
+.activo-meta {
+    margin: 0;
+    padding-top: .5rem;
+    border-top: 1px dashed var(--border);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .35rem .75rem;
+    font-size: .8rem;
+}
+
+.activo-meta > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .5rem;
+}
+
+.activo-meta dt {
+    margin: 0;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.activo-meta dd {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+}
+
 .theme-toggle {
     display: flex;
     align-items: center;
@@ -908,6 +1001,100 @@ body.theme-dark .fc-col-header-cell {
 .sin-registro {
     color: var(--danger);
     font-weight: 600;
+}
+
+/* ===== Expediente: Matriz de Cumplimiento (tab loginMaster) ===== */
+.expediente-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    margin-left: 0 !important;
+    padding-left: 12px;
+}
+
+.expediente-matriz thead th {
+    background: var(--card-soft);
+    color: var(--text-muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border) !important;
+    border-top: 0 !important;
+}
+
+.expediente-matriz tbody td {
+    border-top: 1px solid var(--border);
+    vertical-align: middle;
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+.expediente-matriz tbody tr.exp-row-pending td {
+    background: var(--card-soft);
+}
+
+.exp-req-nombre {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.exp-subarea {
+    margin-top: 2px;
+    font-size: .72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    font-weight: 600;
+}
+
+/* ===== Vista Jefe: tabla de equipo y modal de detalle ===== */
+.equipo-tabla thead th {
+    background: var(--card-soft);
+    color: var(--text-muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border) !important;
+    border-top: 0 !important;
+}
+
+.equipo-tabla tbody td {
+    border-top: 1px solid var(--border);
+    vertical-align: middle;
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+/* DataTables: alinea el control superior y el paginador con la paleta */
+#tablaEquipoExpediente_wrapper .dataTables_length,
+#tablaEquipoExpediente_wrapper .dataTables_filter,
+#tablaEquipoExpediente_wrapper .dataTables_info,
+#tablaEquipoExpediente_wrapper .dataTables_paginate {
+    padding: .5rem .75rem;
+    color: var(--text-muted);
+    font-size: .8rem;
+}
+
+#tablaEquipoExpediente_wrapper .paginate_button.current,
+#tablaEquipoExpediente_wrapper .paginate_button.current:hover {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+}
+
+#modalDetalleExpedienteJefe .modal-content {
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+#modalDetalleExpedienteJefe .modal-footer {
+    background: var(--card-soft);
+    border-color: var(--border);
 }
 
 .notif-panel {

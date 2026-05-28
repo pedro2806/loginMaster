@@ -160,7 +160,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabAvisos-tab" data-toggle="tab" data-target="#tabAvisos" type="button" role="tab">
                                         <i class="fas fa-bullhorn mr-1"></i> Avisos
-                                        <span id="badgeTabAvisos" class="tab-badge"></span>
+                                        <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -169,11 +169,10 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
-                                <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
                                         <i class="fas fa-folder-open mr-1"></i> Expediente
-                                        <span class="tab-badge"></span>
+                                        <span id="badgeTabExpediente" class="tab-badge"></span>
                                         <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
@@ -189,6 +188,12 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabActivos-tab" data-toggle="tab" data-target="#tabActivos" type="button" role="tab">
+                                        <i class="fas fa-box mr-1"></i> Activos
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -370,6 +375,23 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             </div>
                                         </div>
 
+                                        <!-- GESTION PERSONAL -->
+                                        <div class="col-md-3 mb-3" id="divGestionPersonal" style="display:none">
+                                            <div class="card card-action shadow-sm">
+                                                <div class="card-body text-center">
+                                                    <form id="formGestionPersonal" method="POST" action="../gestionPersonal/validaLoginMaster.php">
+                                                        <input type="hidden" name="id_usuarioGP" id="id_usuarioGP" value="">
+                                                        <input type="hidden" name="nombredelusuarioGP" id="nombredelusuarioGP" value="">
+                                                        <input type="hidden" name="noEmpleadoGP" id="noEmpleadoGP" value="">
+                                                        <input type="hidden" name="correoGP" id="correoGP" value="">
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-id-card-alt fa-lg d-block mb-2"></i> Gestión Personal
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <!-- CONTROL SGC -->
                                         <div class="col-md-3 mb-3" id="divControlSGC" style="display:none">
                                             <div class="card card-action shadow-sm">
@@ -469,93 +491,71 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     </div>
                                 </div>
 
-                                <!-- ===== TAB 4: EXPEDIENTE (shell tentativo) ===== -->
+                                <!-- ===== TAB: EXPEDIENTE (vista personal o jefe, según rol) ===== -->
                                 <div class="tab-pane fade" id="tabExpediente" role="tabpanel">
-                                    <div class="alert alert-info" style="background: var(--accent-soft); border-color: var(--border); color: var(--text);">
-                                        <i class="fas fa-info-circle mr-2"></i>
-                                        <strong>Expediente del empleado</strong> — Estructura tentativa. Los datos se conectarán a la base más adelante.
+                                    <!-- Loading inicial mientras se decide qué vista mostrar -->
+                                    <div id="expedienteLoading" class="text-center text-muted py-5">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
+                                        Preparando expediente...
                                     </div>
-                                    <div class="row">
-                                        <!-- FUERZA -->
-                                        <div class="col-lg-4 mb-3">
-                                            <div class="expediente-card h-100">
-                                                <div class="card-header">Fuerza</div>
-                                                <div class="card-body p-0">
-                                                    <table class="table table-sm mb-0 expediente-table">
-                                                        <tbody>
+
+                                    <!-- VISTA EMPLEADO: Matriz de su propio expediente -->
+                                    <div id="vistaExpedientePersonal" style="display:none;">
+                                        <div class="expediente-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-clipboard-list mr-2" style="color: var(--accent);"></i>
+                                                <h6 class="m-0 font-weight-bold" style="color: var(--accent);">Matriz de Cumplimiento y Requisitos de mi Expediente</h6>
+                                            </div>
+                                            <small class="text-muted"><span id="expedienteOk">0</span> / <span id="expedienteTotal">0</span> aprobados</small>
+                                        </div>
+                                        <div class="card shadow-sm">
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover align-middle mb-0 expediente-matriz">
+                                                        <thead>
                                                             <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
-                                                                <td class="text-end">2026-04-01</td>
+                                                                <th class="py-3">Requisito / Documento</th>
+                                                                <th class="py-3 text-center" style="width:170px;">Estatus</th>
+                                                                <th class="py-3 text-center" style="width:200px;">Acción / Archivo</th>
                                                             </tr>
+                                                        </thead>
+                                                        <tbody id="bodyExpediente">
                                                             <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
-                                                                <td class="text-end">2025-02-22</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 3</td>
-                                                                <td class="text-end">2026-05-03</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot danger"></span>Archivo 4</td>
-                                                                <td class="text-end sin-registro">Sin Registro</td>
+                                                                <td colspan="3" class="text-center text-muted py-4">
+                                                                    <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
+                                                                    Cargando expediente...
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- MASA -->
-                                        <div class="col-lg-4 mb-3">
-                                            <div class="expediente-card h-100">
-                                                <div class="card-header">Masa</div>
-                                                <div class="card-body p-0">
-                                                    <table class="table table-sm mb-0 expediente-table">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
-                                                                <td class="text-end">2026-04-01</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
-                                                                <td class="text-end">2025-02-22</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot danger"></span>Archivo 3</td>
-                                                                <td class="text-end sin-registro">Sin Registro</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot danger"></span>Archivo 4</td>
-                                                                <td class="text-end sin-registro">Sin Registro</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                    </div>
+
+                                    <!-- VISTA JEFE: Equipo a su cargo -->
+                                    <div id="vistaExpedienteJefe" style="display:none;">
+                                        <div class="expediente-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-check mr-2" style="color: var(--accent);"></i>
+                                                <h6 class="m-0 font-weight-bold" style="color: var(--accent);">Equipo a mi cargo · Validación de Expedientes</h6>
                                             </div>
+                                            <small class="text-muted"><span id="equipoTotal">0</span> colaboradores</small>
                                         </div>
-                                        <!-- DUREZA -->
-                                        <div class="col-lg-4 mb-3">
-                                            <div class="expediente-card h-100">
-                                                <div class="card-header">Dureza</div>
-                                                <div class="card-body p-0">
-                                                    <table class="table table-sm mb-0 expediente-table">
-                                                        <tbody>
+                                        <div class="card shadow-sm">
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover align-middle mb-0 equipo-tabla" id="tablaEquipoExpediente" style="width:100%;">
+                                                        <thead>
                                                             <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 1</td>
-                                                                <td class="text-end">2026-04-01</td>
+                                                                <th class="py-3 text-center">No. Empleado</th>
+                                                                <th class="py-3">Colaborador</th>
+                                                                <th class="py-3">Área Base</th>
+                                                                <th class="py-3">Puesto</th>
+                                                                <th class="py-3 text-center" style="width:120px;">Acción</th>
                                                             </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 2</td>
-                                                                <td class="text-end">2025-02-22</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot ok"></span>Archivo 3</td>
-                                                                <td class="text-end">2026-05-03</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><span class="status-dot warn"></span>Archivo 4</td>
-                                                                <td class="text-end">2024-01-01</td>
-                                                            </tr>
-                                                        </tbody>
+                                                        </thead>
+                                                        <tbody id="bodyEquipoExpediente"></tbody>
                                                     </table>
                                                 </div>
                                             </div>
@@ -612,7 +612,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
 
-                              
+
 
                                     <div id="frameKPIs">
                                         <div class="text-center text-muted py-5">
@@ -620,6 +620,22 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             $passkpis = isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '';
                                             ?>
                                             <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo $passkpis; ?>" title="KPIs"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===== TAB: ACTIVOS (vista rápida, solo consulta) ===== -->
+                                <div class="tab-pane fade" id="tabActivos" role="tabpanel">
+                                    <div class="activos-header">
+                                        <div>
+                                            <h4 class="mb-1" style="color: var(--accent);">Mis Activos</h4>
+                                        </div>
+                                        <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
+                                    </div>
+                                    <div id="contenedorActivos" class="row">
+                                        <div class="col-12 empty-state">
+                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                            <p class="mb-0">Cargando activos...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -678,18 +694,6 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         </div>
                                     </div>
                                 </div>
-
-
-
-
-
-
-
-
-
-
-
-
                             </div>
                         </div>
                     </div>
@@ -924,6 +928,79 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
     <!-- Modal Acceso a Sistemas -->
     <?php include 'modalAccesoSistemas.php'; ?>
 
+    <!-- Modal: Detalle / Validación del Expediente del Subordinado (Vista Jefe) -->
+    <div class="modal fade" id="modalDetalleExpedienteJefe" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content border-0">
+                <div class="modal-header" style="background: var(--accent-soft); border-color: var(--border);">
+                    <h5 class="modal-title font-weight-bold" style="color: var(--accent); font-size: 1rem;">
+                        <i class="fas fa-folder-open mr-2"></i>Matriz de Requisitos: <span id="tituloDetalleColaborador"></span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 expediente-matriz">
+                            <thead>
+                                <tr>
+                                    <th class="py-3">Documento / Requisito</th>
+                                    <th class="py-3">Área Aplicable</th>
+                                    <th class="py-3 text-center" style="width:140px;">Estatus</th>
+                                    <th class="py-3 text-center" style="width:170px;">Firmas (A / T / C / R)</th>
+                                    <th class="py-3 text-center" style="width:220px;">Acción / Dictamen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyDetalleExpedienteJefe">
+                                <tr><td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Cargando matriz...
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light px-3" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Subir Requisito de Expediente (Mi Expediente) -->
+    <div class="modal fade" id="modalSubirExpediente" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0">
+                <div class="modal-header border-bottom-0 pt-4 px-4 pb-2">
+                    <h5 class="modal-title font-weight-bold text-uppercase" style="color: var(--accent); font-size: 1rem;">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i>Subir Documento
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form id="formSubirExpediente" enctype="multipart/form-data">
+                    <div class="modal-body px-4">
+                        <input type="hidden" name="id_tipo_documento" id="expUpId_tipo">
+                        <input type="hidden" name="id_departamento_alcance" id="expUpId_depto">
+                        <div class="form-group">
+                            <label class="small text-muted mb-1">Documento a cargar</label>
+                            <input type="text" id="expUpNombreDoc" class="form-control bg-light border-0 font-weight-bold" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="small text-muted mb-1">Área aplicable</label>
+                            <input type="text" id="expUpNombreDepto" class="form-control bg-light border-0" readonly>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="small text-muted mb-1">Seleccionar PDF</label>
+                            <input type="file" class="form-control" name="archivo_doc" accept=".pdf" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 p-4">
+                        <button type="button" class="btn btn-sm btn-light px-3" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-sm btn-primary px-4">Iniciar Validación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- ============== SCRIPTS ============== -->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -948,6 +1025,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         var calendarVacaciones = null;
         var esJefeActual = false;
         var vehiculosDocsCargados = false;
+        var misActivosCargados = false;
+        var expedienteCargado = false;
         // Acumulador del estatus de cada vehículo para alimentar el semáforo del tab.
         // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total} } }
         var vehiculosEstado = {};
@@ -995,7 +1074,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 ['id_usuarioSJ', 'nombredelusuarioSJ', 'noEmpleadoSJ', 'correoSJ'],
                 ['id_usuarioAC', 'nombredelusuarioAC', 'noEmpleadoAC', 'correoAC'],
                 ['id_usuarioPRACT', 'nombredelusuarioPRACT', 'noEmpleadoPRACT', 'correoPRACT'],
-                ['id_usuarioSGC', 'nombredelusuarioSGC', 'noEmpleadoSGC', 'correoSGC']
+                ['id_usuarioSGC', 'nombredelusuarioSGC', 'noEmpleadoSGC', 'correoSGC'],
+                ['id_usuarioGP', 'nombredelusuarioGP', 'noEmpleadoGP', 'correoGP']
             ];
             sets.forEach(function(s) {
                 const [a, b, c, d] = s;
@@ -1022,13 +1102,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 cargarNotificaciones(false);
             }, 5400000); // 1.5h
 
-            // Sincronizar el conteo de notificaciones con el badge del tab Avisos.
+            // Sincronizar el conteo de notificaciones con el badge del tab Personal.
             // Observa cambios en #badgeNotificaciones (que actualiza funcionesGlobales.js)
-            // y replica el valor en #badgeTabAvisos sin tocar la función global.
+            // y replica el valor en #badgeTabPersonal sin tocar la función global.
             (function() {
                 var $src = $('#badgeNotificaciones');
-                var $dst = $('#badgeTabAvisos');
-                var $tab = $('#tabAvisos-tab');
+                var $dst = $('#badgeTabPersonal');
+                var $tab = $('#tabPersonal-tab');
                 if (!$src.length || !$dst.length) return;
 
                 function sync() {
@@ -1089,6 +1169,12 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             });
             $('#tabVehiculo-tab').on('shown.bs.tab', function() {
                 if (!vehiculosDocsCargados) cargarVehiculosDocs();
+            });
+            $('#tabActivos-tab').on('shown.bs.tab', function() {
+                if (!misActivosCargados) cargarMisActivos();
+            });
+            $('#tabExpediente-tab').on('shown.bs.tab', function() {
+                if (!expedienteCargado) cargarMiExpediente();
             });
 
             // Tickets: lazy-load del iframe activo (evita cargar ambos al inicio)
@@ -1925,6 +2011,547 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             if (okAll === totalAll)      $dot.addClass('is-green');
             else if (okAll === 0)        $dot.addClass('is-red');
             else                         $dot.addClass('is-yellow');
+        }
+
+        // ===== Activos (vista rápida solo consulta) =====
+        // Cards de los activos asignados al usuario. Para detalle/edición se entra al
+        // módulo de Activos (../activos/verActivos).
+        function cargarMisActivos() {
+            var $cont = $('#contenedorActivos');
+            var noEmp = getCookie('noEmpleadoL') || '';
+            if (!noEmp) {
+                $cont.html('<div class="col-12"><div class="alert alert-info mb-0">No hay sesión válida.</div></div>');
+                return;
+            }
+
+            $.ajax({
+                url: '../activos/apiActivos.php',
+                type: 'POST',
+                dataType: 'json',
+                data: { opcion: 'activosPorEmpleado', noEmpleado: noEmp }
+            }).done(function(resp) {
+                var lista = (resp && resp.data) ? resp.data : [];
+                $('#activosTotal').text(lista.length);
+
+                if (!lista.length) {
+                    $cont.html(
+                        '<div class="col-12">' +
+                          '<div class="card shadow-sm">' +
+                            '<div class="card-body text-center text-muted py-5">' +
+                              '<i class="fas fa-box-open fa-3x mb-3" style="opacity:.4;"></i>' +
+                              '<h6 class="mb-1">Sin activos asignados</h6>' +
+                              '<small>No tienes activos registrados a tu nombre.</small>' +
+                            '</div>' +
+                          '</div>' +
+                        '</div>'
+                    );
+                    misActivosCargados = true;
+                    return;
+                }
+
+                var html = '';
+                lista.forEach(function(a) {
+                    html += renderCardActivo(a);
+                });
+                $cont.html(html);
+                misActivosCargados = true;
+            }).fail(function() {
+                $cont.html('<div class="col-12"><div class="alert alert-danger mb-0">No se pudo obtener la información de activos.</div></div>');
+            });
+        }
+
+        function renderCardActivo(a) {
+            var icono = iconoTipoActivo(a);
+            var tipo  = escapeHtml(a.tipo_activo || 'Activo');
+            var desc  = escapeHtml(a.descripcion || '—');
+            var marcaModelo = [a.marca, a.modelo].filter(Boolean).map(escapeHtml).join(' / ') || '—';
+            var serie = escapeHtml(a.no_serie || '—');
+            var idInt = escapeHtml(a.id_interno || '—');
+            var ubic  = escapeHtml(a.ubicacion || a.nave || '—');
+            var fAdq  = formatFechaActivo(a.fecha_adquisicion);
+            var badgeAcc = (parseInt(a.es_accesorio, 10) === 1)
+                ? '<span class="badge badge-pill badge-secondary ml-2">Accesorio</span>' : '';
+
+            return ''
+                + '<div class="col-md-6 col-xl-4 mb-3">'
+                +   '<div class="card card-activo shadow-sm h-100">'
+                +     '<div class="card-body">'
+                +       '<div class="d-flex align-items-center mb-2">'
+                +         '<div class="activo-icon"><i class="fas ' + icono + '"></i></div>'
+                +         '<div class="ml-2 flex-grow-1">'
+                +           '<div class="activo-tipo">' + tipo + badgeAcc + '</div>'
+                +           '<div class="activo-desc">' + desc + '</div>'
+                +         '</div>'
+                +       '</div>'
+                +       '<dl class="activo-meta mb-0">'
+                +         '<div><dt>Marca / Modelo</dt><dd>' + marcaModelo + '</dd></div>'
+                +         '<div><dt>No. Serie</dt><dd>' + serie + '</dd></div>'
+                +         '<div><dt>ID Interno</dt><dd>' + idInt + '</dd></div>'
+                +         '<div><dt>Ubicación</dt><dd>' + ubic + '</dd></div>'
+                +         '<div><dt>Adquisición</dt><dd>' + fAdq + '</dd></div>'
+                +       '</dl>'
+                +     '</div>'
+                +   '</div>'
+                + '</div>';
+        }
+
+        // Los tipos en BD son genéricos (EQ COMPUTO, MOBILIARIO Y EQ DE OFICINA,
+        // MAQUINAS Y EQUIPOS, HERRAMIENTAS GRALES, ACCESORIO). Cuando el tipo es
+        // "EQ COMPUTO" se mira la descripción/marca/modelo para distinguir
+        // laptop, monitor, mouse, etc.
+        function iconoTipoActivo(a) {
+            var tipo = (a && a.tipo_activo ? a.tipo_activo : '').toLowerCase();
+            var det  = [a && a.descripcion, a && a.marca, a && a.modelo, a && a.cpu_info, a && a.monitor_info]
+                       .filter(Boolean).join(' ').toLowerCase();
+
+            // 1) Si la descripción tiene una palabra clara, gana sobre el tipo.
+            if (/laptop|notebook|portatil|portátil/.test(det))                 return 'fa-laptop';
+            if (/monitor|pantalla/.test(det))                                  return 'fa-tv';
+            if (/impres/.test(det))                                            return 'fa-print';
+            if (/tel[eé]fono|celular|smartphone/.test(det))                    return 'fa-mobile-alt';
+            if (/mouse|rat[oó]n/.test(det))                                    return 'fa-mouse';
+            if (/teclado|keyboard/.test(det))                                  return 'fa-keyboard';
+            if (/audifono|aud[ií]fono|headset|diadema/.test(det))              return 'fa-headphones';
+            if (/cpu|desktop|escritorio|torre|all\s*in\s*one|aio/.test(det))   return 'fa-desktop';
+            if (/tablet|ipad/.test(det))                                       return 'fa-tablet-alt';
+            if (/proyector/.test(det))                                         return 'fa-video';
+            if (/c[aá]mara|webcam/.test(det))                                  return 'fa-camera';
+            if (/router|switch|access\s*point|red\s/.test(det))                return 'fa-network-wired';
+            if (/silla/.test(det))                                             return 'fa-chair';
+            if (/escritorio|mesa|archivero|gabinete|mueble/.test(det))         return 'fa-couch';
+
+            // 2) Cae al tipo genérico.
+            if (tipo.indexOf('eq computo') >= 0 || tipo.indexOf('cómputo') >= 0 || tipo.indexOf('computo') >= 0) return 'fa-desktop';
+            if (tipo.indexOf('mobiliario') >= 0 || tipo.indexOf('oficina') >= 0) return 'fa-chair';
+            if (tipo.indexOf('herramienta') >= 0)                              return 'fa-tools';
+            if (tipo.indexOf('maquina') >= 0 || tipo.indexOf('máquina') >= 0)  return 'fa-industry';
+            if (tipo.indexOf('accesorio') >= 0)                                return 'fa-plug';
+            if (tipo.indexOf('vehic') >= 0)                                    return 'fa-car';
+
+            // Default distinto al ícono de la pestaña (fa-box) para que no se confundan.
+            return 'fa-box-open';
+        }
+
+        function formatFechaActivo(f) {
+            if (!f) return '—';
+            // Formato esperado: YYYY-MM-DD o YYYY-MM-DD HH:MM:SS
+            var partes = (f + '').split(' ')[0].split('-');
+            if (partes.length !== 3) return escapeHtml(f);
+            return partes[2] + '/' + partes[1] + '/' + partes[0];
+        }
+
+        function escapeHtml(s) {
+            return (s == null ? '' : (s + ''))
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // ===== Expediente (Matriz de Cumplimiento) =====
+        // Reusa el endpoint del módulo gestionPersonal. La acción `obtener_expediente`
+        // recibe el noEmpleado y devuelve la matriz armada con catálogo + alcance
+        // (por puesto / por área). Aquí mostramos solo Requisito / Estatus / Acción
+        // (las columnas Tipo, Laboratorio y Validaciones del módulo original se omiten).
+        var EXPEDIENTE_URL          = '../gestionPersonal/action_controller.php';
+        var EXPEDIENTE_FIRMA_URL    = '../gestionPersonal/validation_controller.php';
+        var EXPEDIENTE_BASE_ARCHIVOS = '../gestionPersonal/';
+        // Super-users con permiso global para firmar columnas dedicadas.
+        var NOEMP_CALIDAD = 5;
+        var NOEMP_RRHH    = 403;
+        var dtTablaEquipo = null;
+        // Cache de la respuesta de listar_administracion_empleados. Se llena al cargar
+        // el tab y se reutiliza al abrir el modal de detalle de cada subordinado.
+        var personalCache = null;
+
+        // Punto de entrada: decide si mostrar vista personal o vista de jefe.
+        // - Si la sesión es super-user (5/403) → vista jefe con todo el personal.
+        // - Si la sesión aparece como jefe admin / técnico de algún empleado → vista jefe.
+        // - En cualquier otro caso → vista personal (mi propia matriz).
+        function cargarMiExpediente() {
+            var noEmp = parseInt(getCookie('noEmpleadoL')) || 0;
+            if (!noEmp) {
+                mostrarSeccionExpediente('personal');
+                $('#bodyExpediente').html('<tr><td colspan="3" class="text-center text-muted py-4">No hay sesión válida.</td></tr>');
+                return;
+            }
+
+            var esSuper = (noEmp === NOEMP_CALIDAD || noEmp === NOEMP_RRHH);
+
+            // Pedimos la lista de personal del módulo para detectar relaciones jefe-empleado.
+            $.ajax({
+                url: EXPEDIENTE_URL,
+                type: 'POST',
+                dataType: 'json',
+                data: { action: 'listar_administracion_empleados' }
+            }).done(function(resp) {
+                personalCache = (resp && resp.data) ? resp.data : [];
+                var equipo = filtrarEquipoDelJefe(personalCache, noEmp, esSuper);
+                if (equipo.length > 0) {
+                    renderVistaEquipo(equipo, noEmp, esSuper);
+                } else {
+                    cargarVistaPersonal(noEmp);
+                }
+                expedienteCargado = true;
+            }).fail(function() {
+                // Si falla la consulta de personal, intentamos al menos la vista personal.
+                cargarVistaPersonal(noEmp);
+            });
+        }
+
+        function mostrarSeccionExpediente(seccion) {
+            $('#expedienteLoading').hide();
+            $('#vistaExpedientePersonal').toggle(seccion === 'personal');
+            $('#vistaExpedienteJefe').toggle(seccion === 'jefe');
+        }
+
+        // Filtro idéntico al de validacion.php: super-users ven a todos; en caso contrario
+        // se conserva al empleado si la sesión es su jefe directo (admin) o si la sesión
+        // aparece dentro de los jefes técnicos del empleado.
+        function filtrarEquipoDelJefe(empleados, noEmpSesion, esSuper) {
+            if (esSuper) return empleados;
+            return empleados.filter(function(emp) {
+                var esAdmin = emp.id_jefe_directo && parseInt(emp.id_jefe_directo) === noEmpSesion;
+                var listaTec = (emp.id_jefes_tecnicos || '').toString().split(',')
+                                 .map(function(s){ return parseInt(s, 10); })
+                                 .filter(function(n){ return !isNaN(n); });
+                var esTec = listaTec.indexOf(noEmpSesion) >= 0;
+                return esAdmin || esTec;
+            });
+        }
+
+        // Carga la matriz del propio empleado (vista personal).
+        function cargarVistaPersonal(noEmp) {
+            mostrarSeccionExpediente('personal');
+            var $body = $('#bodyExpediente');
+            $.ajax({
+                url: EXPEDIENTE_URL,
+                type: 'POST',
+                dataType: 'json',
+                data: { action: 'obtener_expediente', id_usuario: noEmp }
+            }).done(function(resp) {
+                if (!resp || resp.status !== 'success') {
+                    $body.html('<tr><td colspan="3" class="text-center text-danger py-4">No se pudo cargar el expediente.</td></tr>');
+                    return;
+                }
+                renderExpediente(resp.data || []);
+            }).fail(function() {
+                $body.html('<tr><td colspan="3" class="text-center text-danger py-4">Error de red al consultar el expediente.</td></tr>');
+            });
+        }
+
+        // Renderiza la tabla del equipo y monta DataTable.
+        function renderVistaEquipo(equipo, noEmpSesion, esSuper) {
+            mostrarSeccionExpediente('jefe');
+            $('#equipoTotal').text(equipo.length);
+
+            // Si ya había DataTable previo, lo destruimos antes de recargar tbody.
+            if (dtTablaEquipo) {
+                dtTablaEquipo.destroy();
+                dtTablaEquipo = null;
+            }
+
+            var html = '';
+            equipo.forEach(function(emp) {
+                var noEmpE = parseInt(emp.noEmpleado, 10) || 0;
+                html += '<tr data-no-emp="' + noEmpE + '" data-nombre="' + escapeHtml(emp.nombreCompleto || '') + '">'
+                     +   '<td class="text-center font-weight-bold">' + escapeHtml(emp.noEmpleado || '') + '</td>'
+                     +   '<td class="font-weight-bold">' + escapeHtml(emp.nombreCompleto || '') + '</td>'
+                     +   '<td class="text-uppercase small text-muted">' + escapeHtml(emp.depto_base || 'General') + '</td>'
+                     +   '<td><span class="badge badge-light border">' + escapeHtml(emp.puesto || '—') + '</span></td>'
+                     +   '<td class="text-center">'
+                     +     '<button type="button" class="btn btn-sm btn-outline-primary btn-equipo-revisar" data-no-emp="' + noEmpE + '" data-nombre="' + escapeHtml(emp.nombreCompleto || '') + '">'
+                     +       '<i class="fas fa-search-plus mr-1"></i>Revisar'
+                     +     '</button>'
+                     +   '</td>'
+                     + '</tr>';
+            });
+            $('#bodyEquipoExpediente').html(html);
+
+            dtTablaEquipo = $('#tablaEquipoExpediente').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50],
+                order: [[1, 'asc']],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
+            });
+        }
+
+        // Delegación: click en "Revisar" abre el modal de detalle del subordinado.
+        $(document).on('click', '.btn-equipo-revisar', function() {
+            var $b = $(this);
+            abrirModalDetalleSubordinado(parseInt($b.data('no-emp'), 10), $b.data('nombre'));
+        });
+
+        // Modal de detalle por subordinado: carga matriz + arma firmas según rol.
+        function abrirModalDetalleSubordinado(noEmpE, nombreCompleto) {
+            $('#tituloDetalleColaborador').text(noEmpE + ' · ' + nombreCompleto);
+            var $body = $('#bodyDetalleExpedienteJefe');
+            $body.html('<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando matriz...</td></tr>');
+            $('#modalDetalleExpedienteJefe').modal('show');
+
+            // Necesitamos saber el rol de la sesión respecto a ESTE empleado para
+            // decidir qué columna de firma activar. Reusamos el cache de personal.
+            var noEmpSesion = parseInt(getCookie('noEmpleadoL'), 10) || 0;
+            var emp = (personalCache || []).find(function(e){ return parseInt(e.noEmpleado, 10) === noEmpE; }) || null;
+            var columnaFirma = detectarColumnaFirma(emp, noEmpSesion);
+
+            $.ajax({
+                url: EXPEDIENTE_URL, type: 'POST', dataType: 'json',
+                data: { action: 'obtener_expediente', id_usuario: noEmpE }
+            }).done(function(matriz) {
+                if (!matriz || matriz.status !== 'success') {
+                    $body.html('<tr><td colspan="5" class="text-center text-danger py-4">No se pudo cargar la matriz.</td></tr>');
+                    return;
+                }
+                renderDetalleSubordinado(matriz.data || [], columnaFirma, noEmpE, nombreCompleto);
+            }).fail(function(){
+                $body.html('<tr><td colspan="5" class="text-center text-danger py-4">Error de red.</td></tr>');
+            });
+        }
+
+        // Determina qué columna de firma puede asentar la sesión para ESTE empleado:
+        // - noEmp 403 → val_rrhh   (super)
+        // - noEmp 5   → val_calidad (super)
+        // - sesión == jefe admin del empleado     → val_jefe_admin
+        // - sesión en jefes técnicos del empleado → val_jefe_tecnico
+        // - otro caso → null (solo lectura)
+        function detectarColumnaFirma(emp, noEmpSesion) {
+            if (noEmpSesion === NOEMP_RRHH)    return 'val_rrhh';
+            if (noEmpSesion === NOEMP_CALIDAD) return 'val_calidad';
+            if (!emp) return null;
+            if (emp.id_jefe_directo && parseInt(emp.id_jefe_directo, 10) === noEmpSesion) return 'val_jefe_admin';
+            var listaTec = (emp.id_jefes_tecnicos || '').toString().split(',')
+                             .map(function(s){ return parseInt(s, 10); })
+                             .filter(function(n){ return !isNaN(n); });
+            if (listaTec.indexOf(noEmpSesion) >= 0) return 'val_jefe_tecnico';
+            return null;
+        }
+
+        function renderDetalleSubordinado(lista, columnaFirma, noEmpE, nombreCompleto) {
+            var $body = $('#bodyDetalleExpedienteJefe');
+            if (!lista.length) {
+                $body.html('<tr><td colspan="5" class="text-center text-muted py-4">Sin requisitos configurados.</td></tr>');
+                return;
+            }
+            var html = '';
+            lista.forEach(function(req) {
+                var badge = renderBadgeEstatusExp(req.estatus_general);
+                var firmas = renderBadgesFirmas(req);
+                var accion = renderAccionDictamen(req, columnaFirma, noEmpE, nombreCompleto);
+                html += '<tr' + (req.subido ? '' : ' class="exp-row-pending"') + '>'
+                     +   '<td><div class="exp-req-nombre">' + escapeHtml(req.nombre_tipo || '') + '</div></td>'
+                     +   '<td class="small text-uppercase text-muted">' + escapeHtml(req.nombre_depto || 'Universal') + '</td>'
+                     +   '<td class="text-center">' + badge + '</td>'
+                     +   '<td class="text-center">' + firmas + '</td>'
+                     +   '<td class="text-center">' + accion + '</td>'
+                     + '</tr>';
+            });
+            $body.html(html);
+        }
+
+        function renderBadgesFirmas(req) {
+            function cls(v) {
+                v = parseInt(v, 10);
+                if (v === 1 || v === 3) return 'badge-success';
+                if (v === 2)            return 'badge-danger';
+                return 'badge-light border';
+            }
+            return '<span class="badge ' + cls(req.val_jefe_admin)    + ' px-2 py-1 mr-1" title="Jefe Admin">A</span>'
+                 + '<span class="badge ' + cls(req.val_jefe_tecnico)  + ' px-2 py-1 mr-1" title="Jefe Técnico">T</span>'
+                 + '<span class="badge ' + cls(req.val_calidad)       + ' px-2 py-1 mr-1" title="Calidad">C</span>'
+                 + '<span class="badge ' + cls(req.val_rrhh)          + ' px-2 py-1" title="RRHH">R</span>';
+        }
+
+        function renderAccionDictamen(req, columnaFirma, noEmpE, nombreCompleto) {
+            var hayArchivo = req.subido || req.archivo_url;
+            if (!hayArchivo) {
+                return '<span class="text-muted small"><i class="fas fa-exclamation-triangle mr-1"></i>Faltante</span>';
+            }
+            var url = (req.archivo_url || '');
+            if (url && url.indexOf('http') !== 0 && url.indexOf('../') !== 0) {
+                url = EXPEDIENTE_BASE_ARCHIVOS + url;
+            }
+            var idDoc = req.id_documento_real || req.id || 0;
+            var pdf = '<a href="' + escapeHtml(url) + '" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i></a>';
+
+            if (!columnaFirma || !idDoc) return pdf; // sin permiso de firma → solo PDF
+
+            var attrs = ' data-id-doc="' + idDoc + '"'
+                      + ' data-columna="' + escapeHtml(columnaFirma) + '"'
+                      + ' data-no-emp="' + noEmpE + '"'
+                      + ' data-nombre="' + escapeHtml(nombreCompleto) + '"';
+
+            var aprobar  = '<button type="button" class="btn btn-sm btn-outline-success btn-firmar"' + attrs + ' data-voto="1" title="Aprobar"><i class="fas fa-check"></i></button>';
+            var rechazar = '<button type="button" class="btn btn-sm btn-outline-danger btn-firmar"'  + attrs + ' data-voto="2" title="Rechazar"><i class="fas fa-times"></i></button>';
+            return '<div class="d-inline-flex" style="gap:.25rem;">' + pdf + aprobar + rechazar + '</div>';
+        }
+
+        // Delegación: click en aprobar/rechazar dispara la firma.
+        $(document).on('click', '.btn-firmar', function() {
+            var $b = $(this);
+            var idDoc = parseInt($b.data('id-doc'), 10);
+            var columna = $b.data('columna');
+            var voto = parseInt($b.data('voto'), 10); // 1 aprobar · 2 rechazar
+            var noEmpE = parseInt($b.data('no-emp'), 10);
+            var nombre = $b.data('nombre');
+            var pregunta = voto === 1 ? '¿Aprobar este documento?' : '¿Rechazar este documento?';
+
+            Swal.fire({
+                title: pregunta,
+                icon: voto === 1 ? 'question' : 'warning',
+                showCancelButton: true,
+                confirmButtonText: voto === 1 ? 'Sí, aprobar' : 'Sí, rechazar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: voto === 1 ? '#1cc88a' : '#e74a3b'
+            }).then(function(r) {
+                if (!r.isConfirmed) return;
+                $.ajax({
+                    url: EXPEDIENTE_FIRMA_URL,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'procesar_firma_documento',
+                        id_documento: idDoc,
+                        columna_firma: columna,
+                        estado_firma: voto
+                    }
+                }).done(function(res) {
+                    if (res && res.status === 'success') {
+                        Swal.fire('Dictamen guardado', '', 'success');
+                        abrirModalDetalleSubordinado(noEmpE, nombre); // refresca modal
+                    } else {
+                        Swal.fire('Error', (res && res.message) || 'No se pudo asentar la firma.', 'error');
+                    }
+                }).fail(function() {
+                    Swal.fire('Error', 'No se pudo contactar al servidor.', 'error');
+                });
+            });
+        });
+
+        function renderExpediente(lista) {
+            var $body = $('#bodyExpediente');
+            if (!lista.length) {
+                $body.html('<tr><td colspan="3" class="text-center text-muted py-4">No hay requisitos configurados para tu puesto/área.</td></tr>');
+                $('#expedienteOk').text(0);
+                $('#expedienteTotal').text(0);
+                actualizarSemaforoExpediente(0, 0);
+                return;
+            }
+
+            var ok = 0;
+            var html = '';
+            lista.forEach(function(req) {
+                if (req.estatus_general === 'Aprobado') ok++;
+
+                var nombre = escapeHtml(req.nombre_tipo || '');
+                // Cuando es "Por Alcance" mostramos el área como subtítulo (compensa la
+                // columna omitida "Laboratorio / Área").
+                var sub = (req.tipo_alcance === 'Por Alcance' && req.nombre_depto)
+                    ? '<div class="exp-subarea"><i class="fas fa-microscope mr-1"></i>' + escapeHtml(req.nombre_depto) + '</div>'
+                    : '';
+
+                var badge = renderBadgeEstatusExp(req.estatus_general);
+                var accion = renderAccionExp(req);
+
+                html += '<tr' + (req.subido ? '' : ' class="exp-row-pending"') + '>'
+                     +   '<td><div class="exp-req-nombre">' + nombre + '</div>' + sub + '</td>'
+                     +   '<td class="text-center">' + badge + '</td>'
+                     +   '<td class="text-center">' + accion + '</td>'
+                     + '</tr>';
+            });
+
+            $body.html(html);
+            $('#expedienteOk').text(ok);
+            $('#expedienteTotal').text(lista.length);
+            actualizarSemaforoExpediente(ok, lista.length);
+        }
+
+        function renderBadgeEstatusExp(estatus) {
+            switch (estatus) {
+                case 'Aprobado':    return '<span class="badge badge-success px-2 py-1">Aprobado</span>';
+                case 'Rechazado':   return '<span class="badge badge-danger px-2 py-1">Rechazado</span>';
+                case 'En Revisión': return '<span class="badge badge-warning px-2 py-1">En Revisión</span>';
+                default:            return '<span class="badge badge-secondary px-2 py-1">Pendiente</span>';
+            }
+        }
+
+        function renderAccionExp(req) {
+            var attrs = ''
+                + ' data-id-tipo="'   + escapeHtml(req.id_tipo) + '"'
+                + ' data-nombre="'    + escapeHtml(req.nombre_tipo || '') + '"'
+                + ' data-area="'      + escapeHtml(req.nombre_depto || 'Universal') + '"'
+                + ' data-id-depto="'  + escapeHtml(req.id_depto == null ? '' : req.id_depto) + '"';
+
+            // Si ya hay archivo subido: link "Ver PDF" (+ Reintentar si fue rechazado y le toca al empleado)
+            if (req.subido) {
+                var url = (req.archivo_url || '');
+                if (url && url.indexOf('http') !== 0 && url.indexOf('../') !== 0) {
+                    url = EXPEDIENTE_BASE_ARCHIVOS + url;
+                }
+                var btn = '<a href="' + escapeHtml(url) + '" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf mr-1"></i>Ver PDF</a>';
+                if (req.estatus_general === 'Rechazado' && req.subido_por === 'Empleado') {
+                    btn += ' <button type="button" class="btn btn-sm btn-outline-warning btn-exp-subir"' + attrs + '><i class="fas fa-sync-alt"></i></button>';
+                }
+                return btn;
+            }
+            // Pendiente: si le toca al empleado, botón Subir; si no, "Carga por X"
+            if (req.subido_por === 'Empleado') {
+                return '<button type="button" class="btn btn-sm btn-outline-primary btn-exp-subir"' + attrs + '><i class="fas fa-upload mr-1"></i>Subir</button>';
+            }
+            return '<span class="text-muted small"><i class="fas fa-lock mr-1"></i>Carga por ' + escapeHtml(req.subido_por || 'Jefe') + '</span>';
+        }
+
+        // Delegación: cualquier botón .btn-exp-subir abre el modal con los datos del row.
+        $(document).on('click', '.btn-exp-subir', function() {
+            var $b = $(this);
+            $('#expUpId_tipo').val($b.data('id-tipo'));
+            var idDepto = $b.data('id-depto');
+            $('#expUpId_depto').val((idDepto === '' || idDepto == null) ? '' : idDepto);
+            $('#expUpNombreDoc').val($b.data('nombre') || '');
+            $('#expUpNombreDepto').val($b.data('area') || 'Universal');
+            $('#formSubirExpediente input[name="archivo_doc"]').val('');
+            $('#modalSubirExpediente').modal('show');
+        });
+
+        // Submit del modal: envía al mismo endpoint que gestionPersonal
+        $(document).on('submit', '#formSubirExpediente', function(e) {
+            e.preventDefault();
+            var noEmp = getCookie('noEmpleadoL') || '';
+            if (!noEmp) {
+                Swal.fire('Sesión', 'No hay sesión válida.', 'warning');
+                return;
+            }
+            var fd = new FormData(this);
+            fd.append('action', 'subir_documento_expediente');
+            fd.append('id_usuario_destino', noEmp);
+            fd.append('id_usuario_sesion', noEmp);
+
+            $.ajax({
+                url: EXPEDIENTE_URL,
+                type: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                dataType: 'json'
+            }).done(function(res) {
+                if (res && res.status === 'success') {
+                    $('#modalSubirExpediente').modal('hide');
+                    Swal.fire('¡Cargado!', 'El documento entró a revisión.', 'success');
+                    expedienteCargado = false;
+                    cargarMiExpediente();
+                } else {
+                    Swal.fire('Error', (res && res.message) || 'No se pudo cargar el documento.', 'error');
+                }
+            }).fail(function() {
+                Swal.fire('Error', 'No se pudo contactar al servidor.', 'error');
+            });
+        });
+
+        // Semáforo del tab Expediente: verde si todo aprobado, rojo si nada, amarillo si parcial.
+        function actualizarSemaforoExpediente(ok, total) {
+            var $dot = $('#statusTabExpediente').removeClass('is-green is-yellow is-red');
+            if (total === 0) return;
+            if (ok === total)      $dot.addClass('is-green');
+            else if (ok === 0)     $dot.addClass('is-red');
+            else                   $dot.addClass('is-yellow');
         }
 
         // ===== Cookies =====
