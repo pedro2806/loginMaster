@@ -134,10 +134,19 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                         </div>
 
                         <!-- ========== CONTENIDO CON TABS ========== -->
-                        <div class="col-xl-9 col-md-8" Style="padding-left: 0px !important">
-                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #0e2788;">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab">
+                        <div class="col-xl-9 col-md-8" Style="padding-left: 0px !important; background: linear-gradient(180deg, #0e2788 0%, #0a1c61 100%) !important;">
+                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #0e2788 !important;">
+                               
+                              <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
+                                        <i class="fas fa-user-cog mr-1"></i> Mi Espacio
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                            
+                            
+                            <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab">
                                         <i class="fas fa-th-large mr-1"></i> Sistemas
                                         <span class="tab-badge"></span>
                                     </button>
@@ -167,12 +176,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
-                                        <i class="fas fa-user-cog mr-1"></i> Personal
-                                        <span id="badgeTabPersonal" class="tab-badge"></span>
-                                    </button>
-                                </li>
+                                -->
+                              
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
                                         <i class="fas fa-car mr-1"></i> Vehículo
@@ -202,7 +207,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                             <div class="tab-content" id="mainTabsContent">
                                 <!-- ===== TAB 1: SISTEMAS ===== -->
-                                <div class="tab-pane fade show active" id="tabSistemas" role="tabpanel">
+                                <div class="tab-pane fade" id="tabSistemas" role="tabpanel">
                                     <div class="row">
                                         <!-- VACACIONES -->
                                         <div class="col-md-3 mb-3" id="divVacaciones" style="display:none">
@@ -559,7 +564,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 </div>
 
                                 <!-- ===== TAB 5: PERSONAL ===== -->
-                                <div class="tab-pane fade" id="tabPersonal" role="tabpanel">
+                                <div class="tab-pane fade show active" id="tabPersonal" role="tabpanel">
                                     <div class="row">
                                         <!-- Notificaciones expandidas -->
                                         <div class="col-lg-5 mb-4">
@@ -694,14 +699,21 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     </div>
                 </div>
             </div>
+         
+
             <!-- Footer -->
-            <footer class="sticky-footer" style="background: var(--card-bg); border-top: 1px solid var(--border);">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; MESS <?php echo date("Y"); ?></span>
-                    </div>
-                </div>
-            </footer>
+<footer class="sticky-footer">
+    <div class="container my-auto">
+        <div class="copyright text-center my-auto">
+            <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
+            <div class="fb-footer-links">
+                Business Intelligence | Messbook © <?php echo date("Y"); ?>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
         </div>
     </div>
 
@@ -1126,11 +1138,9 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 'tabAgenda-tab':     'Sala de Juntas',
                 'tabAvisos-tab':     'Avisos',
                 'tabTickets-tab':    'Tickets',
-                'tabExpediente-tab': 'Expediente',
-                'tabPersonal-tab':   'Personal',
+                'tabPersonal-tab':   'Mi Espacio',
                 'tabVehiculo-tab':   'Vehículo',
                 'tabKpis-tab':       "KPI's",
-                'tabActivos-tab':    'Activos',
                 'tabDirectorio-tab': 'Directorio'
             };
             $('#mainTabs button[data-toggle="tab"]').on('shown.bs.tab', function(e) {
