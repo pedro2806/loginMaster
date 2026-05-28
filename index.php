@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $passwordRecuperar = trim($row['password_restaurar'] ?? '');
     
     if (empty($passwordRecuperar)) {
-        echo json_encode(['success' => false, 'message' => 'No hay contraseña de recuperación asignada. Contacta a soporte']);
+        echo json_encode(['success' => false, 'message' => 'No hay contraseña de recuperación asignada. Contacta a soporte de Messbook']);
         $stmt->close();
         $conn->close();
         exit;
@@ -95,8 +95,8 @@ $mail->Body = '
                             <h2 style="margin: 0 0 20px 0; color: #1c1e21; font-size: 20px; font-weight: 600; font-family: Helvetica, Arial, sans-serif;">Recuperación de contraseña</h2>
 
                             <p style="margin: 0 0 24px 0; color: #1c1e21; font-size: 15px; line-height: 1.5; font-family: Helvetica, Arial, sans-serif;">
-                                Hola,<br><br>
-                                Recibimos una solicitud para recuperar tu contraseña de Messbook.
+                                Hola,<br>
+                              Recibimos una solicitud para recuperar tu contraseña de Messbook.
                             </p>
 
                             <!-- Box de contraseña -->
@@ -127,7 +127,7 @@ $mail->Body = '
                             <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #dadde1; margin-top: 30px; padding-top: 20px;">
                                 <tr>
                                     <td style="text-align: center;">
-                                        <p style="margin: 0 0 8px 0; color: #1c1e21; font-size: 13px; font-weight: 600; font-family: Helvetica, Arial, sans-serif;">Soporte del sistema</p>
+                                        <p style="margin: 0 0 8px 0; color: #1c1e21; font-size: 13px; font-weight: 600; font-family: Helvetica, Arial, sans-serif;">Si tienes problemas para acceder a Messbook contacta a:</p>
                                         <p style="margin: 0; color: #65676b; font-size: 13px; line-height: 1.6; font-family: Helvetica, Arial, sans-serif;">
                                             <a href="mailto:pedro.martinez@mess.com.mx" style="color: #1877f2; text-decoration: none;">pedro.martinez@mess.com.mx</a><br>
                                             <a href="mailto:sebastian.gutierrez@mess.com.mx" style="color: #1877f2; text-decoration: none;">sebastian.gutierrez@mess.com.mx</a>
@@ -238,7 +238,7 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
                             <div class="fb-divider"></div>
                             
                             <div class="fb-support-text">
-                                <strong>Soporte del sistema</strong><br>
+                                <strong>Messbook es desarrollado por el equipo de BI</strong><br>
                                 <a href="mailto:pedro.martinez@mess.com.mx">pedro.martinez@mess.com.mx</a><br>
                                 <a href="mailto:sebastian.gutierrez@mess.com.mx">sebastian.gutierrez@mess.com.mx</a>
                             </div>
