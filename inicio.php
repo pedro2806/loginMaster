@@ -47,7 +47,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                     </p>
                                     <div class="profile-info small mb-2">
                                         <div class="profile-info-row" title="Jefe Directo">
-                                            <i class="fas fa-sitemap profile-info-icon" style="color: white !important" aria-hidden="true"></i>
+                                            <i class="fas fa-sitemap profile-info-icon" style="color: white !important" aria-hidden="true"></i>&nbsp;
                                             <span class="sr-only">Jefe Directo:</span>
                                             <span id="lblJefe" class="fw-semibold"></span>
                                         </div>
