@@ -36,7 +36,7 @@
 </style>
 
 <!-- Topbar -->
-<nav class="navbar navbar-expand navbar-light bg-white mb-2 static-top shadow" style="background-color: #0e2788 !important;">
+<nav class="navbar navbar-expand navbar-light bg-white mb-2 static-top shadow" style="background-color: #074480 !important;">
 
     <!-- BOTÓN TOGGLE SIDEBAR -->
     <button id="toggleSidebarBtn" class="btn" type="button" title="Ocultar/Mostrar menú">

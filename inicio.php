@@ -34,30 +34,35 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     <div class="row">
                         <!-- ========== SIDEBAR PERFIL ========== -->
                         <div class="col-xl-3 col-md-4">
-                            <div class="profile-card text-center">                                                        
-                                <div class="profile-avatar">
-                                    <i class="fas fa-user-circle"></i>
+                            <div class="profile-card text-center">      
+                                <div id= "info_us_card" class="stat-box" style="border: .5px solid white;">                                                   
+                                    <div class="profile-avatar">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <h6>
+                                        <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
+                                    </h6>
+                                    <p class="text-muted mb-2" style="font-size:0.85rem;">
+                                        No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
+                                    </p>
+                                    <div class="profile-info small mb-2">
+                                        <div class="profile-info-row" title="Jefe Directo">
+                                            <i class="fas fa-user-tie profile-info-icon" style="color: white !important" aria-hidden="true"></i>
+                                            <span class="sr-only">Jefe Directo:</span>
+                                            <span id="lblJefe" class="fw-semibold"></span>
+                                        </div>
+                                        <div class="profile-info-row" title="Área">
+                                            <i class="fas fa-building profile-info-icon" style="color: white !important" aria-hidden="true"></i>
+                                            <span class="sr-only">Área:</span>
+                                            <span id="lblArea" class="fw-semibold"></span>
+                                        </div>
+                                        <div class="profile-info-row" title="Puesto">
+                                            <i class="fas fa-briefcase profile-info-icon" style="color: white !important" aria-hidden="true"></i>
+                                            <span class="sr-only">Puesto:</span>
+                                            <span id="lblPuesto" class="fw-semibold">—</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <h4 class="mb-1 fw-bold" style="color: var(--accent);">
-                                    <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
-                                </h4>
-                                <p class="text-muted mb-2" style="font-size:0.85rem;">
-                                    No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
-                                </p>
-                                <ul class="list-group list-group-flush text-start small mb-2" style="background:transparent;">
-                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
-                                        <small class="text-muted fw-bold me-1">Jefe Directo:</small>
-                                        <span id="lblJefe" class="fw-semibold"></span>
-                                    </li>
-                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
-                                        <small class="text-muted fw-bold me-1">Área:</small>
-                                        <span id="lblArea" class="fw-semibold"></span>
-                                    </li>
-                                    <li class="list-group-item px-0 py-1 bg-transparent border-0">
-                                        <small class="text-muted fw-bold me-1">Puesto:</small>
-                                        <span id="lblPuesto" class="fw-semibold">—</span>
-                                    </li>
-                                </ul>
 
                                 <!-- Fila 1: Fecha Ingreso (full width) -->
                                 <div class="row no-gutters">
@@ -176,8 +181,6 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
-                                -->
-                              
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
                                         <i class="fas fa-car mr-1"></i> Vehículo
@@ -188,12 +191,6 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
-                                        <span class="tab-badge"></span>
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabActivos-tab" data-toggle="tab" data-target="#tabActivos" type="button" role="tab">
-                                        <i class="fas fa-box mr-1"></i> Activos
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -566,8 +563,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <!-- ===== TAB 5: PERSONAL ===== -->
                                 <div class="tab-pane fade show active" id="tabPersonal" role="tabpanel">
                                     <div class="row">
-                                        <!-- Notificaciones expandidas -->
-                                        <div class="col-lg-5 mb-4">
+                                        <!-- Notificaciones -->
+                                        <div class="col-lg-4 mb-4">
                                             <div class="card shadow-sm h-100">
                                                 <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-bell mr-2"></i>Notificaciones</h6>
@@ -580,7 +577,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             </div>
                                         </div>
                                         <!-- Calendario de Vacaciones -->
-                                        <div class="col-lg-7 mb-4">
+                                        <div class="col-lg-4 mb-4">
                                             <div class="card shadow-sm h-100">
                                                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="background: var(--card-soft); border-color: var(--border);">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-umbrella-beach mr-2"></i>Mis Vacaciones</h6>
@@ -596,9 +593,33 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                                 </div>
                                             </div>
                                         </div>
+                                        <!-- Mis Activos -->
+                                        <div class="col-lg-4 mb-4">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-box mr-2"></i>En Resguardo</h6>
+                                                    <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
+                                                </div>
+                                                <div class="card-body p-0">
+                                                    <div id="contenedorActivos" class="activos-lista">
+                                                        <div class="activos-empty text-center text-muted py-4">
+                                                            <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
+                                                            <small>Cargando activos...</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!--
+                                                <div class="card-footer text-right" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <button type="button" id="btnExportarActivosCSV" class="btn btn-sm btn-outline-success" disabled>
+                                                        <i class="fas fa-file-csv mr-1"></i> Exportar CSV
+                                                    </button>
+                                                </div>
+                                                
+                                                -->
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-
                                 <!-- ===== TAB: VEHÍCULO ===== -->
                                 <div class="tab-pane fade" id="tabVehiculo" role="tabpanel">
                                     <div id="contenedorVehiculos">
@@ -620,22 +641,6 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                             $passkpis = isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '';
                                             ?>
                                             <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo $passkpis; ?>" title="KPIs"></iframe>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- ===== TAB: ACTIVOS (vista rápida, solo consulta) ===== -->
-                                <div class="tab-pane fade" id="tabActivos" role="tabpanel">
-                                    <div class="activos-header">
-                                        <div>
-                                            <h4 class="mb-1" style="color: var(--accent);">Mis Activos</h4>
-                                        </div>
-                                        <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
-                                    </div>
-                                    <div id="contenedorActivos" class="row">
-                                        <div class="col-12 empty-state">
-                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
-                                            <p class="mb-0">Cargando activos...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1026,6 +1031,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         var esJefeActual = false;
         var vehiculosDocsCargados = false;
         var misActivosCargados = false;
+        var misActivosData = [];
         var expedienteCargado = false;
         // Acumulador del estatus de cada vehículo para alimentar el semáforo del tab.
         // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total} } }
@@ -1170,9 +1176,6 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             $('#tabVehiculo-tab').on('shown.bs.tab', function() {
                 if (!vehiculosDocsCargados) cargarVehiculosDocs();
             });
-            $('#tabActivos-tab').on('shown.bs.tab', function() {
-                if (!misActivosCargados) cargarMisActivos();
-            });
             $('#tabExpediente-tab').on('shown.bs.tab', function() {
                 if (!expedienteCargado) cargarMiExpediente();
             });
@@ -1194,6 +1197,86 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 // Si ya estaba cargado, refresca la tabla recargando el iframe
                 var $f = $('#iframeTicketsMis');
                 if ($f.attr('src')) $f.attr('src', $f.attr('src'));
+            });
+
+            // El tab "Mi Espacio" (#tabPersonal) arranca activo, por lo que
+            // `shown.bs.tab` no se dispara al cargar la página. Inicializamos
+            // su contenido (calendario, notificaciones, activos) explícitamente.
+            if (!calendarVacaciones) initCalendarVacaciones();
+            setTimeout(function() {
+                if (calendarVacaciones) calendarVacaciones.updateSize();
+            }, 50);
+            cargarPanelNotificaciones();
+            if (!misActivosCargados) cargarMisActivos();
+
+            $('#btnExportarActivosCSV').on('click', exportarActivosCSV);
+
+            // ===== Confirmación de resguardo de activos =====
+            // Check verde: solo marca visualmente el ítem como confirmado.
+            // Cross rojo: llama al endpoint para liberar el activo
+            // (id_usuario = 0) y lo quita de la lista.
+            $('#contenedorActivos').on('click', '.btn-activo-ok', function() {
+                $(this).closest('.activo-item')
+                    .removeClass('is-confirmado').addClass('is-confirmado');
+                $(this).addClass('is-active');
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success',
+                    title: 'Resguardo confirmado',
+                    showConfirmButton: false, timer: 1400, timerProgressBar: true
+                });
+            });
+
+            $('#contenedorActivos').on('click', '.btn-activo-ko', function() {
+                var $item = $(this).closest('.activo-item');
+                var id    = parseInt($item.data('id'), 10) || 0;
+                if (!id) return;
+
+                Swal.fire({
+                    title: '¿Confirmar?',
+                    text: 'Indicarás que ya no tienes este activo en resguardo. Quedará sin asignar.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, ya no lo tengo',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc3545'
+                }).then(function(r) {
+                    if (!r.isConfirmed) return;
+
+                    $.ajax({
+                        url: '../activos/apiActivos.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: { opcion: 'desasignarActivo', id: id }
+                    }).done(function(resp) {
+                        if (resp && resp.status === 'success') {
+                            $item.slideUp(180, function() {
+                                $(this).remove();
+                                misActivosData = misActivosData.filter(function(a) {
+                                    return (parseInt(a.id, 10) || 0) !== id;
+                                });
+                                $('#activosTotal').text(misActivosData.length);
+                                $('#btnExportarActivosCSV').prop('disabled', misActivosData.length === 0);
+                                if (!misActivosData.length) {
+                                    $('#contenedorActivos').html(
+                                        '<div class="activos-empty text-center text-muted py-4">' +
+                                          '<i class="fas fa-box-open fa-2x mb-2 d-block" style="opacity:.4;"></i>' +
+                                          '<small>Sin activos asignados</small>' +
+                                        '</div>'
+                                    );
+                                }
+                            });
+                            Swal.fire({
+                                toast: true, position: 'top-end', icon: 'success',
+                                title: 'Activo liberado',
+                                showConfirmButton: false, timer: 1500, timerProgressBar: true
+                            });
+                        } else {
+                            Swal.fire('Error', (resp && resp.message) || 'No se pudo actualizar.', 'error');
+                        }
+                    }).fail(function() {
+                        Swal.fire('Error', 'No se pudo conectar al servidor.', 'error');
+                    });
+                });
             });
         });
 
@@ -2014,13 +2097,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         }
 
         // ===== Activos (vista rápida solo consulta) =====
-        // Cards de los activos asignados al usuario. Para detalle/edición se entra al
-        // módulo de Activos (../activos/verActivos).
+        // Lista compacta de los activos asignados al usuario, dentro del tab
+        // "Mi Espacio". Para detalle/edición se entra al módulo Activos.
         function cargarMisActivos() {
             var $cont = $('#contenedorActivos');
             var noEmp = getCookie('noEmpleadoL') || '';
             if (!noEmp) {
-                $cont.html('<div class="col-12"><div class="alert alert-info mb-0">No hay sesión válida.</div></div>');
+                $cont.html('<div class="activos-empty text-center text-muted py-4"><small>No hay sesión válida.</small></div>');
                 return;
             }
 
@@ -2031,18 +2114,15 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                 data: { opcion: 'activosPorEmpleado', noEmpleado: noEmp }
             }).done(function(resp) {
                 var lista = (resp && resp.data) ? resp.data : [];
+                misActivosData = lista;
                 $('#activosTotal').text(lista.length);
+                $('#btnExportarActivosCSV').prop('disabled', lista.length === 0);
 
                 if (!lista.length) {
                     $cont.html(
-                        '<div class="col-12">' +
-                          '<div class="card shadow-sm">' +
-                            '<div class="card-body text-center text-muted py-5">' +
-                              '<i class="fas fa-box-open fa-3x mb-3" style="opacity:.4;"></i>' +
-                              '<h6 class="mb-1">Sin activos asignados</h6>' +
-                              '<small>No tienes activos registrados a tu nombre.</small>' +
-                            '</div>' +
-                          '</div>' +
+                        '<div class="activos-empty text-center text-muted py-4">' +
+                          '<i class="fas fa-box-open fa-2x mb-2 d-block" style="opacity:.4;"></i>' +
+                          '<small>Sin activos asignados</small>' +
                         '</div>'
                     );
                     misActivosCargados = true;
@@ -2051,46 +2131,95 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 
                 var html = '';
                 lista.forEach(function(a) {
-                    html += renderCardActivo(a);
+                    html += renderActivoItem(a);
                 });
                 $cont.html(html);
                 misActivosCargados = true;
             }).fail(function() {
-                $cont.html('<div class="col-12"><div class="alert alert-danger mb-0">No se pudo obtener la información de activos.</div></div>');
+                $cont.html('<div class="activos-empty text-center text-danger py-4"><small>No se pudo obtener la información de activos.</small></div>');
             });
         }
 
-        function renderCardActivo(a) {
+        // Exporta el listado de Mis Activos a CSV (UTF-8 con BOM para que Excel
+        // reconozca acentos). Incluye todos los campos que devuelve el endpoint.
+        function exportarActivosCSV() {
+            if (!misActivosData || !misActivosData.length) return;
+
+            var columnas = [
+                { key: 'tipo_activo',       label: 'Tipo' },
+                { key: 'descripcion',       label: 'Descripción' },
+                { key: 'marca',             label: 'Marca' },
+                { key: 'modelo',            label: 'Modelo' },
+                { key: 'no_serie',          label: 'No. Serie' },
+                { key: 'id_interno',        label: 'ID Interno' },
+                { key: 'cpu_info',          label: 'CPU' },
+                { key: 'monitor_info',      label: 'Monitor' },
+                { key: 'ubicacion',         label: 'Ubicación' },
+                { key: 'nave',              label: 'Nave' },
+                { key: 'fecha_adquisicion', label: 'Fecha de adquisición' },
+                { key: 'observaciones',     label: 'Observaciones' },
+                { key: 'es_accesorio',      label: 'Accesorio' }
+            ];
+
+            function escaparCsv(v) {
+                if (v === null || typeof v === 'undefined') return '';
+                var s = String(v).replace(/\r?\n|\r/g, ' ').trim();
+                if (s.indexOf('"') !== -1 || s.indexOf(',') !== -1 || s.indexOf(';') !== -1) {
+                    s = '"' + s.replace(/"/g, '""') + '"';
+                }
+                return s;
+            }
+
+            var filas = [columnas.map(function(c) { return escaparCsv(c.label); }).join(',')];
+            misActivosData.forEach(function(a) {
+                filas.push(columnas.map(function(c) {
+                    var v = a[c.key];
+                    if (c.key === 'es_accesorio') v = (parseInt(v, 10) === 1) ? 'Sí' : 'No';
+                    return escaparCsv(v);
+                }).join(','));
+            });
+
+            var csv = '﻿' + filas.join('\r\n');
+            var noEmp = getCookie('noEmpleadoL') || 'usuario';
+            var fecha = new Date().toISOString().slice(0, 10);
+            var nombre = 'mis_activos_' + noEmp + '_' + fecha + '.csv';
+
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = nombre;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+        }
+
+        function renderActivoItem(a) {
             var icono = iconoTipoActivo(a);
             var tipo  = escapeHtml(a.tipo_activo || 'Activo');
             var desc  = escapeHtml(a.descripcion || '—');
-            var marcaModelo = [a.marca, a.modelo].filter(Boolean).map(escapeHtml).join(' / ') || '—';
-            var serie = escapeHtml(a.no_serie || '—');
-            var idInt = escapeHtml(a.id_interno || '—');
+            var marcaModelo = [a.marca, a.modelo].filter(Boolean).map(escapeHtml).join(' / ');
             var ubic  = escapeHtml(a.ubicacion || a.nave || '—');
-            var fAdq  = formatFechaActivo(a.fecha_adquisicion);
+            var idActivo = parseInt(a.id, 10) || 0;
             var badgeAcc = (parseInt(a.es_accesorio, 10) === 1)
                 ? '<span class="badge badge-pill badge-secondary ml-2">Accesorio</span>' : '';
 
+            var metaMarca = marcaModelo
+                ? '<span><i class="fas fa-tag"></i> ' + marcaModelo + '</span>'
+                : '';
+
             return ''
-                + '<div class="col-md-6 col-xl-4 mb-3">'
-                +   '<div class="card card-activo shadow-sm h-100">'
-                +     '<div class="card-body">'
-                +       '<div class="d-flex align-items-center mb-2">'
-                +         '<div class="activo-icon"><i class="fas ' + icono + '"></i></div>'
-                +         '<div class="ml-2 flex-grow-1">'
-                +           '<div class="activo-tipo">' + tipo + badgeAcc + '</div>'
-                +           '<div class="activo-desc">' + desc + '</div>'
-                +         '</div>'
-                +       '</div>'
-                +       '<dl class="activo-meta mb-0">'
-                +         '<div><dt>Marca / Modelo</dt><dd>' + marcaModelo + '</dd></div>'
-                +         '<div><dt>No. Serie</dt><dd>' + serie + '</dd></div>'
-                +         '<div><dt>ID Interno</dt><dd>' + idInt + '</dd></div>'
-                +         '<div><dt>Ubicación</dt><dd>' + ubic + '</dd></div>'
-                +         '<div><dt>Adquisición</dt><dd>' + fAdq + '</dd></div>'
-                +       '</dl>'
-                +     '</div>'
+                + '<div class="activo-item" data-id="' + idActivo + '">'
+                +   '<div class="activo-item-icon"><i class="fas ' + icono + '"></i></div>'
+                +   '<div class="activo-item-body">'
+                +     '<div class="activo-item-tipo">' + tipo + badgeAcc + '</div>'
+                +     '<div class="activo-item-desc">' + desc + '</div>'
+                +     '<div class="activo-item-meta">' + metaMarca + '<span><i class="fas fa-map-marker-alt"></i> ' + ubic + '</span></div>'
+                +   '</div>'
+                +   '<div class="activo-item-acciones">'
+                +     '<button type="button" class="btn-activo-accion btn-activo-ok" title="Sí, lo tengo en resguardo"><i class="fas fa-check"></i></button>'
+                +     '<button type="button" class="btn-activo-accion btn-activo-ko" title="Ya no lo tengo"><i class="fas fa-times"></i></button>'
                 +   '</div>'
                 + '</div>';
         }
@@ -2925,7 +3054,7 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                      +      avatar
                      +      '<div class="dir-info">'
                      +        '<div class="dir-name">' + nombre
-                     +          (noEmp ? ' <span class="dir-noemp">- noEmpleado: <span class="dir-noemp-val">' + noEmp + '</span></span>' : '')
+                     +          (noEmp ? ' <span class="dir-noemp">- noEmpleado: ' + noEmp + '</span>' : '')
                      +        '</div>'
                      +        '<div class="dir-meta">' + area + '</div>'
                      +        '<div class="dir-meta">' + puesto + '</div>'
@@ -3020,11 +3149,6 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
         // Carga lazy: la primera vez que se abre el tab.
         $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
     </script>
-
-
-
-
-
 <script>
 // Toggle Sidebar - ARREGLADO
 document.addEventListener('DOMContentLoaded', function() {
