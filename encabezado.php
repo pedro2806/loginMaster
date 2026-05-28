@@ -31,8 +31,6 @@
     #toggleSidebarBtn i {
         font-size: 1.25rem;
     }
-    
-    
 </style>
 
 <!-- Topbar -->
