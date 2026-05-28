@@ -139,17 +139,14 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                         </div>
 
                         <!-- ========== CONTENIDO CON TABS ========== -->
-                        <div class="col-xl-9 col-md-8" Style="padding-left: 0px !important; background: linear-gradient(180deg, #0e2788 0%, #0a1c61 100%) !important;">
-                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #0e2788 !important;">
-                               
-                              <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
-                                        <i class="fas fa-user-cog mr-1"></i> Mi Espacio
-                                        <span class="tab-badge"></span>
-                                    </button>
-                                </li>
-                            
-                            
+                        <div class="col-xl-9 col-md-8 d-flex flex-column" Style="padding-left: 0px !important; background: linear-gradient(180deg, #074480 0%, #0a1c61 100%) !important;">
+                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #074480 !important;">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
+                                    <i class="fas fa-user-cog mr-1"></i> Mi Espacio
+                                    <span class="tab-badge"></span>
+                                </button>
+                            </li>
                             <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab">
                                         <i class="fas fa-th-large mr-1"></i> Sistemas
@@ -563,9 +560,10 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 <!-- ===== TAB 5: PERSONAL ===== -->
                                 <div class="tab-pane fade show active" id="tabPersonal" role="tabpanel">
                                     <div class="row">
-                                        <!-- Notificaciones -->
-                                        <div class="col-lg-4 mb-4">
-                                            <div class="card shadow-sm h-100">
+                                        <!-- Columna izquierda: Notificaciones + En Resguardo -->
+                                        <div class="col-lg-5 mb-4 d-flex flex-column">
+                                            <!-- Notificaciones -->
+                                            <div class="card shadow-sm mb-4">
                                                 <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-bell mr-2"></i>Notificaciones</h6>
                                                 </div>
@@ -575,32 +573,13 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <!-- Calendario de Vacaciones -->
-                                        <div class="col-lg-4 mb-4">
-                                            <div class="card shadow-sm h-100">
-                                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="background: var(--card-soft); border-color: var(--border);">
-                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-umbrella-beach mr-2"></i>Mis Vacaciones</h6>
-                                                    <small class="text-muted"><strong class="text-dark"><span id="diasDispPanel">0</span> días disp.</strong> · <strong class="text-dark"><span id="diasSolPanel">0</span> solicitados</strong></small>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-2" style="gap: 0.75rem; font-size:.8rem;">
-                                                        <span><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#050D9E; border-radius:.15rem; vertical-align:middle;"></span>Yo</span>
-                                                        <span id="leyendaVacacionesEquipo" class="d-none"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
-                                                        <span id="leyendaVacacionesDepartamento"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
-                                                    </div>
-                                                    <div id="calendarVacaciones"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- Mis Activos -->
-                                        <div class="col-lg-4 mb-4">
-                                            <div class="card shadow-sm h-100">
+                                            <!-- Mis Activos -->
+                                            <div class="card shadow-sm flex-grow-1">
                                                 <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--card-soft); border-color: var(--border);">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-box mr-2"></i>En Resguardo</h6>
                                                     <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
                                                 </div>
-                                                <div class="card-body p-0">
+                                                <div class="card-body p-0 d-flex flex-column">
                                                     <div id="contenedorActivos" class="activos-lista">
                                                         <div class="activos-empty text-center text-muted py-4">
                                                             <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
@@ -614,8 +593,25 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                                         <i class="fas fa-file-csv mr-1"></i> Exportar CSV
                                                     </button>
                                                 </div>
-                                                
+
                                                 -->
+                                            </div>
+                                        </div>
+                                        <!-- Columna derecha: Calendario de Vacaciones (más grande) -->
+                                        <div class="col-lg-7 mb-4">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-umbrella-beach mr-2"></i>Mis Vacaciones</h6>
+                                                    <small class="text-muted"><strong class="text-dark"><span id="diasDispPanel">0</span> días disp.</strong> · <strong class="text-dark"><span id="diasSolPanel">0</span> solicitados</strong></small>
+                                                </div>
+                                                <div class="card-body d-flex flex-column">
+                                                    <div class="d-flex align-items-center mb-2" style="gap: 0.75rem; font-size:.8rem;">
+                                                        <span><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#050D9E; border-radius:.15rem; vertical-align:middle;"></span>Yo</span>
+                                                        <span id="leyendaVacacionesEquipo" class="d-none"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
+                                                        <span id="leyendaVacacionesDepartamento"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
+                                                    </div>
+                                                    <div id="calendarVacaciones"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1457,7 +1453,8 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
             calendarVacaciones = new FullCalendar.Calendar(el, {
                 initialView: 'dayGridMonth',
                 locale: 'es',
-                height: 500,
+                height: '100%',
+                expandRows: true,
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
