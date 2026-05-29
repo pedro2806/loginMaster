@@ -52,11 +52,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     try {
         // Configuración SMTP
         $mail->isSMTP();
+        $mail->SMTPDebug = 2; // PONER EN 0 SI NO QUIERES QUE SALGA EL LOG EN LA PANTALLA
+                          //PONER EN 2 PARA DEPURACION DETALLADA
         $mail->Host       = 'smtp.gmail.com'; 
         $mail->SMTPAuth   = true;
         $mail->Username   = 'mess.metrologia@gmail.com';
         $mail->Password   = 'hglidvwsxcbbefhe';
-        $mail->SMTPSecure = 'ssl'; //PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->SMTPSecure =  PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 465; //desarrollo 587, produccion 465 con SSL
         $mail->CharSet    = 'UTF-8';
         
