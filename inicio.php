@@ -7,6 +7,25 @@ if (empty($_COOKIE['noEmpleadoL'])) {
 }
 $empleadosAdmin = [276, 403, 569, 523, 183];
 $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosAdmin);
+
+// Acceso especial a la pestaña KPI's (tabla accesos_especiales, gestionada desde modalAccesosEspeciales.php).
+// El campo inf_adicional guarda el pk (contraseña) que se inyecta al iframe de KPIs.
+$tieneKpis = false;
+$kpisPk = '';
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $noEmpKpis = intval($_COOKIE['noEmpleadoL']);
+    $stmtKpis = $conn->prepare("SELECT inf_adicional FROM accesos_especiales
+                                WHERE noEmpleado = ? AND sistema = 'kpis' AND opcion = 'verKpis' AND estatus = 1
+                                LIMIT 1");
+    $stmtKpis->bind_param("i", $noEmpKpis);
+    $stmtKpis->execute();
+    $rowKpis = $stmtKpis->get_result()->fetch_assoc();
+    if ($rowKpis) {
+        $tieneKpis = true;
+        $kpisPk = trim((string)$rowKpis['inf_adicional']);
+    }
+    $stmtKpis->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -185,12 +204,14 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                         <span id="statusTabVehiculo" class="tab-status" title="Estatus de vehículo"></span>
                                     </button>
                                 </li>
+                                <?php if ($tieneKpis): ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
+                                <?php endif; ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab">
                                         <i class="fas fa-address-book mr-1"></i> Directorio
@@ -627,19 +648,19 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                                 </div>
 
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
+                                <?php if ($tieneKpis): ?>
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
-
-
-
                                     <div id="frameKPIs">
                                         <div class="text-center text-muted py-5">
                                             <?php
-                                            $passkpis = isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '';
+                                            // pk = inf_adicional del acceso especial; si está vacío, se usa la cookie como respaldo.
+                                            $passkpis = $kpisPk !== '' ? $kpisPk : (isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '');
                                             ?>
-                                            <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo $passkpis; ?>" title="KPIs"></iframe>
+                                            <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo urlencode($passkpis); ?>" title="KPIs"></iframe>
                                         </div>
                                     </div>
                                 </div>
+                                <?php endif; ?>
 
                                 <!-- ===== TAB 7: DIRECTORIO ===== -->
                                 <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
@@ -700,21 +721,17 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
                     </div>
                 </div>
             </div>
-         
-
             <!-- Footer -->
-<footer class="sticky-footer">
-    <div class="container my-auto">
-        <div class="copyright text-center my-auto">
-            <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
-            <div class="fb-footer-links">
-                Business Intelligence | Messbook © <?php echo date("Y"); ?>
-            </div>
-        </div>
-    </div>
-</footer>
-
-
+            <footer class="sticky-footer">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
+                        <div class="fb-footer-links">
+                            Business Intelligence | Messbook © <?php echo date("Y"); ?>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 
