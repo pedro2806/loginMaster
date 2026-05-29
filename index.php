@@ -52,18 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     try {
         // Configuración SMTP
         $mail->isSMTP();
-        $mail->SMTPDebug = 2; // PONER EN 0 SI NO QUIERES QUE SALGA EL LOG EN LA PANTALLA
+        $mail->SMTPDebug = 0; // PONER EN 0 SI NO QUIERES QUE SALGA EL LOG EN LA PANTALLA
                           //PONER EN 2 PARA DEPURACION DETALLADA
         $mail->Host       = 'smtp.gmail.com'; 
         $mail->SMTPAuth   = true;
         $mail->Username   = 'mess.metrologia@gmail.com';
         $mail->Password   = 'hglidvwsxcbbefhe';
         $mail->SMTPSecure =  PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 465; //desarrollo 587, produccion 465 con SSL
+        $mail->Port       = 587; //desarrollo 587, produccion 465 con SSL
         $mail->CharSet    = 'UTF-8';
         
         // Remitente y destinatario
-        $mail->setFrom('no-reply@messbook.com.mx', 'Messbook');
+        $mail->setFrom('mess.metrologia@gmail.com', 'Messbook');
         $mail->addAddress($email);
         $mail->addReplyTo('sebastian.gutierrez@mess.com.mx', 'Soporte Messbook');
         
