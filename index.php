@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
     
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
+    $mail =  new PHPMailer(true);
     
     try {
         // Configuración SMTP
