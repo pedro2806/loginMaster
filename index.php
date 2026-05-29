@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $mail->SMTPAuth   = true;
         $mail->Username   = 'mess.metrologia@gmail.com';
         $mail->Password   = 'hglidvwsxcbbefhe';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->SMTPSecure = 'ssl'; //PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 465; //desarrollo 587, produccion 465 con SSL
         $mail->CharSet    = 'UTF-8';
         
