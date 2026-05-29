@@ -459,7 +459,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-bullhorn mr-2"></i>Mural / Tablero de avisos</h6>
                                                 </div>
                                                 <div class="card-body p-2">
-                                                    <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-MAYO26_compressed.pdf' type="application/pdf" width="100%" height="600px" />
+                                                    <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-JUNIO_compressed.pdf' type="application/pdf" width="100%" height="600px" />
                                                 </div>
                                             </div>
                                         </div>
