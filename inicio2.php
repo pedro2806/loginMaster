@@ -190,6 +190,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
+                                <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
                                         <i class="fas fa-folder-open mr-1"></i> Expediente
@@ -197,6 +198,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
+                                --->
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
                                         <i class="fas fa-car mr-1"></i> Vehículo
