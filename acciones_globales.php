@@ -2,10 +2,10 @@
 header('Content-Type: application/json');
 include '../incidencias/conn.php';
 
-$accion = $_POST["accion"];
-$noEmpleado = $_POST["noEmpleado"];
-$sistema = $_POST["sistema"];
-$opcion = $_POST["opcion"];
+$accion = $_POST["accion"] ?? '';
+$noEmpleado = $_POST["noEmpleado"] ?? '';
+$sistema = $_POST["sistema"] ?? '';
+$opcion = $_POST["opcion"] ?? '';
 
 // Variables para notificaciones
 $id_usuario_Destino = $_COOKIE['noEmpleadoL'] ?? 0;
