@@ -53,8 +53,8 @@ if ($accion == 'Ingresar') {
         } else if ($password === $row['password']) {
             // Fallback para contraseñas viejas sin hash
             $nuevo_hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt_up = $conn->prepare("UPDATE usuarios SET password = ? WHERE id_usuario = ?");
-            $stmt_up->bind_param('si', $nuevo_hash, $row['id_usuario']);
+            $stmt_up = $conn->prepare("UPDATE usuarios SET password = ? WHERE noEmpleado = ?");
+            $stmt_up->bind_param('si', $nuevo_hash, $row['noEmpleado']);
             $stmt_up->execute();
             $stmt_up->close();
             
