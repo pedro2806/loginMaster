@@ -25,13 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
     
-    $stmt = $conn->prepare("SELECT password_restaurar FROM usuarios WHERE correo = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT password_restaurar FROM usuarios WHERE correo = ? AND estatus ='1' LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'El correo no está registrado']);
+        echo json_encode(['success' => false, 'message' => 'El correo no está registrado o el usuario esta dado de baja']);
         $stmt->close();
         $conn->close();
         exit;

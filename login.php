@@ -23,7 +23,7 @@ if ($accion == 'Ingresar') {
     $sql = "SELECT u.id_usuario, u.usuario, u.nombre, u.noEmpleado, u.rol, u.correo, u.password, u.foto, k.Password_KPI
     FROM usuarios u 
     LEFT JOIN accesos_kpis k ON u.correo = k.Correo
-    WHERE u.usuario = ? OR u.correo = ?";                
+    WHERE (u.usuario = ? OR u.correo = ?) AND u.estatus = '1'";                
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $emailValido, $emailValido);
     $stmt->execute();
