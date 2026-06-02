@@ -293,11 +293,67 @@ if ($accion == 'obtener_asistencias') {
     }
 
     echo json_encode([
-        'success' => true, 
+        'success' => true,
         'asistencias' => $asistenciasData
     ]);
-    
+
     $conn->close();
+    exit;
+}
+
+// SUBIR PDF DEL MURAL (solo admins de RRHH) — reemplaza el PDF vigente
+if ($accion == 'subir_mural') {
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+
+    // Mismo conjunto de admins que en inicio.php
+    $empleadosAdmin = [276, 403, 569, 523, 183];
+    $noEmpSesion = isset($_COOKIE['noEmpleadoL']) ? intval($_COOKIE['noEmpleadoL']) : 0;
+    if (!in_array($noEmpSesion, $empleadosAdmin, true)) {
+        echo json_encode(['success' => false, 'message' => 'No tienes permisos para actualizar el mural.']);
+        exit;
+    }
+
+    if (!isset($_FILES['mural']) || $_FILES['mural']['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(['success' => false, 'message' => 'No se recibió el archivo o hubo un error en la carga.']);
+        exit;
+    }
+
+    $archivo = $_FILES['mural'];
+
+    // Tamaño máximo: 20 MB
+    if ($archivo['size'] > 20 * 1024 * 1024) {
+        echo json_encode(['success' => false, 'message' => 'El archivo supera el tamaño máximo de 20 MB.']);
+        exit;
+    }
+
+    // Validar que realmente sea un PDF (extensión + tipo MIME del contenido)
+    $ext  = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $archivo['tmp_name']);
+    finfo_close($finfo);
+    if ($ext !== 'pdf' || $mime !== 'application/pdf') {
+        echo json_encode(['success' => false, 'message' => 'Solo se permiten archivos PDF.']);
+        exit;
+    }
+
+    $dir = __DIR__ . '/uploads/mural/';
+    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        echo json_encode(['success' => false, 'message' => 'No se pudo crear el directorio de destino.']);
+        exit;
+    }
+
+    $destino = $dir . 'mural_actual.pdf';
+    if (!move_uploaded_file($archivo['tmp_name'], $destino)) {
+        echo json_encode(['success' => false, 'message' => 'No se pudo guardar el archivo en el servidor.']);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Mural actualizado correctamente.',
+        'src' => 'uploads/mural/mural_actual.pdf?v=' . time()
+    ]);
     exit;
 }
 ?>
