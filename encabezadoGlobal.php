@@ -55,10 +55,8 @@
 
     // Función para leer cookies
     function getCookie(name) {
-        let value = "; " + document.cookie;
-        let parts = value.split("; " + name + "=");
-        if (parts.length === 2) return parts.pop().split(";").shift();
-        return null; // Si no encuentra la cookie, retorna null
+        const cookies = new URLSearchParams(document.cookie.replace(/; /g, '&'));
+        return cookies.get(name) || undefined;
     }
 
     // Función para escapar caracteres especiales en HTML

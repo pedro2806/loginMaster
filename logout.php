@@ -18,14 +18,27 @@
 	<script type="text/javascript" class="init">
 	
 $(document).ready(function() {
-    //document.cookie = "antiguedad='.$antiguedad.';expires=" + new Date(Date.now() + 9600000).toUTCString() + ";SameSite=Lax;";
-	document.cookie = "antiguedad=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-	document.cookie = "correo=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-	document.cookie = "diasD=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-	document.cookie = "id_usuario=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-	document.cookie = "noEmpleado=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-	document.cookie = "nombredelusuario=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-	document.cookie = "rol=00; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+	// Cerrar sesión de loginMaster: borrar TODAS las cookies.
+	var expirada = "Thu, 01 Jan 1970 00:00:00 UTC";
+	var paths = ['/', '/Tickets', '/loginMaster'];
+
+	// Cookies visibles desde esta página (path=/ y /loginMaster).
+	document.cookie.split(';').forEach(function (c) {
+		var eq = c.indexOf('=');
+		var name = (eq > -1 ? c.substr(0, eq) : c).trim();
+		if (!name) return;
+		document.cookie = name + "=; expires=" + expirada + ";";
+		paths.forEach(function (p) {
+			document.cookie = name + "=; expires=" + expirada + "; path=" + p + ";";
+		});
+	});
+
+	// Cookies *BI: viven en path=/Tickets y no son visibles aquí, se borran por nombre.
+	['id_usuarioBI','nombredelusuarioBI','noEmpleadoBI','rolBI','correoBI','fotoBI'].forEach(function (c) {
+		paths.forEach(function (p) {
+			document.cookie = c + "=; expires=" + expirada + "; path=" + p + ";";
+		});
+	});
 
     window.location.assign("index.php")
 } );
