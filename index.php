@@ -356,7 +356,6 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
         });
     }
     // ===== FIN MODAL RECUPERAR CONTRASEÑA =====
-    
     function validaSesion() {
         var usuario = $('#InputEmail').val(); 
         var password = $('#InputPassword').val();
@@ -411,13 +410,14 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
                         document.cookie = `fotoL=${encodeURIComponent(data.foto)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `UsrKpis=${encodeURIComponent(data.kpis)}; expires=${expires}; SameSite=Lax; path=/;`;
 
-                        // Cookies para Tickets BI (mismo valor que las *L, sufijo BI)
-                        document.cookie = `id_usuarioBI=${encodeURIComponent(data.id)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `nombredelusuarioBI=${encodeURIComponent(data.nombre)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `noEmpleadoBI=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `rolBI=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `correoBI=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `fotoBI=${encodeURIComponent(data.foto)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        // Cookies para Tickets BI (mismo valor que las *L, sufijo BI).
+                        // Acotadas a path=/Tickets para que solo existan dentro del sistema de tickets BI.
+                        document.cookie = `id_usuarioBI=${encodeURIComponent(data.id)}; expires=${expires}; SameSite=Lax; path=/Tickets;`;
+                        document.cookie = `nombredelusuarioBI=${encodeURIComponent(data.nombre)}; expires=${expires}; SameSite=Lax; path=/Tickets;`;
+                        document.cookie = `noEmpleadoBI=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/Tickets;`;
+                        document.cookie = `rolBI=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/Tickets;`;
+                        document.cookie = `correoBI=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/Tickets;`;
+                        document.cookie = `fotoBI=${encodeURIComponent(data.foto)}; expires=${expires}; SameSite=Lax; path=/Tickets;`;
                     });
 
                     window.location.href = 'inicio';
