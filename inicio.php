@@ -454,12 +454,26 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     <div class="row">
                                         <!-- Mural / Tablero (solo PDF) -->
                                         <div class="col-lg-7 mb-4">
+                                            <?php
+                                            // El mural se sirve desde el archivo local subido por RRHH (uploads/mural/mural_actual.pdf).
+                                            // Si aún no se ha subido ninguno, se muestra el PDF histórico de WordPress como respaldo.
+                                            $muralLocal = __DIR__ . '/uploads/mural/mural_actual.pdf';
+                                            $muralSrc = file_exists($muralLocal)
+                                                ? 'uploads/mural/mural_actual.pdf?v=' . filemtime($muralLocal)
+                                                : 'https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-JUNIO_compressed.pdf';
+                                            ?>
                                             <div class="card shadow-sm h-100">
-                                                <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
+                                                <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--card-soft); border-color: var(--border);">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-bullhorn mr-2"></i>Mural / Tablero de avisos</h6>
+                                                    <?php if ($esAdmin): ?>
+                                                    <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('inputMural').click()" title="Subir un nuevo PDF para el mural">
+                                                        <i class="fas fa-upload mr-1"></i> Actualizar mural
+                                                    </button>
+                                                    <input type="file" id="inputMural" accept="application/pdf" style="display:none" onchange="subirMural(this)">
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div class="card-body p-2">
-                                                    <embed id="vistaPrevia" src='https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-JUNIO_compressed.pdf' type="application/pdf" width="100%" height="600px" />
+                                                    <embed id="vistaPrevia" src='<?php echo $muralSrc; ?>' type="application/pdf" width="100%" height="600px" />
                                                 </div>
                                             </div>
                                         </div>
@@ -687,12 +701,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 
                                 <!-- ===== TAB 8: TICKETS (embebido vía iframe a /Tickets/) ===== -->
                                 <div class="tab-pane fade" id="tabTickets" role="tabpanel">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div>
-                                            <h4 class="mb-1" style="color: var(--accent);">Tickets</h4>
-                                            <p class="text-muted mb-0 small">Crea solicitudes para el equipo BI y consulta el seguimiento.</p>
-                                        </div>
-                                    </div>
                                     <ul class="nav nav-tabs" id="subTabsTickets" role="tablist">
                                         <li class="nav-item" role="presentation">
                                             <button class="nav-link active" id="subTabNuevo-tab" data-toggle="tab" data-target="#subTabNuevo" type="button" role="tab">
@@ -709,12 +717,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <div class="tab-pane fade show active" id="subTabNuevo" role="tabpanel">
                                             <iframe id="iframeTicketsNuevo"
                                                     data-src="../Tickets/embed_nuevo.php"
-                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
+                                                    scrolling="no"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem; overflow:hidden;"></iframe>
                                         </div>
                                         <div class="tab-pane fade" id="subTabMis" role="tabpanel">
                                             <iframe id="iframeTicketsMis"
                                                     data-src="../Tickets/embed_mis.php"
-                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
+                                                    scrolling="no"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem; overflow:hidden;"></iframe>
                                         </div>
                                     </div>
                                 </div>
@@ -1196,12 +1206,43 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 if (!expedienteCargado) cargarMiExpediente();
             });
 
+            // Ajusta el alto del iframe (mismo origen) al de su contenido, para
+            // que no necesite scroll propio. Reintenta tras la carga por fuentes/
+            // imágenes y observa cambios de tamaño del contenido si es posible.
+            function autoAjustarIframe($f) {
+                var ifr = $f[0];
+                function fit() {
+                    try {
+                        var doc = ifr.contentWindow.document;
+                        var h = Math.max(
+                            doc.body ? doc.body.scrollHeight : 0,
+                            doc.documentElement ? doc.documentElement.scrollHeight : 0
+                        );
+                        if (h > 0) $f.css('height', h + 'px');
+                    } catch (e) { /* distinto origen: no se puede medir */ }
+                }
+                $f.on('load', function() {
+                    fit();
+                    setTimeout(fit, 300);
+                    setTimeout(fit, 800);
+                    try {
+                        var doc = ifr.contentWindow.document;
+                        if (window.ResizeObserver && doc.body) {
+                            new ResizeObserver(fit).observe(doc.body);
+                        }
+                    } catch (e) {}
+                });
+            }
+
             // Tickets: lazy-load del iframe activo (evita cargar ambos al inicio)
             function cargarIframeTickets(target) {
                 var $f = $(target);
                 if (!$f.length) return;
                 var src = $f.data('src');
-                if (src && !$f.attr('src')) $f.attr('src', src);
+                if (src && !$f.attr('src')) {
+                    autoAjustarIframe($f);
+                    $f.attr('src', src);
+                }
             }
             $('#tabTickets-tab').on('shown.bs.tab', function() {
                 // Por defecto la sub-tab activa es "Nuevo Ticket"
@@ -2704,6 +2745,55 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         function getCookie(name) {
             const cookies = new URLSearchParams(document.cookie.replace(/; /g, '&'));
             return cookies.get(name) || undefined;
+        }
+
+        // ===== Mural / Tablero de avisos =====
+        function subirMural(input) {
+            if (!input.files || !input.files.length) return;
+            var file = input.files[0];
+
+            if (file.type !== 'application/pdf' || !/\.pdf$/i.test(file.name)) {
+                Swal.fire('Archivo inválido', 'Solo se permiten archivos PDF.', 'warning');
+                input.value = '';
+                return;
+            }
+            if (file.size > 20 * 1024 * 1024) {
+                Swal.fire('Archivo muy grande', 'El PDF no debe superar los 20 MB.', 'warning');
+                input.value = '';
+                return;
+            }
+
+            var fd = new FormData();
+            fd.append('accion', 'subir_mural');
+            fd.append('noEmpleado', getCookie('noEmpleadoL') || '');
+            fd.append('mural', file);
+
+            Swal.fire({
+                title: 'Subiendo mural...',
+                allowOutsideClick: false,
+                didOpen: function() { Swal.showLoading(); }
+            });
+
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                dataType: 'json'
+            }).done(function(res) {
+                if (res && res.success) {
+                    var emb = document.getElementById('vistaPrevia');
+                    if (emb && res.src) emb.src = res.src;
+                    Swal.fire('¡Mural actualizado!', 'El nuevo PDF ya está visible para todos.', 'success');
+                } else {
+                    Swal.fire('Error', (res && res.message) || 'No se pudo actualizar el mural.', 'error');
+                }
+            }).fail(function() {
+                Swal.fire('Error', 'No se pudo contactar al servidor.', 'error');
+            }).always(function() {
+                input.value = '';
+            });
         }
 
         // ===== Tallas =====
