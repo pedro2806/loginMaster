@@ -190,7 +190,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
-                                <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
                                         <i class="fas fa-folder-open mr-1"></i> Expediente
@@ -198,7 +197,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <span id="statusTabExpediente" class="tab-status" title="Estatus de expediente"></span>
                                     </button>
                                 </li>
-                                --->
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
                                         <i class="fas fa-car mr-1"></i> Vehículo
@@ -1265,6 +1263,11 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             }, 50);
             cargarPanelNotificaciones();
             if (!misActivosCargados) cargarMisActivos();
+
+            // El semáforo del tab Expediente refleja el estatus del expediente
+            // propio. Se precarga al iniciar (sin abrir la pestaña ni montar la
+            // tabla del equipo) para que no quede gris hasta entrar al tab.
+            precargarSemaforoExpediente();
 
             $('#btnExportarActivosCSV').on('click', exportarActivosCSV);
 
@@ -2731,6 +2734,30 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 Swal.fire('Error', 'No se pudo contactar al servidor.', 'error');
             });
         });
+
+        // Precarga ligera del semáforo del tab Expediente al cargar la página.
+        // Consulta solo el expediente propio y calcula ok/total sin renderizar la
+        // matriz ni montar el DataTable de equipo (que se inicializa oculto y
+        // rompería el dimensionado de columnas). No toca `expedienteCargado`, así
+        // que la carga completa sigue ocurriendo al abrir la pestaña.
+        function precargarSemaforoExpediente() {
+            var noEmp = parseInt(getCookie('noEmpleadoL')) || 0;
+            if (!noEmp) return;
+            $.ajax({
+                url: EXPEDIENTE_URL,
+                type: 'POST',
+                dataType: 'json',
+                data: { action: 'obtener_expediente', id_usuario: noEmp }
+            }).done(function(resp) {
+                if (!resp || resp.status !== 'success') return;
+                var lista = resp.data || [];
+                var ok = 0;
+                lista.forEach(function(req) {
+                    if (req.estatus_general === 'Aprobado') ok++;
+                });
+                actualizarSemaforoExpediente(ok, lista.length);
+            });
+        }
 
         // Semáforo del tab Expediente: verde si todo aprobado, rojo si nada, amarillo si parcial.
         function actualizarSemaforoExpediente(ok, total) {
