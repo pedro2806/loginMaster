@@ -2,5 +2,5 @@ node_modules
 settings.json
 /uploads
 /.claude
-/img/ProfilePictures
-/img/VehiclePictures
+/img/ProfilePictures/*
+/img/VehiclePictures/*
