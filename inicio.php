@@ -1929,15 +1929,37 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             var btnCls  = abierto ? ''          : ' collapsed';
             var spinner = '<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i></div>';
 
+            // Enlace a la Tenencia 2026 (PDF en TENENCIAS_2026/<placa>.pdf). Va fuera del botón
+            // del accordion para que no dispare el colapso al hacer clic.
+            var placaT = (placa || '').trim();
+            var tenenciaBtn = placaT
+                ? '<a href="TENENCIAS_2026/' + encodeURIComponent(placaT) + '.pdf" target="_blank" rel="noopener noreferrer" '
+                +     'class="btn btn-info btn-sm text-white mr-2 flex-shrink-0" title="Tenencia 2026 de ' + placaT + '" '
+                +     'onclick="event.stopPropagation();">'
+                +   '<i class="fas fa-file-pdf mr-1"></i>Tenencia 2026'
+                + '</a>'
+                : '';
+            // Enlace a la Póliza 2026: el PDF (POLIZAS_2026/POLIZA <num> <placa>.pdf) se localiza
+            // por placa vía poliza.php, porque el nombre lleva un prefijo variable.
+            var polizaBtn = placaT
+                ? '<a href="poliza.php?placa=' + encodeURIComponent(placaT) + '" target="_blank" rel="noopener noreferrer" '
+                +     'class="btn btn-success btn-sm text-white mr-2 flex-shrink-0" title="Póliza 2026 de ' + placaT + '" '
+                +     'onclick="event.stopPropagation();">'
+                +   '<i class="fas fa-file-contract mr-1"></i>Póliza 2026'
+                + '</a>'
+                : '';
+
             return ''
                 + '<div class="card shadow-sm mb-3" data-vehiculo="' + idVeh + '">'
-                +   '<div class="card-header p-0" id="headingV-' + idVeh + '" style="background: var(--card-soft); border-color: var(--border);">'
-                +     '<button class="btn btn-link w-100 text-left py-2 px-3 d-flex align-items-center justify-content-between font-weight-bold' + btnCls + '" '
+                +   '<div class="card-header p-0 d-flex align-items-center" id="headingV-' + idVeh + '" style="background: var(--card-soft); border-color: var(--border);">'
+                +     '<button class="btn btn-link flex-grow-1 text-left py-2 px-3 d-flex align-items-center justify-content-between font-weight-bold' + btnCls + '" '
                 +             'style="color: var(--text); text-decoration:none;" '
                 +             'type="button" data-toggle="collapse" data-target="#collapseV-' + idVeh + '" aria-expanded="' + (abierto ? 'true' : 'false') + '" aria-controls="collapseV-' + idVeh + '">'
                 +       '<span><i class="fas fa-car mr-2"></i>' + titulo + '</span>'
                 +       '<i class="fas fa-chevron-down"></i>'
                 +     '</button>'
+                +     tenenciaBtn
+                +     polizaBtn
                 +   '</div>'
                 +   '<div id="collapseV-' + idVeh + '" class="collapse' + shown + '" aria-labelledby="headingV-' + idVeh + '" data-parent="#accordionVehiculos">'
                 +     '<div class="card-body p-2">'
