@@ -448,6 +448,19 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- COTIZADOR IA -->
+                                        <?php if ($tieneCotizador): ?>
+                                        <div class="col-md-3 mb-3" id="divCotizadorIA">
+                                            <div class="card card-action shadow-sm">
+                                                <div class="card-body text-center">
+                                                    <a href="http://192.168.2.235/messIAs/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-block">
+                                                        <i class="fas fa-robot fa-lg d-block mb-2"></i> Cotizador IA
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
 
