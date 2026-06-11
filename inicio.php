@@ -448,6 +448,19 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- COTIZADOR IA -->
+                                        <?php if ($tieneCotizador): ?>
+                                        <div class="col-md-3 mb-3" id="divCotizadorIA">
+                                            <div class="card card-action shadow-sm">
+                                                <div class="card-body text-center">
+                                                    <a href="http://192.168.2.235/messIAs/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-block">
+                                                        <i class="fas fa-robot fa-lg d-block mb-2"></i> Cotizador IA
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
 
@@ -712,14 +725,8 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <!-- ===== TAB: COTIZADOR IA ===== -->
                                 <?php if ($tieneCotizador): ?>
                                 <div class="tab-pane fade" id="tabCotizador" role="tabpanel">
-                                    <div id="frameCotizador" class="cotizador-launcher">
-                                        <i class="fas fa-robot cotizador-launcher-icon"></i>
-                                        <h4 class="mb-2">Cotizador IA — MessIAs</h4>
-                                        <p class="text-muted mb-4">Optimización de cotizaciones basada en inteligencia analítica y registros históricos.</p>
-                                        <a href="http://192.168.2.235/messIAs/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
-                                            <i class="fas fa-external-link-alt mr-2"></i> Abrir Cotizador IA
-                                        </a>
-                                        <p class="text-muted small mt-3 mb-0">Se abrirá en una pestaña nueva.</p>
+                                    <div id="frameCotizador">
+                                        <iframe src="http://192.168.2.235/messIAs/" title="Cotizador IA"></iframe>
                                     </div>
                                 </div>
                                 <?php endif; ?>
