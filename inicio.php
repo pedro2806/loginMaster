@@ -713,7 +713,9 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <?php if ($tieneCotizador): ?>
                                 <div class="tab-pane fade" id="tabCotizador" role="tabpanel">
                                     <div id="frameCotizador">
-                                        <iframe src="http://192.168.2.235/messIAs/" title="Cotizador IA"></iframe>
+                                        <iframe id="iframeCotizador"
+                                                data-src="http://192.168.2.235/messIAs/"
+                                                title="Cotizador IA"></iframe>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -1248,6 +1250,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             });
             $('#tabExpediente-tab').on('shown.bs.tab', function() {
                 if (!expedienteCargado) cargarMiExpediente();
+            });
+
+            // Cotizador IA: lazy-load del iframe (evita cargar la IP interna
+            // al abrir inicio.php; sólo se carga al entrar a la pestaña).
+            $('#tabCotizador-tab').on('shown.bs.tab', function() {
+                var $f = $('#iframeCotizador');
+                var src = $f.data('src');
+                if (src && !$f.attr('src')) $f.attr('src', src);
             });
 
             // Ajusta el alto del iframe (mismo origen) al de su contenido, para
