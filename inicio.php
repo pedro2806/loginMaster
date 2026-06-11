@@ -26,6 +26,20 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     }
     $stmtKpis->close();
 }
+
+// Acceso a la pestaña Cotizador IA (tabla accesos, sistema = 'divCotizadorIA',
+// gestionada desde el modal "ACCESOS" → modalAccesoSistemas.php).
+$tieneCotizador = false;
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $noEmpCot = intval($_COOKIE['noEmpleadoL']);
+    $stmtCot = $conn->prepare("SELECT id FROM accesos
+                               WHERE noEmpleado = ? AND sistema = 'divCotizadorIA' AND estatus = 1
+                               LIMIT 1");
+    $stmtCot->bind_param("i", $noEmpCot);
+    $stmtCot->execute();
+    $tieneCotizador = (bool) $stmtCot->get_result()->fetch_assoc();
+    $stmtCot->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -211,6 +225,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <?php endif; ?>
+                                <?php if ($tieneCotizador): ?>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabCotizador-tab" data-toggle="tab" data-target="#tabCotizador" type="button" role="tab">
+                                        <i class="fas fa-robot mr-1"></i> Cotizador IA
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -683,6 +705,15 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                             ?>
                                             <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo urlencode($passkpis); ?>" title="KPIs"></iframe>
                                         </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+
+                                <!-- ===== TAB: COTIZADOR IA ===== -->
+                                <?php if ($tieneCotizador): ?>
+                                <div class="tab-pane fade" id="tabCotizador" role="tabpanel">
+                                    <div id="frameCotizador">
+                                        <iframe src="http://192.168.2.235/messIAs/" title="Cotizador IA"></iframe>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -1185,6 +1216,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 'tabPersonal-tab':   'Mi Espacio',
                 'tabVehiculo-tab':   'Vehículo',
                 'tabKpis-tab':       "KPI's",
+                'tabCotizador-tab':  'Cotizador IA',
                 'tabDirectorio-tab': 'Directorio'
             };
             $('#mainTabs button[data-toggle="tab"]').on('shown.bs.tab', function(e) {

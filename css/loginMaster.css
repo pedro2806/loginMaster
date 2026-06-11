@@ -1282,6 +1282,19 @@ body.theme-dark .fc-col-header-cell {
     margin: 0 !important;
 }
 
+#tabCotizador #frameCotizador {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#tabCotizador iframe {
+    display: block !important;
+    width: 100% !important;
+    height: calc(100vh - 140px) !important;
+    border: none !important;
+    margin: 0 !important;
+}
+
 .profile-avatar {
     padding-top: 35px !important;
     display: flex !important;
