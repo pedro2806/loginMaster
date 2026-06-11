@@ -15,6 +15,26 @@ $accionV = $_POST['accionV'] ?? '';
 
 $emailValido = trim(strtolower($email));
 
+// === HISTORIAL DE ACCESOS ===
+// Registra cada intento de entrada (exitoso o fallido) en accesos_historial.
+// Es no-bloqueante: si algo falla aquí, el login continúa sin interrupciones.
+// $accion describe el tipo de evento: 'inicio_sesion' hoy; a futuro p.ej. 'acceso_sistema'.
+function registrarAcceso($conn, $resultado, $motivo, $entrada, $idUsuario = null, $usuario = null, $noEmpleado = null, $accion = 'inicio_sesion') {
+    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+    if (strpos($ip, ',') !== false) { $ip = trim(explode(',', $ip)[0]); } // primer IP si viene tras proxy
+    $ip = substr($ip, 0, 45);
+    $navegador = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 512);
+
+    $sql = "INSERT INTO accesos_historial
+                (id_usuario, usuario, noEmpleado, entrada_login, resultado, motivo, ip, navegador, fecha_acceso, accion)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) { return; }
+    $stmt->bind_param('isissssss', $idUsuario, $usuario, $noEmpleado, $entrada, $resultado, $motivo, $ip, $navegador, $accion);
+    $stmt->execute();
+    $stmt->close();
+}
+
 // === LOGIN PRINCIPAL ===
 if ($accion == 'Ingresar') {
     $datosUsr = [];        
@@ -38,8 +58,10 @@ if ($accion == 'Ingresar') {
             $_SESSION['usuario'] = $row['usuario'];
             $_SESSION['nombre'] = $row['nombre'];
             $_SESSION['rol'] = $row['rol'];
-            
-            $datosUsr[] = [                
+
+            registrarAcceso($conn, 'exito', null, $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
+
+            $datosUsr[] = [
                 'id' => $row['id_usuario'],
                 'usuario' => $row['usuario'],
                 'nombre' => $row['nombre'],
@@ -57,13 +79,15 @@ if ($accion == 'Ingresar') {
             $stmt_up->bind_param('si', $nuevo_hash, $row['noEmpleado']);
             $stmt_up->execute();
             $stmt_up->close();
-            
+
             $_SESSION['id_usuario'] = $row['id_usuario'];
             $_SESSION['usuario'] = $row['usuario'];
             $_SESSION['nombre'] = $row['nombre'];
             $_SESSION['rol'] = $row['rol'];
-            
-            $datosUsr[] = [                
+
+            registrarAcceso($conn, 'exito', null, $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
+
+            $datosUsr[] = [
                 'id' => $row['id_usuario'],
                 'usuario' => $row['usuario'],
                 'nombre' => $row['nombre'],
@@ -75,13 +99,17 @@ if ($accion == 'Ingresar') {
             ];
             
         } else {
+            registrarAcceso($conn, 'fallido', 'password_incorrecto', $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
             echo json_encode([]);
             $stmt->close();
             $conn->close();
             exit;
         }
+    } else {
+        // No existe usuario/correo activo con esa entrada.
+        registrarAcceso($conn, 'fallido', 'usuario_no_encontrado', $emailValido, null, null, null, 'inicio_sesion');
     }
-    
+
     echo json_encode($datosUsr);
     $stmt->close();
     $conn->close();
