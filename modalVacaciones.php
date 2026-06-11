@@ -12,9 +12,10 @@
 
                     <!-- Solicitante -->
                     <div class="form-group" id="mv_divSolicita">
-                        <label class="small font-weight-bold">Solicita para</label>
-                        <select id="mv_solicita" class="form-control form-control-sm" style="width:100%;"></select>
-                        <small class="text-muted">Puedes solicitar para los colaboradores a tu cargo.</small>
+                        <label class="small font-weight-bold">Usuario</label>
+                        <input type="text" id="mv_solicitaNombre" class="form-control form-control-sm" placeholder="Cargando..." readonly>
+                        <input type="hidden" id="mv_solicita">
+                        <small class="text-muted">Para solicitar vacaciones de un colaborador, entra al sistema vacaciones.</small>
                     </div>
 
                     <!-- Tipo de incidencia -->
@@ -222,22 +223,12 @@ function mv_cargarSolicita() {
         method: 'POST', dataType: 'json',
         data: { accion: 'empleadosSolicita' }
     }).done(function (data) {
-        var $sel = $('#mv_solicita');
-        if ($.fn.select2 && $sel.hasClass('select2-hidden-accessible')) {
-            $sel.select2('destroy');
-        }
-        $sel.empty();
-        (data || []).forEach(function (u) {
-            $sel.append($('<option></option>').attr('value', u.noEmpleado).text(u.nombre));
-        });
-        // Autoselecciona al usuario en sesión.
+        // Solo se solicita para uno mismo: muestra el nombre del usuario en sesión
+        // y guarda su noEmpleado en el hidden (lo usan el envío y el aviso de vehículo).
         var yo = mv_cookie('noEmpleadoL');
-        if (yo) $sel.val(yo);
-        // Si sólo se puede solicitar para uno mismo, oculta el selector.
-        $('#mv_divSolicita').toggle((data || []).length > 1);
-        if ($.fn.select2) {
-            $sel.select2({ width: '100%', dropdownParent: $('#modalSolicitarVac') });
-        }
+        $('#mv_solicita').val(yo || '');
+        var miReg = (data || []).filter(function (u) { return String(u.noEmpleado) === String(yo); });
+        $('#mv_solicitaNombre').val(miReg.length ? miReg[0].nombre : '');
     });
 }
 
@@ -351,9 +342,15 @@ function mv_cargarEstatus() {
                 .html('<tr><td colspan="7" class="text-center text-danger py-3">No se pudo cargar la información.</td></tr>');
             return;
         }
-        mv_renderPorAut(data.porAutorizar || []);
-        mv_renderAut(data.autorizadas || []);
-        mv_renderCan(data.canceladas || []);
+        // Más reciente primero: ordena por id (PK autoincremental) descendente.
+        var ordRec = function (arr) {
+            return (arr || []).slice().sort(function (a, b) {
+                return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
+            });
+        };
+        mv_renderPorAut(ordRec(data.porAutorizar));
+        mv_renderAut(ordRec(data.autorizadas));
+        mv_renderCan(ordRec(data.canceladas));
     }).fail(function () {
         $('#mv_bodyPorAut, #mv_bodyAut, #mv_bodyCan')
             .html('<tr><td colspan="7" class="text-center text-danger py-3">Error de conexión.</td></tr>');
