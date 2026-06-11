@@ -712,10 +712,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <!-- ===== TAB: COTIZADOR IA ===== -->
                                 <?php if ($tieneCotizador): ?>
                                 <div class="tab-pane fade" id="tabCotizador" role="tabpanel">
-                                    <div id="frameCotizador">
-                                        <iframe id="iframeCotizador"
-                                                data-src="http://192.168.2.235/messIAs/"
-                                                title="Cotizador IA"></iframe>
+                                    <div id="frameCotizador" class="cotizador-launcher">
+                                        <i class="fas fa-robot cotizador-launcher-icon"></i>
+                                        <h4 class="mb-2">Cotizador IA — MessIAs</h4>
+                                        <p class="text-muted mb-4">Optimización de cotizaciones basada en inteligencia analítica y registros históricos.</p>
+                                        <a href="http://192.168.2.235/messIAs/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-external-link-alt mr-2"></i> Abrir Cotizador IA
+                                        </a>
+                                        <p class="text-muted small mt-3 mb-0">Se abrirá en una pestaña nueva.</p>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -1250,14 +1254,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             });
             $('#tabExpediente-tab').on('shown.bs.tab', function() {
                 if (!expedienteCargado) cargarMiExpediente();
-            });
-
-            // Cotizador IA: lazy-load del iframe (evita cargar la IP interna
-            // al abrir inicio.php; sólo se carga al entrar a la pestaña).
-            $('#tabCotizador-tab').on('shown.bs.tab', function() {
-                var $f = $('#iframeCotizador');
-                var src = $f.data('src');
-                if (src && !$f.attr('src')) $f.attr('src', src);
             });
 
             // Ajusta el alto del iframe (mismo origen) al de su contenido, para
