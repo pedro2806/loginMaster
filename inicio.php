@@ -40,6 +40,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
     <link href="css/loginMaster.css" rel="stylesheet">
+    <link href="css/modales.css" rel="stylesheet">
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
   
 </head>
@@ -637,9 +638,17 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <!-- Columna derecha: Calendario de Vacaciones (más grande) -->
                                         <div class="col-lg-7 mb-4">
                                             <div class="card shadow-sm h-100">
-                                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="background: var(--card-soft); border-color: var(--border);">
+                                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="background: var(--card-soft); border-color: var(--border); gap:.5rem;">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-umbrella-beach mr-2"></i>Mis Vacaciones</h6>
-                                                    <small class="text-muted"><strong class="text-dark"><span id="diasDispPanel">0</span> días disp.</strong> · <strong class="text-dark"><span id="diasSolPanel">0</span> solicitados</strong></small>
+                                                    <div class="d-flex align-items-center flex-wrap" style="gap:.5rem;">
+                                                        <button type="button" class="btn btn-sm mv-btn-accent shadow-sm" data-toggle="modal" data-target="#modalSolicitarVac">
+                                                            <i class="fas fa-plus-circle mr-1"></i>Solicitar
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm mv-btn-ghost shadow-sm" data-toggle="modal" data-target="#modalEstatusVac">
+                                                            <i class="fas fa-list-ul mr-1"></i>Estatus
+                                                        </button>
+                                                        <small class="text-muted"><strong class="text-dark"><span id="diasDispPanel">0</span> días disp.</strong> · <strong class="text-dark"><span id="diasSolPanel">0</span> solicitados</strong></small>
+                                                    </div>
                                                 </div>
                                                 <div class="card-body d-flex flex-column">
                                                     <div class="d-flex align-items-center mb-2" style="gap: 0.75rem; font-size:.8rem;">
@@ -958,6 +967,9 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 
     <!-- Modal Acceso a Sistemas -->
     <?php include 'modalAccesoSistemas.php'; ?>
+
+    <!-- Modales Mis Vacaciones: Solicitar + Estatus -->
+    <?php include 'modalVacaciones.php'; ?>
 
     <!-- Modal: Detalle / Validación del Expediente del Subordinado (Vista Jefe) -->
     <div class="modal fade" id="modalDetalleExpedienteJefe" tabindex="-1" role="dialog" aria-hidden="true">

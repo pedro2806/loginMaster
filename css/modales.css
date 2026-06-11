@@ -1,0 +1,189 @@
+/* ============================================================
+   modales.css — Diseño unificado de los modales de loginMaster.
+   Homologa todos los modales a la paleta de loginMaster.css
+   (variables --accent, --header-gradient, --card-bg, --border,
+   --text, --text-muted...), con soporte de tema claro/oscuro.
+
+   Los colores semánticos (success/info/primary/warning/danger)
+   se conservan ÚNICAMENTE en los badges dentro de las tablas.
+
+   Se empieza por los modales de "Mis Vacaciones":
+     #modalSolicitarVac  y  #modalEstatusVac
+   Conforme se homologuen más modales, se agregan sus IDs a
+   los selectores .mdl-* o se añaden secciones aquí.
+   ============================================================ */
+
+/* ---- Estructura base del modal ---- */
+#modalSolicitarVac .modal-content,
+#modalEstatusVac   .modal-content {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    overflow: hidden;
+}
+
+#modalSolicitarVac .modal-header,
+#modalEstatusVac   .modal-header {
+    background: var(--header-gradient);
+    color: #fff;
+    border-bottom: none;
+}
+
+#modalSolicitarVac .modal-header .close,
+#modalEstatusVac   .modal-header .close {
+    color: #fff;
+    text-shadow: none;
+    opacity: .9;
+}
+
+#modalSolicitarVac .modal-body,
+#modalEstatusVac   .modal-body,
+#modalSolicitarVac label,
+#modalEstatusVac   label {
+    color: var(--text);
+}
+
+/* ---- Formularios (mismo look que los campos del sistema, ver vacaciones.css) ---- */
+#modalSolicitarVac .form-control,
+#modalSolicitarVac textarea.form-control {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+}
+#modalSolicitarVac .form-control:focus {
+    background: var(--card-bg);
+    color: var(--text);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 .15rem rgba(28, 131, 241, .15);
+}
+#modalSolicitarVac .form-control::placeholder { color: var(--text-muted); }
+
+/* ---- Select2: igualar el look de los campos (claro y oscuro, vía variables) ---- */
+#modalSolicitarVac .select2-container--default .select2-selection--single {
+    height: calc(1.5em + .5rem + 2px);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+}
+#modalSolicitarVac .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--text);
+    line-height: calc(1.5em + .5rem);
+}
+#modalSolicitarVac .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + .5rem);
+}
+#modalSolicitarVac .select2-dropdown {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+#modalSolicitarVac .select2-search--dropdown .select2-search__field {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: .375rem;
+}
+#modalSolicitarVac .select2-results__option { color: var(--text); }
+#modalSolicitarVac .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: var(--accent);
+    color: #fff;
+}
+#modalSolicitarVac .select2-container--default .select2-results__option[aria-selected="true"] {
+    background: var(--accent-soft);
+    color: var(--text);
+}
+
+/* ---- Botones unificados al acento institucional ---- */
+.mv-btn-accent {
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--accent);
+}
+.mv-btn-accent:hover,
+.mv-btn-accent:focus {
+    filter: brightness(.94);
+    color: #fff;
+}
+
+.mv-btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--border);
+}
+.mv-btn-ghost:hover,
+.mv-btn-ghost:focus {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* ---- Botones de periodo: agregar (verde) / eliminar (rojo) ---- */
+.mv-btn-add,
+.mv-btn-del {
+    width: 31px;
+    height: 31px;
+    border-radius: .5rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid;
+    transition: background-color .15s ease, color .15s ease;
+}
+.mv-btn-add { color: var(--success); border-color: var(--success); }
+.mv-btn-add:hover,
+.mv-btn-add:focus { background: var(--success); color: #fff; }
+.mv-btn-del { color: var(--danger); border-color: var(--danger); }
+.mv-btn-del:hover,
+.mv-btn-del:focus { background: var(--danger); color: #fff; }
+
+/* ---- Selector de tipo de incidencia (btn-group-toggle) ---- */
+#mv_formSolicitud .btn-group-toggle .btn {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+#mv_formSolicitud .btn-group-toggle .btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+/* ---- Pestañas del modal de estatus ---- */
+#mv_tabsEstatus {
+    border-bottom: 2px solid var(--border);
+}
+#mv_tabsEstatus .nav-link {
+    color: var(--text-muted);
+    font-weight: 600;
+    border: none;
+    background: transparent;
+}
+#mv_tabsEstatus .nav-link:hover {
+    color: var(--accent);
+}
+#mv_tabsEstatus .nav-link.active {
+    color: var(--accent);
+    background: transparent;
+    border-bottom: 3px solid var(--accent);
+}
+
+/* ---- Tablas: encabezado institucional (los badges conservan su color semántico) ---- */
+#modalEstatusVac thead th {
+    background: var(--card-soft);
+    color: var(--text-muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border) !important;
+    border-top: 0 !important;
+}
+#modalEstatusVac tbody td {
+    border-top: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    vertical-align: middle;
+}
