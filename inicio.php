@@ -1760,9 +1760,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                     html += (nota && nota !== titulo ? '              <div class="text-muted" style="font-size:.8rem;">' + nota + '</div>' : '');
                     html += '              <div class="text-muted" style="font-size:.75rem;"><i class="far fa-calendar-alt mr-1"></i>' + fecha + ' · <span class="text-uppercase">' + sistema + '</span></div>';
                     html += '          </div>';
-                    html += '          <button type="button" class="btn btn-sm btn-light border border-success text-success px-2 py-1 ml-2" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + noEmpleadoL + '\')">';
-                    html += '              <i class="fas fa-check fa-sm"></i>';
-                    html += '          </button>';
+                    html += '          <div class="d-flex align-items-center ml-2">';
+                    html += '              <button type="button" class="btn btn-sm btn-light border border-success text-success px-2 py-1 mr-1" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + noEmpleadoL + '\')">';
+                    html += '                  <i class="fas fa-check fa-sm"></i>';
+                    html += '              </button>';
+                    html += '              <button type="button" class="btn btn-sm btn-light border border-secondary text-secondary px-2 py-1" title="Descartar" aria-label="Descartar notificación" onclick="descartarNotificacion(' + id + ')">';
+                    html += '                  <i class="fas fa-times fa-sm"></i>';
+                    html += '              </button>';
+                    html += '          </div>';
                     html += '      </div>';
                     html += '  </div>';
                     html += '</div>';
