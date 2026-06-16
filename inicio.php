@@ -1188,7 +1188,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             cargarNotificaciones(false);
             setInterval(function() {
                 cargarNotificaciones(false);
-            }, 5400000); // 1.5h
+            }, 1800000); // cada 30 minutos
 
             // Sincronizar el conteo de notificaciones con el badge del tab Personal.
             // Observa cambios en #badgeNotificaciones (que actualiza funcionesGlobales.js)
