@@ -62,9 +62,14 @@ function renderNotificacionFlotante(notificacion) {
     html += '                  <span class="text-muted" style="font-size: .90rem; white-space: nowrap;"><i class="far fa-calendar-alt mr-1"></i>' + fecha + '</span>';
     html += '              </div>';
     html += '          </div>';
-    html += '          <button class="btn btn-sm btn-light border border-success text-success px-2 py-1" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + getCookie('noEmpleadoL') + '\')">';
-    html += '              <i class="fas fa-check fa-sm"></i>';
-    html += '          </button>';
+    html += '          <div class="d-flex align-items-center">';
+    html += '              <button class="btn btn-sm btn-light border border-success text-success px-2 py-1 mr-1" title="Marcar como leída" aria-label="Marcar como leída" onclick="marcarNotificacionLeida(' + id + ', ' + idRegistro + ', \'' + sistema + '\', \'' + archivo + '\', \'' + getCookie('noEmpleadoL') + '\')">';
+    html += '                  <i class="fas fa-check fa-sm"></i>';
+    html += '              </button>';
+    html += '              <button class="btn btn-sm btn-light border border-secondary text-secondary px-2 py-1" title="Descartar" aria-label="Descartar notificación" onclick="descartarNotificacion(' + id + ')">';
+    html += '                  <i class="fas fa-times fa-sm"></i>';
+    html += '              </button>';
+    html += '          </div>';
     html += '      </div>';
     html += '  </div>';
     html += '</div>';
@@ -140,6 +145,28 @@ function cargarNotificaciones(mostrarFlotantes) {
                         });
                     }
                 }
+            }
+        }
+    });
+}
+
+// Función para descartar una notificación: la marca como leída en la BD sin redireccionar
+function descartarNotificacion(idNotificacion) {
+    $.ajax({
+        url: 'acciones_globales.php',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+            accion: 'marcarLeida',
+            idNotificacion: idNotificacion,
+            noEmpleado: getCookie('noEmpleadoL')
+        },
+        success: function(response) {
+            if (response.success) {
+                $('[data-notificacion-id="' + idNotificacion + '"]').fadeOut(200, function() {
+                    $(this).remove();
+                });
+                cargarNotificaciones(false);
             }
         }
     });
