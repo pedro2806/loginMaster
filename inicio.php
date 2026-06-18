@@ -40,6 +40,28 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     $tieneCotizador = (bool) $stmtCot->get_result()->fetch_assoc();
     $stmtCot->close();
 }
+
+$tieneVehiculo = false;
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $connCV = new mysqli("localhost", "mess_incidencias", "Pipmytrade123", "mess_control_vehicular");
+    if (!$connCV->connect_error) {
+        $noEmpVeh = intval($_COOKIE['noEmpleadoL']);
+        $stmtVeh = $connCV->prepare(
+            "SELECT 1 FROM usuarios u
+             WHERE u.noEmpleado = ?
+               AND (
+                 EXISTS (SELECT 1 FROM inventario i WHERE i.id_usuario = u.id_usuario OR i.id_us_asignado = u.id_usuario)
+                 OR EXISTS (SELECT 1 FROM prestamos p WHERE p.id_usuario = u.id_usuario AND p.estatus IN ('AUTORIZADO','EN CURSO'))
+               )
+             LIMIT 1"
+        );
+        $stmtVeh->bind_param("i", $noEmpVeh);
+        $stmtVeh->execute();
+        $tieneVehiculo = (bool) $stmtVeh->get_result()->fetch_assoc();
+        $stmtVeh->close();
+        $connCV->close();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -214,6 +236,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     </button>
                                 </li>
                                 --->
+                                <?php if ($tieneVehiculo): ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
                                         <i class="fas fa-car mr-1"></i> Vehículo
@@ -221,6 +244,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         <span id="statusTabVehiculo" class="tab-status" title="Estatus de vehículo"></span>
                                     </button>
                                 </li>
+                                <?php endif; ?>
                                 <?php if ($tieneKpis): ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
@@ -229,14 +253,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     </button>
                                 </li>
                                 <?php endif; ?>
-                                <?php if ($tieneCotizador): ?>
+                                <!-- <?php if ($tieneCotizador): ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabCotizador-tab" data-toggle="tab" data-target="#tabCotizador" type="button" role="tab">
                                         <i class="fas fa-robot mr-1"></i> Cotizador IA
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
-                                <?php endif; ?>
+                                <?php endif; ?> -->
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab">
                                         <i class="fas fa-address-book mr-1"></i> Directorio
@@ -698,6 +722,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     </div>
                                 </div>
                                 <!-- ===== TAB: VEHÍCULO ===== -->
+                                <?php if ($tieneVehiculo): ?>
                                 <div class="tab-pane fade" id="tabVehiculo" role="tabpanel">
                                     <div id="contenedorVehiculos">
                                         <div class="text-center text-muted py-5">
@@ -706,6 +731,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         </div>
                                     </div>
                                 </div>
+                                <?php endif; ?>
 
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <?php if ($tieneKpis): ?>
@@ -721,16 +747,16 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     </div>
                                 </div>
                                 <?php endif; ?>
-
-                                <!-- ===== TAB: COTIZADOR IA ===== -->
+                                
+                                <!-- ===== TAB: COTIZADOR IA =====
                                 <?php if ($tieneCotizador): ?>
                                 <div class="tab-pane fade" id="tabCotizador" role="tabpanel">
                                     <div id="frameCotizador">
                                         <iframe src="http://192.168.2.235/messIAs/" title="Cotizador IA"></iframe>
                                     </div>
                                 </div>
-                                <?php endif; ?>
-
+                                <?php endif; ?> -->
+                                
                                 <!-- ===== TAB 7: DIRECTORIO ===== -->
                                 <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
                                     <div class="directorio-header">
@@ -1143,8 +1169,9 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
             registrarNotificacionPlaneacion();
-            // Pre-carga del tab Vehículo para que el semáforo se calcule sin abrirlo.
+            <?php if ($tieneVehiculo): ?>
             cargarVehiculosDocs();
+            <?php endif; ?>
 
             // Asignar cookies a campos hidden
             const idU = getCookie('id_usuarioL');
@@ -1256,9 +1283,11 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 }, 50);
                 cargarPanelNotificaciones();
             });
+            <?php if ($tieneVehiculo): ?>
             $('#tabVehiculo-tab').on('shown.bs.tab', function() {
                 if (!vehiculosDocsCargados) cargarVehiculosDocs();
             });
+            <?php endif; ?>
             $('#tabExpediente-tab').on('shown.bs.tab', function() {
                 if (!expedienteCargado) cargarMiExpediente();
             });
