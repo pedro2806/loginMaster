@@ -255,11 +255,11 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="small font-weight-bold">Fecha y hora de inicio</label>
-                        <input type="datetime-local" class="form-control form-control-sm" id="lugarSJ_inicio" required>
+                        <input type="text" class="form-control form-control-sm" id="lugarSJ_inicio" placeholder="Selecciona fecha y hora" required>
                     </div>
                     <div class="form-group">
                         <label class="small font-weight-bold">Fecha y hora de fin</label>
-                        <input type="datetime-local" class="form-control form-control-sm" id="lugarSJ_fin" required>
+                        <input type="text" class="form-control form-control-sm" id="lugarSJ_fin" placeholder="Selecciona fecha y hora" required>
                     </div>
                     <div class="form-group">
                         <label class="small font-weight-bold">Motivo / Descripción</label>
@@ -274,6 +274,81 @@
         </div>
     </div>
 </div>
+
+<!-- Flatpickr LOCAL (vendor/) para Sala de Juntas: selector con saltos de 30 min -->
+<link rel="stylesheet" href="vendor/flatpickr/flatpickr.min.css">
+<script src="vendor/flatpickr/flatpickr.min.js"></script>
+<script src="vendor/flatpickr/l10n/es.js"></script>
+<script>
+// Inicializa Flatpickr en los campos de Sala de Juntas. Guarda el valor en
+// formato "YYYY-MM-DDTHH:mm" (igual que datetime-local) para no alterar
+// registrarLugarSJ(); muestra al usuario un formato amigable (altInput).
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof flatpickr === 'undefined') return;
+    var opts = {
+        enableTime: true,
+        time_24hr: true,
+        minuteIncrement: 30,        // la hora salta de 30 en 30 min
+        defaultMinute: 0,
+        dateFormat: "Y-m-d\\TH:i",   // valor enviado (compatible con el backend)
+        altInput: true,
+        altFormat: "d/m/Y H:i",      // lo que ve el usuario
+        locale: (flatpickr.l10ns && flatpickr.l10ns.es) ? 'es' : 'default'
+    };
+    var fpInicio = flatpickr('#lugarSJ_inicio', opts);
+    var fpFin    = flatpickr('#lugarSJ_fin', opts);
+
+    // Al cerrar el modal, limpiar los campos (el reset() del form no basta con Flatpickr).
+    if (window.jQuery) {
+        jQuery('#modalRegistrarLugarSJ').on('hidden.bs.modal', function () {
+            if (fpInicio) fpInicio.clear();
+            if (fpFin) fpFin.clear();
+        });
+    }
+});
+</script>
+
+<style>
+/* ===== Flatpickr Sala de Juntas: resaltar selección en azul MESS ===== */
+/* Día seleccionado: círculo azul */
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.selected:focus,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #074480 !important;
+    border-color: #074480 !important;
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+.flatpickr-day:hover,
+.flatpickr-day:focus { background: #e7eefc; }
+/* Día de hoy: borde azul */
+.flatpickr-day.today { border-color: #074480; }
+.flatpickr-day.today:hover { background: #e7eefc; color: #074480; }
+
+/* Cabecera (mes / día de semana) y flechas en azul */
+.flatpickr-current-month .cur-month,
+.flatpickr-current-month input.cur-year,
+.flatpickr-weekday { color: #074480 !important; font-weight: 600; }
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg { fill: #074480; }
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg { fill: #0a1c61; }
+
+/* Sección de hora resaltada en azul (línea + fondo) */
+.flatpickr-time {
+    border-top: 2px solid #074480 !important;
+    background: #f0f5ff;
+}
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm { color: #074480; font-weight: 600; }
+.flatpickr-time input:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:hover { background: #e7eefc; }
+</style>
 
 <style>
    /* Altura máxima para el cuerpo de los modales grandes */
