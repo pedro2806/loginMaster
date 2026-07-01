@@ -1,6 +1,18 @@
 <?php
 include '../incidencias/conn.php';
 
+// Si el POST llegó vacío pero el navegador SÍ envió cuerpo (Content-Length > 0),
+// PHP descartó todo por exceder post_max_size. Respondemos con un mensaje claro
+// en vez de dejar que el flujo termine en un error confuso.
+if (empty($_POST) && empty($_FILES) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'El archivo excede el límite de subida del servidor (post_max_size). Súbelo más pequeño o aumenta el límite.'
+    ]);
+    exit;
+}
+
 $accion = isset($_POST['accion']) ? $_POST['accion'] : '';
 $noEmpleado = isset($_POST['noEmpleado']) ? $_POST['noEmpleado'] : '';
 
@@ -327,12 +339,34 @@ if ($accion == 'subir_mural') {
         exit;
     }
 
-    // Validar que realmente sea un PDF (extensión + tipo MIME del contenido)
-    $ext  = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mime = finfo_file($finfo, $archivo['tmp_name']);
-    finfo_close($finfo);
-    if ($ext !== 'pdf' || $mime !== 'application/pdf') {
+    // Validar que realmente sea un PDF. Se valida por la FIRMA de bytes ("%PDF-"),
+    // que no depende de la extensión fileinfo (finfo_open) — evita un fatal 500 en
+    // servidores donde 'fileinfo' está deshabilitada. Si finfo está disponible, se
+    // usa como verificación adicional.
+    $ext   = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+    $esPdf = ($ext === 'pdf');
+
+    if ($esPdf) {
+        $fh = @fopen($archivo['tmp_name'], 'rb');
+        if ($fh) {
+            $firma = fread($fh, 5);
+            fclose($fh);
+            $esPdf = (strncmp($firma, '%PDF-', 5) === 0);
+        } else {
+            $esPdf = false;
+        }
+    }
+
+    if ($esPdf && function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $mime = finfo_file($finfo, $archivo['tmp_name']);
+            finfo_close($finfo);
+            $esPdf = ($mime === 'application/pdf');
+        }
+    }
+
+    if (!$esPdf) {
         echo json_encode(['success' => false, 'message' => 'Solo se permiten archivos PDF.']);
         exit;
     }
