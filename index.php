@@ -403,7 +403,8 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
                     dataArray.forEach(function (data) {
                         const expires = new Date(Date.now() + 99900000).toUTCString();
                         document.cookie = `id_usuarioL=${encodeURIComponent(data.id)}; expires=${expires}; SameSite=Lax; path=/;`;
-                        document.cookie = `nombredelusuarioL=${encodeURIComponent(data.nombre)}; expires=${expires}; SameSite=Lax; path=/;`;
+                        const nombreCompleto = (data.nombre_completo && data.nombre_completo.trim()) ? data.nombre_completo.trim() : data.nombre;
+                        document.cookie = `nombredelusuarioL=${encodeURIComponent(nombreCompleto)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `noEmpleadoL=${encodeURIComponent(data.noEmpleado)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `rolL=${encodeURIComponent(data.rol)}; expires=${expires}; SameSite=Lax; path=/;`;
                         document.cookie = `correoL=${encodeURIComponent(data.usuario)}; expires=${expires}; SameSite=Lax; path=/;`;

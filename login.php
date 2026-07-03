@@ -40,10 +40,12 @@ if ($accion == 'Ingresar') {
     $datosUsr = [];        
 
     // Busca por usuario O por correo directo
-    $sql = "SELECT u.id_usuario, u.usuario, u.nombre, u.noEmpleado, u.rol, u.correo, u.password, u.foto, k.Password_KPI
-    FROM usuarios u 
-    LEFT JOIN accesos_kpis k ON u.correo = k.Correo
-    WHERE (u.usuario = ? OR u.correo = ?) AND u.estatus = '1'";                
+    $sql = "SELECT u.id_usuario, u.usuario, u.nombre, u.noEmpleado, u.rol, u.correo, u.password, u.foto,
+                   u.nombres, u.apellidos,
+                   k.Password_KPI
+            FROM usuarios u
+            LEFT JOIN accesos_kpis k ON u.correo = k.Correo
+            WHERE (u.usuario = ? OR u.correo = ?) AND u.estatus = '1'";                
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $emailValido, $emailValido);
     $stmt->execute();
@@ -61,10 +63,15 @@ if ($accion == 'Ingresar') {
 
             registrarAcceso($conn, 'exito', null, $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
 
+            $nombreCompleto = trim(($row['nombres'] ?? '') . ' ' . ($row['apellidos'] ?? ''));
+            if ($nombreCompleto === '') $nombreCompleto = $row['nombre'];
             $datosUsr[] = [
                 'id' => $row['id_usuario'],
                 'usuario' => $row['usuario'],
                 'nombre' => $row['nombre'],
+                'nombres' => $row['nombres'] ?? '',
+                'apellidos' => $row['apellidos'] ?? '',
+                'nombre_completo' => $nombreCompleto,
                 'noEmpleado' => $row['noEmpleado'],
                 'rol' => $row['rol'],
                 'email' => $row['correo'],
@@ -87,10 +94,15 @@ if ($accion == 'Ingresar') {
 
             registrarAcceso($conn, 'exito', null, $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
 
+            $nombreCompleto = trim(($row['nombres'] ?? '') . ' ' . ($row['apellidos'] ?? ''));
+            if ($nombreCompleto === '') $nombreCompleto = $row['nombre'];
             $datosUsr[] = [
                 'id' => $row['id_usuario'],
                 'usuario' => $row['usuario'],
                 'nombre' => $row['nombre'],
+                'nombres' => $row['nombres'] ?? '',
+                'apellidos' => $row['apellidos'] ?? '',
+                'nombre_completo' => $nombreCompleto,
                 'noEmpleado' => $row['noEmpleado'],
                 'rol' => $row['rol'],
                 'email' => $row['correo'],

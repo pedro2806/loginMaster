@@ -2227,23 +2227,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 if (subareas[k] === 'ok') ok++;
             });
 
-            // Mantenimiento (3 items: autorizado, sin pendientes, próximo al día).
-            // Misma semántica que renderListaMantenimiento: REALIZADO cuenta como autorizado
-            // y "sin fecha_proxi tras un REALIZADO" cuenta como al día.
-            var mt = data.mantenimiento || null;
-            total += 3;
-            if (mt) {
-                var vobo = (mt.VoBo_jefe || '').toUpperCase();
-                var realizado = (vobo === 'REALIZADO');
-                if (vobo === 'AUTORIZADO' || realizado) ok++;
-                if (vobo && vobo !== 'PENDIENTE') ok++;
-                if (mt.fecha_proxi) {
-                    var prox = new Date(mt.fecha_proxi);
-                    if (!isNaN(prox.getTime()) && prox >= new Date()) ok++;
-                } else if (realizado) {
-                    ok++;
-                }
-            }
+            // Mantenimiento excluido del semáforo por decisión de negocio.
 
             return { ok: ok, total: total };
         }
