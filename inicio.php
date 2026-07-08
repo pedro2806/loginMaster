@@ -62,6 +62,35 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         $connCV->close();
     }
 }
+
+// Acceso a SIVAC 3000 (Vacantes y Contratación).
+// Card "Sistemas": RRHH/Reclutamiento = departamentos 26 y 27 en mess_rrhh.usuarios.
+// Pestaña "Mis Vacantes": cualquier empleado que sea solicitante (dueño) de una
+// vacante activa en mess_sivac (el usuario MySQL ya tiene grants cross-DB).
+$tieneSivac = false;
+$tieneSivacSolicitante = false;
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $noEmpSvc = intval($_COOKIE['noEmpleadoL']);
+    $stmtSvc = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
+                               WHERE noEmpleado = ? AND departamento IN (26, 27) AND estatus = 1
+                               LIMIT 1");
+    if ($stmtSvc) {
+        $stmtSvc->bind_param("i", $noEmpSvc);
+        $stmtSvc->execute();
+        $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
+        $stmtSvc->close();
+    }
+    $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
+                                  WHERE no_empleado_solicitante = ?
+                                    AND estado IN ('abierta','en_proceso','pausada')
+                                  LIMIT 1");
+    if ($stmtSvcSol) {
+        $stmtSvcSol->bind_param("i", $noEmpSvc);
+        $stmtSvcSol->execute();
+        $tieneSivacSolicitante = (bool) $stmtSvcSol->get_result()->fetch_assoc();
+        $stmtSvcSol->close();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -249,6 +278,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <?php endif; ?>
+                                <?php if ($tieneSivacSolicitante): ?>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab">
+                                        <i class="fas fa-briefcase mr-1"></i> Mis Vacantes
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -485,8 +522,31 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                             </div>
                                         </div>
                                         <?php endif; ?>
+
+                                        <!-- SIVAC 3000 (Vacantes y Contratación) -->
+                                        <?php if ($tieneSivac): ?>
+                                        <div class="col-md-3 mb-3" id="divSivac">
+                                            <div class="card card-action shadow-sm">
+                                                <div class="card-body text-center">
+                                                    <a href="../SIVAC3000/" class="btn btn-outline-primary btn-block">
+                                                        <i class="fas fa-user-tie fa-lg d-block mb-2"></i> SIVAC 3000
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
+
+                                <!-- ===== TAB: MIS VACANTES (SIVAC, solo solicitantes) ===== -->
+                                <?php if ($tieneSivacSolicitante): ?>
+                                <div class="tab-pane fade" id="tabSivacSol" role="tabpanel">
+                                    <iframe id="iframeSivacSol"
+                                            data-src="../SIVAC3000/embed_solicitante.php"
+                                            scrolling="auto"
+                                            style="width:100%; height:78vh; border:0; background:transparent; border-radius:.5rem;"></iframe>
+                                </div>
+                                <?php endif; ?>
 
                                 <!-- ===== TAB 2: SALA DE JUNTAS ===== -->
                                 <div class="tab-pane fade" id="tabAgenda" role="tabpanel">
@@ -1340,6 +1400,11 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 // Si ya estaba cargado, refresca la tabla recargando el iframe
                 var $f = $('#iframeTicketsMis');
                 if ($f.attr('src')) $f.attr('src', $f.attr('src'));
+            });
+
+            // SIVAC "Mis Vacantes": lazy-load del iframe al mostrar la pestaña
+            $('#tabSivacSol-tab').on('shown.bs.tab', function() {
+                cargarIframeTickets('#iframeSivacSol');
             });
 
             // El tab "Mi Espacio" (#tabPersonal) arranca activo, por lo que
