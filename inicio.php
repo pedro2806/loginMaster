@@ -82,7 +82,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     }
     $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
                                   WHERE no_empleado_solicitante = ?
-                                    AND estado IN ('abierta','en_proceso','pausada')
+                                    AND estatus IN ('abierta','en_proceso','pausada')
                                   LIMIT 1");
     if ($stmtSvcSol) {
         $stmtSvcSol->bind_param("i", $noEmpSvc);
