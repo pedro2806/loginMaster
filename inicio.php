@@ -63,7 +63,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     }
 }
 
-// Acceso a SIVAC 3000 (Vacantes y Contratación).
+// Acceso a SIVAC (Vacantes y Contratación).
 // Card "Sistemas": RRHH/Reclutamiento = departamentos 26 y 27 en mess_rrhh.usuarios.
 // Pestaña "Mis Vacantes": cualquier empleado que sea solicitante (dueño) de una
 // vacante activa en mess_sivac (el usuario MySQL ya tiene grants cross-DB).
@@ -523,13 +523,13 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         </div>
                                         <?php endif; ?>
 
-                                        <!-- SIVAC 3000 (Vacantes y Contratación) -->
+                                        <!-- SIVAC (Vacantes y Contratación) -->
                                         <?php if ($tieneSivac): ?>
                                         <div class="col-md-3 mb-3" id="divSivac">
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
-                                                    <a href="../SIVAC3000/" class="btn btn-outline-primary btn-block">
-                                                        <i class="fas fa-user-tie fa-lg d-block mb-2"></i> SIVAC 3000
+                                                    <a href="../SIVAC/" class="btn btn-outline-primary btn-block">
+                                                        <i class="fas fa-user-tie fa-lg d-block mb-2"></i> SIVAC
                                                     </a>
                                                 </div>
                                             </div>
@@ -542,7 +542,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <?php if ($tieneSivacSolicitante): ?>
                                 <div class="tab-pane fade" id="tabSivacSol" role="tabpanel">
                                     <iframe id="iframeSivacSol"
-                                            data-src="../SIVAC3000/embed_solicitante.php"
+                                            data-src="../SIVAC/embed_solicitante.php"
                                             scrolling="auto"
                                             style="width:100%; height:78vh; border:0; background:transparent; border-radius:.5rem;"></iframe>
                                 </div>
