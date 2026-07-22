@@ -80,15 +80,30 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
         $stmtSvc->close();
     }
+    // Dueño de CUALQUIER vacante (en cualquier estado: así un jefe con una
+    // requisición pendiente de VoBo o rechazada también sigue su estado).
     $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
                                   WHERE no_empleado_solicitante = ?
-                                    AND estatus IN ('abierta','en_proceso','pausada')
                                   LIMIT 1");
     if ($stmtSvcSol) {
         $stmtSvcSol->bind_param("i", $noEmpSvc);
         $stmtSvcSol->execute();
         $tieneSivacSolicitante = (bool) $stmtSvcSol->get_result()->fetch_assoc();
         $stmtSvcSol->close();
+    }
+    // Jefe con personal a cargo: aunque no tenga vacante todavía, debe ver la
+    // pestaña para poder levantar una requisición (mess_rrhh.usuarios.jefe apunta
+    // a él; la columna es VARCHAR pero MySQL la castea a número al comparar).
+    if (!$tieneSivacSolicitante) {
+        $stmtSvcJefe = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
+                                       WHERE jefe = ? AND estatus = 1 AND noEmpleado <> ?
+                                       LIMIT 1");
+        if ($stmtSvcJefe) {
+            $stmtSvcJefe->bind_param("ii", $noEmpSvc, $noEmpSvc);
+            $stmtSvcJefe->execute();
+            $tieneSivacSolicitante = (bool) $stmtSvcJefe->get_result()->fetch_assoc();
+            $stmtSvcJefe->close();
+        }
     }
 }
 ?>
