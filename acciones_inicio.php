@@ -8,7 +8,7 @@ if (empty($_POST) && empty($_FILES) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'message' => 'El archivo excede el límite de subida del servidor (post_max_size). Súbelo más pequeño o aumenta el límite.'
+        'message' => 'El archivo excede el límite de subida del servidor. Súbelo más pequeño o aumenta el límite.'
     ]);
     exit;
 }
