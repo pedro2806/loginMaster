@@ -1282,6 +1282,32 @@ body.theme-dark .fc-col-header-cell {
     margin: 0 !important;
 }
 
+/* Pestaña Análisis BI: tablero Power BI embebido */
+#tabAnalisisBI,
+#tabAnalisisBI #frameAnalisisBI {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#tabAnalisisBI #frameAnalisisBI {
+    overflow: hidden;
+}
+
+#tabAnalisisBI iframe {
+    display: block !important;
+    /* Zoom predeterminado 60%: se renderiza a 166.667% (=100/0.6) y se escala a 0.6,
+       de modo que tras el zoom vuelve a llenar el contenedor pero mostrando más contenido. */
+    zoom: 0.6;
+    width: 166.6667% !important;
+    /* KPIs usa -140px; +37px extra por el recorte del clip-path, dividido entre 0.6 por el zoom */
+    height: calc((100vh - 103px) / 0.6) !important;
+    border: none !important;
+    margin: 0 !important;
+    /* Oculta la barra inferior de Power BI (logo + iconos de compartir)
+       recortando los últimos 37px (mismo truco que .quitarbarra en planeacion). */
+    clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 37px), 0% calc(100% - 37px));
+}
+
 #tabCotizador #frameCotizador {
     padding: 0 !important;
     margin: 0 !important;
