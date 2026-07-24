@@ -41,6 +41,20 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     $stmtCot->close();
 }
 
+// Acceso a la pestaña "Análisis BI" (tabla accesos, sistema = 'divAnalisisBI',
+// gestionada desde el modal "ACCESOS" → modalAccesoSistemas.php).
+$tieneAnalisisBI = false;
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $noEmpAbi = intval($_COOKIE['noEmpleadoL']);
+    $stmtAbi = $conn->prepare("SELECT id FROM accesos
+                               WHERE noEmpleado = ? AND sistema = 'divAnalisisBI' AND estatus = 1
+                               LIMIT 1");
+    $stmtAbi->bind_param("i", $noEmpAbi);
+    $stmtAbi->execute();
+    $tieneAnalisisBI = (bool) $stmtAbi->get_result()->fetch_assoc();
+    $stmtAbi->close();
+}
+
 $tieneVehiculo = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $connCV = new mysqli("localhost", "mess_incidencias", "Pipmytrade123", "mess_control_vehicular");
@@ -293,6 +307,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
                                         <i class="fas fa-chart-line mr-1"></i> KPI's
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <?php endif; ?>
+                                <?php if ($tieneAnalisisBI): ?>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabAnalisisBI-tab" data-toggle="tab" data-target="#tabAnalisisBI" type="button" role="tab">
+                                        <i class="fas fa-chart-pie mr-1"></i> Análisis BI
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -822,6 +844,16 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     </div>
                                 </div>
                                 <?php endif; ?>
+
+                                <!-- ===== TAB: ANÁLISIS BI (tablero Power BI embebido, solo con acceso) ===== -->
+                                <?php if ($tieneAnalisisBI): ?>
+                                <div class="tab-pane fade" id="tabAnalisisBI" role="tabpanel">
+                                    <div id="frameAnalisisBI">
+                                        <iframe src="https://app.powerbi.com/view?r=eyJrIjoiNDhiOWRmY2QtNzg2Mi00ZGQ2LTk1Y2UtMDI4OGFhODZkNjgzIiwidCI6ImZlMGNmZmU4LTkxMjYtNGRmYS1iNjE2LTU3MGM2YWViYTdiNiJ9"
+                                                title="Análisis BI" allowfullscreen></iframe>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                                 
                                 <!-- ===== TAB: COTIZADOR IA =====
                                 <?php if ($tieneCotizador): ?>
@@ -1331,6 +1363,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 'tabPersonal-tab':   'Mi Espacio',
                 'tabVehiculo-tab':   'Vehículo',
                 'tabKpis-tab':       "KPI's",
+                'tabAnalisisBI-tab': 'Análisis BI',
                 'tabCotizador-tab':  'Cotizador IA',
                 'tabDirectorio-tab': 'Directorio'
             };
