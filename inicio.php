@@ -78,15 +78,19 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 }
 
 // Acceso a SIVAC (Vacantes y Contratación).
-// Card "Sistemas": RRHH/Reclutamiento = departamentos 26 y 27 en mess_rrhh.usuarios.
-// Pestaña "Mis Vacantes": cualquier empleado que sea solicitante (dueño) de una
-// vacante activa en mess_sivac (el usuario MySQL ya tiene grants cross-DB).
+// Card "Sistemas": RRHH (47) y Business Intelligence (27) en mess_rrhh.usuarios.
+// Debe coincidir con SIVAC_DEPTS_RRHH en SIVAC/auth.php.
+// Pestaña "Mis Vacantes": HARDCODEADA mientras dura la prueba en producción.
+// Solo estos empleados la ven; al terminar la prueba, quitar $empleadosSivacTab
+// y volver a habilitar el bloque comentado (solicitante de vacante o jefe con
+// personal a cargo).
+$empleadosSivacTab = [523, 360, 569, 403, 487];
 $tieneSivac = false;
 $tieneSivacSolicitante = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $noEmpSvc = intval($_COOKIE['noEmpleadoL']);
     $stmtSvc = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
-                               WHERE noEmpleado = ? AND departamento IN (26, 27) AND estatus = 1
+                               WHERE noEmpleado = ? AND departamento IN (27, 47) AND estatus = 1
                                LIMIT 1");
     if ($stmtSvc) {
         $stmtSvc->bind_param("i", $noEmpSvc);
@@ -94,6 +98,9 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
         $stmtSvc->close();
     }
+    $tieneSivacSolicitante = in_array($noEmpSvc, $empleadosSivacTab, true);
+
+    /* --- Regla original, deshabilitada durante la prueba en producción ---
     // Dueño de CUALQUIER vacante (en cualquier estado: así un jefe con una
     // requisición pendiente de VoBo o rechazada también sigue su estado).
     $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
@@ -119,6 +126,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             $stmtSvcJefe->close();
         }
     }
+    --- fin regla original --- */
 }
 ?>
 <!DOCTYPE html>
