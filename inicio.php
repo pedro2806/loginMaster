@@ -819,7 +819,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                                         <span><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#050D9E; border-radius:.15rem; vertical-align:middle;"></span>Yo</span>
                                                         <span id="leyendaVacacionesEquipo" class="d-none"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
                                                         <span id="leyendaVacacionesDepartamento"><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#F5A623; border-radius:.15rem; vertical-align:middle;"></span>Equipo</span>
-                                                        <span><span class="d-inline-block mr-1" style="width:.75rem; height:.75rem; background:#8E44AD; border-radius:.15rem; vertical-align:middle;"></span>Pendiente RRHH</span>
                                                     </div>
                                                     <div id="calendarVacaciones"></div>
                                                 </div>
@@ -1714,26 +1713,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         }
 
         // ===== Calendario de Vacaciones (Personal) =====
-
-        // Autorizadas por el jefe pero SIN el visto bueno de RRHH (autorizaRH = 1).
-        // Van en su propio color, tanto las mías como las del equipo/departamento:
-        // lo que importa aquí es que la fecha todavía puede cambiar.
-        var COLOR_VAC_PEND_RH = '#8E44AD';
-
-        // El color puesto en el evento le gana al de su fuente, así que basta con
-        // marcar los pendientes y dejar el resto con el color de "Yo"/"Equipo".
-        function marcarPendientesRH(resp) {
-            if (!Array.isArray(resp)) return [];
-            return resp.map(function(ev) {
-                if (String(ev.autorizaRH) === '1') {
-                    ev.color = COLOR_VAC_PEND_RH;
-                    ev.borderColor = COLOR_VAC_PEND_RH;
-                    ev.textColor = '#ffffff';
-                }
-                return ev;
-            });
-        }
-
         function initCalendarVacaciones() {
             var el = document.getElementById('calendarVacaciones');
             if (!el) return;
@@ -1760,11 +1739,10 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 dataType: 'json',
                                 data: {
                                     opcion: 'rrhh',
-                                    ing: noEmp,
-                                    incluyePendRH: 1
+                                    ing: noEmp
                                 }
                             }).done(function(resp) {
-                                successCallback(marcarPendientesRH(resp));
+                                successCallback(Array.isArray(resp) ? resp : []);
                             }).fail(function() {
                                 successCallback([]);
                             });
@@ -1787,11 +1765,10 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 type: 'GET',
                                 dataType: 'json',
                                 data: {
-                                    opcion: 'jefes',
-                                    incluyePendRH: 1
+                                    opcion: 'jefes'
                                 }
                             }).done(function(resp) {
-                                successCallback(marcarPendientesRH(resp));
+                                successCallback(Array.isArray(resp) ? resp : []);
                             }).fail(function() {
                                 successCallback([]);
                             });
@@ -1814,11 +1791,10 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 type: 'GET',
                                 dataType: 'json',
                                 data: {
-                                    opcion: 'departamento',
-                                    incluyePendRH: 1
+                                    opcion: 'departamento'
                                 }
                             }).done(function(resp) {
-                                successCallback(marcarPendientesRH(resp));
+                                successCallback(Array.isArray(resp) ? resp : []);
                             }).fail(function() {
                                 successCallback([]);
                             });
