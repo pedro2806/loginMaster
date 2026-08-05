@@ -84,7 +84,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 // Solo estos empleados la ven; al terminar la prueba, quitar $empleadosSivacTab
 // y volver a habilitar el bloque comentado (solicitante de vacante o jefe con
 // personal a cargo).
-$empleadosSivacTab = [523, 360, 569, 403, 487,183, 276];
+$empleadosSivacTab = [523, 360, 569, 403, 487,183, 276, 161];
 $tieneSivac = false;
 $tieneSivacSolicitante = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
