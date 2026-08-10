@@ -104,6 +104,9 @@ function obtenerIconoNotificacion(sistema) {
     if (sistema.indexOf('ticketsbi') !== -1) {
         return 'fas fa-ticket-alt';
     }
+    if (sistema.indexOf('sivac') !== -1) {
+        return 'fas fa-user-tie';
+    }
     return 'fas fa-bell';
 }
 
@@ -268,6 +271,16 @@ function procesarRedireccionNotificacion(response, idNotificacion, sistema, arch
         return;
     }
 
+    // Caso especial: SIVAC (vacantes y contratación) redirige directo.
+    // Tampoco tiene sesión PHP propia: usa las cookies *L globales, igual que
+    // ticketsBI. Sus pantallas no reciben el registro por la URL (validaLoginNot
+    // ya decidió a cuál ir según el archivo de la notificación), así que se va
+    // limpio, sin query string.
+    if (sistema === 'sivac') {
+        window.location.href = urlDestino;
+        return;
+    }
+
     // Identificar el formulario según el sistema
     if (sistema === 'incidencias') {
         idFormulario = 'formIncidencias';
@@ -344,9 +357,18 @@ function construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro) 
         activos: '/activos/validaLoginNot.php',
         horas: '/horas/validaLoginNot.php',
         practicantes: '/practicantes/validaLoginNot.php',
-        ticketsBI: '/Tickets/validaLoginNot.php'
+        ticketsBI: '/Tickets/validaLoginNot.php',
+        sivac: '/SIVAC/validaLoginNot.php'
     };
     var endpointValidaLogin = endpointsPorSistema[sistema];
+
+    // Sin endpoint no hay a dónde ir: se avisa en vez de mandar el POST a la
+    // página actual (url: undefined), que terminaba en "error de conexión".
+    if (!endpointValidaLogin) {
+        console.error('Sistema sin endpoint de validacion:', sistema);
+        alert('Esta notificacion no tiene pantalla destino configurada (' + sistema + ').');
+        return;
+    }
 
     $.ajax({
         url: endpointValidaLogin,

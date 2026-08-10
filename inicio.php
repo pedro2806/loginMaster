@@ -100,18 +100,25 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     }
     $tieneSivacSolicitante = in_array($noEmpSvc, $empleadosSivacTab, true);
 
-    /* --- Regla original, deshabilitada durante la prueba en producción ---
     // Dueño de CUALQUIER vacante (en cualquier estado: así un jefe con una
-    // requisición pendiente de VoBo o rechazada también sigue su estado).
-    $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
-                                  WHERE no_empleado_solicitante = ?
-                                  LIMIT 1");
-    if ($stmtSvcSol) {
-        $stmtSvcSol->bind_param("i", $noEmpSvc);
-        $stmtSvcSol->execute();
-        $tieneSivacSolicitante = (bool) $stmtSvcSol->get_result()->fetch_assoc();
-        $stmtSvcSol->close();
+    // requisición pendiente de VoBo o rechazada también sigue su estado). Va
+    // ADEMÁS de la lista de la prueba: cuando RRHH captura una vacante y pone a
+    // un jefe como solicitante, ese jefe ve la pestaña solo, sin que nadie tenga
+    // que agregarlo aquí a mano. La lista sigue para los jefes que todavía no
+    // tienen vacante y necesitan entrar a levantar su requisición.
+    if (!$tieneSivacSolicitante) {
+        $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
+                                      WHERE no_empleado_solicitante = ?
+                                      LIMIT 1");
+        if ($stmtSvcSol) {
+            $stmtSvcSol->bind_param("i", $noEmpSvc);
+            $stmtSvcSol->execute();
+            $tieneSivacSolicitante = (bool) $stmtSvcSol->get_result()->fetch_assoc();
+            $stmtSvcSol->close();
+        }
     }
+
+    /* --- Resto de la regla original, deshabilitado durante la prueba cerrada ---
     // Jefe con personal a cargo: aunque no tenga vacante todavía, debe ver la
     // pestaña para poder levantar una requisición (mess_rrhh.usuarios.jefe apunta
     // a él; la columna es VARCHAR pero MySQL la castea a número al comparar).
