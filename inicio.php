@@ -3361,6 +3361,8 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         }
 
         function pintarPaginaDirectorio() {
+
+            var noEmpleadoLog = <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>; // refresca cookie de sesión
             var total = directorioVista.length;
             if (!total) {
                 $('#directorioGrid').html('<div class="col-12 empty-state">No se encontraron resultados.</div>');
@@ -3372,7 +3374,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             if (directorioPagina < 1) directorioPagina = 1;
             var start = (directorioPagina - 1) * DIR_PAGE_SIZE;
             var end   = Math.min(start + DIR_PAGE_SIZE, total);
-
+            
             var html = '';
             for (var i = start; i < end; i++) {
                 var e = directorioVista[i];
@@ -3386,19 +3388,26 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 var avatar = e.foto
                     ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
                     : '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>';
-                html += '<div class="col-md-6 mb-3">'
-                     +    '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
-                     +      avatar
-                     +      '<div class="dir-info">'
-                     +        '<div class="dir-name">' + nombre
-                     +          (noEmp ? ' <span class="dir-noemp">- noEmpleado: ' + noEmp + '</span>' : '')
-                     +        '</div>'
-                     +        '<div class="dir-meta">' + area + '</div>'
-                     +        '<div class="dir-meta">' + puesto + '</div>'
-                     +        (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
-                     +      '</div>'
-                     +    '</div>'
-                     +  '</div>';
+
+                var botonAccessoPlanta = '';
+                if (noEmpleadoLog == 521 || noEmpleadoLog == 276 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
+                    botonAccessoPlanta = `<br><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="event.stopPropagation(); agregarAccesosPlantas('${noEmp}', '${nombre}')">+ Accesos Plantas</button>`;
+                }
+
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="directorio-card" data-noemp="${dirEscape(e.noEmpleado)}">
+                            ${avatar}
+                            <div class="dir-info">
+                                <div class="dir-name">${nombre} ${noEmp ? `<span class="dir-noemp">- noEmpleado: ${noEmp}</span>` : ''}</div>
+                                <div class="dir-meta">${area}</div>
+                                <div class="dir-meta">${puesto}</div>
+                                ${correo ? `<span class="dir-mail">${correo}</span>` : ''}
+                                ${botonAccessoPlanta}
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
             $('#directorioGrid').html(html);
 
@@ -3416,6 +3425,202 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 +   '</button>'
                 + '</div>';
             $('#directorioPaginacion').html(ctrl);
+        }
+
+        function agregarAccesosPlantas(noEmpleado, nombre) {
+            // 1. Consultar accesos actuales del empleado antes de abrir el modal
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'obtener_accesos_plantas',
+                    noEmpleado: noEmpleado
+                },
+                success: function(response) {
+                    let listadoHtml = '';
+
+                    if (response.success && response.accesos.length > 0) {
+                        listadoHtml = `
+                            <div class="mb-3 text-start">
+                                <label class="form-label fw-bold small text-primary">Plantas ya asignadas:</label>
+                                <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
+                                    <table class="table table-sm table-bordered mb-0 align-middle">
+                                        <thead class="table-light">
+                                            <tr class="small">
+                                                <th>Cliente</th>
+                                                <th>Vigencia</th>
+                                                <th class="text-center">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                        `;
+                        response.accesos.forEach(acc => {
+                            listadoHtml += `
+                                <tr id="fila-existente-${acc.id}">
+                                    <td class="small">${acc.cliente}</td>
+                                    <td class="small">${acc.vigencia}</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1" onclick="eliminarAccesoExistente(${acc.id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        listadoHtml += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <hr class="my-3">
+                        `;
+                    } else {
+                        listadoHtml = `
+                            <div class="alert alert-light text-start py-2 small text-muted mb-3">
+                                Este empleado no tiene plantas asignadas actualmente.
+                            </div>
+                            <hr class="my-3">
+                        `;
+                    }
+
+                    // 2. Mostrar el SweetAlert con el listado + el formulario para agregar nuevos
+                    Swal.fire({
+                        title: 'Gestionar Accesos a Plantas',
+                        html: `
+                            <div class="text-start">
+                                <p class="text-muted small mb-3">Empleado: <strong>${nombre} (${noEmpleado})</strong></p>
+                                ${listadoHtml}
+                                <label class="form-label fw-bold small text-success">Agregar nuevos accesos:</label>
+                                <div id="contenedor-accesos">
+                                    <div class="fila-acceso row g-2 mb-2">
+                                        <div class="col-6">
+                                            <input type="text" class="form-control form-control-sm cliente-input" placeholder="Ej. Planta Norte">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="date" class="form-control form-control-sm vigencia-input">
+                                        </div>
+                                        <div class="col-1 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-success btn-sm mt-2 w-100" id="btn-agregar-fila">
+                                    <i class="fas fa-plus"></i> Agregar otro cliente
+                                </button>
+                            </div>
+                        `,
+                        width: '650px',
+                        showCancelButton: true,
+                        confirmButtonText: 'Guardar',
+                        cancelButtonText: 'Cerrar',
+                        didOpen: () => {
+                            const contenedor = document.getElementById('contenedor-accesos');
+                            document.getElementById('btn-agregar-fila').addEventListener('click', () => {
+                                const nuevaFila = document.createElement('div');
+                                nuevaFila.className = 'fila-acceso row g-2 mb-2';
+                                nuevaFila.innerHTML = `
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm cliente-input" placeholder="Ej. Planta Sur">
+                                    </div>
+                                    <div class="col-5">
+                                        <input type="date" class="form-control form-control-sm vigencia-input">
+                                    </div>
+                                    <div class="col-1 d-flex align-items-center">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.fila-acceso').remove()">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                `;
+                                contenedor.appendChild(nuevaFila);
+                            });
+                        },
+                        preConfirm: () => {
+                            const filas = document.querySelectorAll('.fila-acceso');
+                            const accesos = [];
+                            let valido = true;
+
+                            filas.forEach(fila => {
+                                const cliente = fila.querySelector('.cliente-input').value.trim();
+                                const vigencia = fila.querySelector('.vigencia-input').value;
+
+                                // Si dejaron una fila vacía por completo, la ignoramos, pero si llenaron uno, exigimos ambos
+                                if (cliente || vigencia) {
+                                    if (!cliente || !vigencia) {
+                                        valido = false;
+                                    } else {
+                                        accesos.push({ cliente: cliente, vigencia: vigencia });
+                                    }
+                                }
+                            });
+
+                            if (!valido) {
+                                Swal.showValidationMessage('Asegúrate de completar tanto el cliente como la vigencia en las filas agregadas.');
+                                return false;
+                            }
+
+                            return accesos;
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value && result.value.length > 0) {
+                            $.ajax({
+                                url: 'acciones_inicio.php',
+                                type: 'POST',
+                                dataType: 'json',
+                                data: {
+                                    accion: 'agregar_accesos_plantas',
+                                    noEmpleado: noEmpleado,
+                                    accesos: result.value
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        Swal.fire('¡Éxito!', 'Los accesos se han guardado correctamente.', 'success');
+                                    } else {
+                                        Swal.fire('Error', response.message || 'No se pudieron guardar los accesos.', 'error');
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Función auxiliar para eliminar un acceso existente directamente desde la tabla del modal
+        function eliminarAccesoExistente(idAcceso) {
+            Swal.fire({
+                title: '¿Eliminar este acceso?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    $.ajax({
+                        url: 'acciones_inicio.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            accion: 'eliminar_acceso_planta',
+                            id: idAcceso
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                document.getElementById(`fila-existente-${idAcceso}`).remove();
+                                Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 3000}).fire({
+                                    icon: 'success',
+                                    title: 'Acceso eliminado'
+                                });
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
         }
 
         $(document).on('click', '#dirPagPrev', function () {

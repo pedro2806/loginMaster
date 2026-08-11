@@ -313,6 +313,98 @@ if ($accion == 'obtener_asistencias') {
     exit;
 }
 
+//FUNCION AGREGAR ACCESOS A INGENIEROS
+if($accion == 'agregar_accesos_plantas'){
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    $accesos = $_POST['accesos'] ?? [];
+
+    if (empty($noEmpleado) || empty($accesos) || !is_array($accesos)) {
+        echo json_encode(['success' => false, 'message' => 'Datos incompletos o inválidos.']);
+        exit;
+    }
+
+    $sqlInsertAcceso = "INSERT INTO accesos_plantas_ingenieros (noEmpleado, cliente, vigencia) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sqlInsertAcceso);
+    
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'message' => 'Error en la preparación de la consulta.', 'error' => $conn->error]);
+        $conn->close();
+        exit;
+    }
+
+    $exitoTotal = true;
+    $errorMsg = '';
+
+    // Iterar sobre cada cliente/planta enviado desde el formulario dinámico
+    foreach ($accesos as $item) {
+        $cliente = $item['cliente'] ?? '';
+        $vigencia = $item['vigencia'] ?? '';
+
+        if (!empty($cliente) && !empty($vigencia)) {
+            // "iss" -> i (integer para noEmpleado), s (string para cliente), s (string para vigencia)
+            $stmt->bind_param("iss", $noEmpleado, $cliente, $vigencia);
+            
+            if (!$stmt->execute()) {
+                $exitoTotal = false;
+                $errorMsg = $stmt->error;
+                break; // Si uno falla, podemos detenernos o continuar según prefieras
+            }
+        }
+    }
+
+    $stmt->close();
+    $conn->close();
+
+    if ($exitoTotal) {
+        echo json_encode(['success' => true, 'message' => 'Accesos agregados correctamente.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Error al agregar algunos accesos.', 'error' => $errorMsg]);
+    }
+    
+    exit;
+}
+
+// Obtener accesos actuales del empleado
+if($accion == 'obtener_accesos_plantas'){
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    
+    $sql = "SELECT id, cliente, vigencia FROM accesos_plantas_ingenieros WHERE noEmpleado = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $noEmpleado);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $accesos = [];
+    while ($row = $result->fetch_assoc()) {
+        $accesos[] = $row;
+    }
+    
+    $stmt->close();
+    $conn->close();
+    
+    echo json_encode(['success' => true, 'accesos' => $accesos]);
+    exit;
+}
+
+// Eliminar un acceso existente
+if($accion == 'eliminar_acceso_planta'){
+    $id = $_POST['id'] ?? '';
+    
+    $sql = "DELETE FROM accesos_plantas_ingenieros WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Acceso eliminado correctamente.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Error al eliminar el acceso.']);
+    }
+    
+    $stmt->close();
+    $conn->close();
+    exit;
+}
+
 // SUBIR PDF DEL MURAL (solo admins de RRHH) — reemplaza el PDF vigente
 if ($accion == 'subir_mural') {
     if (ob_get_length()) ob_clean();
