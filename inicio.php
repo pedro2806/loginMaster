@@ -3389,10 +3389,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                     ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
                     : '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>';
 
+                // Botón "Accesos Plantas" siempre visible; botón "+ Accesos Plantas" solo para ciertos noEmpleadoLog
+                var botonVerPlantas = `<br><button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="event.stopPropagation(); verAccesosPlantas('${noEmp}', '${nombre}')"><i class="fas fa-building"></i> Accesos Plantas</button>`;
+
                 var botonAccessoPlanta = '';
-                if (noEmpleadoLog == 521 || noEmpleadoLog == 276 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
+                if (noEmpleadoLog == 521 || noEmpleadoLog == 2756 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
                     botonAccessoPlanta = `<br><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="event.stopPropagation(); agregarAccesosPlantas('${noEmp}', '${nombre}')">+ Accesos Plantas</button>`;
                 }
+
 
                 html += `
                     <div class="col-md-6 mb-3">
@@ -3400,9 +3404,10 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                             ${avatar}
                             <div class="dir-info">
                                 <div class="dir-name">${nombre} ${noEmp ? `<span class="dir-noemp">- noEmpleado: ${noEmp}</span>` : ''}</div>
-                                <div class="dir-meta">${area}</div>
-                                <div class="dir-meta">${puesto}</div>
+                                <div class="dir-meta">${area} - ${puesto}</div>
+                                <div class="dir-meta"></div>
                                 ${correo ? `<span class="dir-mail">${correo}</span>` : ''}
+                                ${botonVerPlantas}
                                 ${botonAccessoPlanta}
                             </div>
                         </div>
@@ -3587,6 +3592,72 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 }
             });
         }
+
+        function verAccesosPlantas(noEmpleado, nombre) {            
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'obtener_accesos_plantas',
+                    noEmpleado: noEmpleado
+                },
+                success: function(response) {
+                    let listadoHtml = '';
+
+                    if (response.success && response.accesos.length > 0) {                         
+                        listadoHtml = `
+                            <div class="mb-1 text-start">                                
+                                <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
+                                    <table class="table table-sm table-bordered mb-0 align-middle">
+                                        <thead class="table-light">
+                                            <tr class="small">
+                                                <th>Cliente</th>
+                                                <th>Vigencia</th>                                                
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                        `;
+                            response.accesos.forEach(acc => {
+                                listadoHtml += `
+                                    <tr id="fila-existente-${acc.id}">
+                                        <td class="small">${acc.cliente}</td>
+                                        <td class="small">${acc.vigencia}</td>                                    
+                                    </tr>
+                                `;
+                            });
+                        listadoHtml += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <hr class="my-2">
+                        `;
+                    } else {
+                        listadoHtml = `
+                            <div class="alert alert-light text-start py-2 small text-muted mb-1">
+                                Este empleado no tiene plantas asignadas actualmente.
+                            </div>
+                            <hr class="my-3">
+                        `;
+                    }
+
+                    Swal.fire({
+                            title: 'Accesos a Plantas',
+                            html: `
+                                <div class="text-start">
+                                    <p class="text-muted small mb-2"><strong>${nombre} (${noEmpleado})</strong></p>
+                                    ${listadoHtml}
+                                </div>
+                            `,
+                            width: '650px',
+                            showCancelButton: true,
+                            confirmButtonText: 'Cerrar',                            
+                        });
+                }
+            });
+        }
+
 
         // Función auxiliar para eliminar un acceso existente directamente desde la tabla del modal
         function eliminarAccesoExistente(idAcceso) {
