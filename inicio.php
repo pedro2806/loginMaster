@@ -3393,7 +3393,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 var botonVerPlantas = `<br><button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="event.stopPropagation(); verAccesosPlantas('${noEmp}', '${nombre}')"><i class="fas fa-building"></i> Accesos Plantas</button>`;
 
                 var botonAccessoPlanta = '';
-                if (noEmpleadoLog == 521 || noEmpleadoLog == 2756 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
+                if (noEmpleadoLog == 521 || noEmpleadoLog == 276 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
                     botonAccessoPlanta = `<br><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="event.stopPropagation(); agregarAccesosPlantas('${noEmp}', '${nombre}')">+ Accesos Plantas</button>`;
                 }
 
