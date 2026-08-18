@@ -214,12 +214,77 @@ if ($accion == 'cumpleanos_hoy') {
         }
     }
 
+    // Quién ya lo felicitó hoy. Se devuelven NOMBRES, no un total: enterarse de
+    // quién se acordó de ti es cálido, mientras que un marcador invita a comparar.
+    $meFelicitaron = [];
+    if ($esMiCumple && $noEmpSesion > 0) {
+        $stmtFel = $conn->prepare(
+            "SELECT u.nombre
+             FROM cumple_aplausos a
+             INNER JOIN usuarios u ON u.noEmpleado = a.no_empleado_origen
+             WHERE a.no_empleado_destino = ? AND a.fecha = CURDATE()
+             ORDER BY u.nombre"
+        );
+        if ($stmtFel) {
+            $stmtFel->bind_param('i', $noEmpSesion);
+            $stmtFel->execute();
+            $resFel = $stmtFel->get_result();
+            while ($f = $resFel->fetch_assoc()) $meFelicitaron[] = $f['nombre'];
+            $stmtFel->close();
+        }
+    }
+
     echo json_encode([
-        'success'     => true,
-        'es_mi_cumple' => $esMiCumple,
-        'mi_nombre'   => $miNombre,
-        'otros'       => $otros
+        'success'        => true,
+        'es_mi_cumple'   => $esMiCumple,
+        'mi_nombre'      => $miNombre,
+        'otros'          => $otros,
+        'me_felicitaron' => $meFelicitaron
     ]);
+    $conn->close();
+    exit;
+}
+
+// REGISTRAR UNA FELICITACIÓN
+// Solo se guarda que alguien felicitó, no cuántas veces: al festejado le importa
+// quién se acordó, y así el minijuego puede seguir sumando clics sin tocar la red.
+// El INSERT ... SELECT valida en la misma sentencia que el destino de verdad
+// cumpla años hoy y esté activo, así que no se pueden sembrar filas arbitrarias.
+if ($accion == 'cumple_aplaudir') {
+    ob_clean();
+    header('Content-Type: application/json');
+
+    // El origen sale de la cookie, nunca del POST: si viniera del cliente,
+    // cualquiera podría felicitar en nombre de otro.
+    $origen  = intval($_COOKIE['noEmpleadoL'] ?? 0);
+    $destino = intval($_POST['destino'] ?? 0);
+
+    if ($origen <= 0 || $destino <= 0 || $origen === $destino) {
+        echo json_encode(['success' => false, 'message' => 'Felicitación no válida.']);
+        $conn->close();
+        exit;
+    }
+
+    $stmtAp = $conn->prepare(
+        "INSERT IGNORE INTO cumple_aplausos (no_empleado_destino, no_empleado_origen, fecha)
+         SELECT u.noEmpleado, ?, CURDATE()
+         FROM usuarios u
+         WHERE u.noEmpleado = ?
+           AND u.estatus = 1
+           AND u.fechaNacimiento IS NOT NULL
+           AND MONTH(u.fechaNacimiento) = MONTH(CURDATE())
+           AND DAY(u.fechaNacimiento)   = DAY(CURDATE())"
+    );
+    if (!$stmtAp) {
+        echo json_encode(['success' => false, 'message' => 'Error al preparar el registro.']);
+        $conn->close();
+        exit;
+    }
+    $stmtAp->bind_param('ii', $origen, $destino);
+    $stmtAp->execute();
+    $stmtAp->close();
+
+    echo json_encode(['success' => true]);
     $conn->close();
     exit;
 }

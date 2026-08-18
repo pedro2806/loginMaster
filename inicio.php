@@ -1120,6 +1120,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         </div>
     </div>
 
+    <!-- Lienzo del confeti del minijuego de cumpleaños. Vive fuera del contenedor
+         para que ninguna columna con overflow:hidden lo recorte. -->
+    <div id="confetiCumple" aria-hidden="true"></div>
+
     <!-- Modal Buzon de Sugerencias -->
     <div class="modal fade" id="modalbuzon" tabindex="-1" role="dialog" aria-labelledby="modalbuzonLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -2077,12 +2081,41 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 if (!resp || !resp.success) return;
 
                 if (resp.es_mi_cumple) {
+                    // Adorno festivo del portal: dura todo el día, a diferencia del
+                    // modal, que se ve una vez. El CSS cuelga de esta clase.
+                    $('body').addClass('es-mi-cumple');
+
                     var hoy = new Date().toISOString().slice(0, 10);
                     if (localStorage.getItem('mess_cumple_visto') !== hoy) {
                         localStorage.setItem('mess_cumple_visto', hoy);
                         $('#cumpleNombre').text(resp.mi_nombre || '');
                         $('#modalCumple').modal('show');
                     }
+                }
+
+                var $cont = $('#cumpleanosHoy').empty();
+
+                // Tarjeta propia del festejado. Antes, si era el único que cumplía,
+                // no veía absolutamente nada tras cerrar el modal.
+                if (resp.es_mi_cumple) {
+                    var $mia = $('<div></div>').append(
+                        $('<strong></strong>').text('🎂 ¡Hoy es tu cumpleaños!')
+                    );
+                    if (resp.me_felicitaron && resp.me_felicitaron.length) {
+                        $mia.append('<br>').append(
+                            $('<span></span>').text('Te felicitaron: ' + resp.me_felicitaron.join(', '))
+                        );
+                    } else {
+                        $mia.append('<br>').append(
+                            $('<span class="small text-muted"></span>')
+                                .text('Cuando alguien te felicite desde el portal, aparecerá aquí.')
+                        );
+                    }
+                    $cont.append(
+                        $('<div class="alert alert-warning d-flex align-items-center mb-3"></div>')
+                            .append('<i class="fas fa-birthday-cake fa-lg mr-3"></i>')
+                            .append($mia)
+                    );
                 }
 
                 if (!resp.otros || !resp.otros.length) return;
@@ -2094,14 +2127,160 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     $('<strong></strong>').text('Hoy cumple' + (plural ? 'n' : '') + ' años:')
                 ).append('<br>');
                 resp.otros.forEach(function(u) {
-                    $texto.append($('<span class="badge badge-light mr-1"></span>').text(u.nombre));
+                    $texto.append(botonFelicitar(u));
                 });
-                $('#cumpleanosHoy').empty().append(
+                $texto.append(
+                    $('<div class="small text-muted mt-1"></div>')
+                        .text('Da clic en su nombre para felicitarlo. Cada 3, fiesta.')
+                );
+                $cont.append(
                     $('<div class="alert alert-info d-flex align-items-center mb-3"></div>')
                         .append('<i class="fas fa-birthday-cake fa-lg mr-3"></i>')
                         .append($texto)
                 );
             }, 'json');
+        }
+
+        // ===== Minijuego: felicitar a clics =====
+        // Cada clic en el nombre suma un aplauso y cada 3 dispara la celebración.
+        // El contador vive en localStorage por día y por empleado: recargar no borra
+        // el avance, y mañana la cuenta arranca de cero sola porque cambia la clave.
+        function cumpleClave(noEmpleado) {
+            return 'mess_cumple_clicks_' + new Date().toISOString().slice(0, 10) + '_' + noEmpleado;
+        }
+
+        function cumpleClicks(noEmpleado) {
+            return parseInt(localStorage.getItem(cumpleClave(noEmpleado)) || '0', 10);
+        }
+
+        function botonFelicitar(u) {
+            var $btn = $('<button type="button" class="cumple-btn mr-1"></button>')
+                .attr('title', 'Felicita a ' + u.nombre);
+            $btn.append($('<span></span>').text(u.nombre));
+
+            // La cuenta NO se muestra a propósito: verla convierte la felicitación
+            // en competencia y expone a quien reciba menos aplausos. Solo vive en
+            // localStorage para saber cuándo toca celebrar.
+            $btn.on('click', function() {
+                var n = cumpleClicks(u.noEmpleado) + 1;
+                localStorage.setItem(cumpleClave(u.noEmpleado), n);
+                registrarFelicitacion(u.noEmpleado);
+                brotarAplauso($btn);
+                sonarAplauso();
+                // Rebote en cada clic para que el botón se sienta vivo.
+                $btn.addClass('cumple-pulso');
+                setTimeout(function() { $btn.removeClass('cumple-pulso'); }, 180);
+                if (n % 3 === 0) celebrarCumple($btn, u.nombre);
+            });
+            return $btn;
+        }
+
+        // A la base solo le interesa QUE felicitaste, no cuántas veces, así que se
+        // manda una sola petición por festejado al día: el primer clic. Los demás
+        // son puro confeti local y no tocan la red. La marca es por día y persona.
+        function registrarFelicitacion(noEmpleadoDestino) {
+            var clave = 'mess_cumple_enviado_' + new Date().toISOString().slice(0, 10)
+                      + '_' + noEmpleadoDestino;
+            if (localStorage.getItem(clave)) return;
+            localStorage.setItem(clave, '1');
+            $.post('acciones_inicio.php', {
+                accion: 'cumple_aplaudir',
+                destino: noEmpleadoDestino
+            }).fail(function() {
+                // Si no llegó, se permite reintentar en el próximo clic.
+                localStorage.removeItem(clave);
+            });
+        }
+
+        // Emoji que brota del botón y sube desvaneciéndose, como las reacciones de
+        // las redes sociales: acusa recibo de cada clic sin llevar la cuenta a la vista.
+        function brotarAplauso($btn) {
+            var r = $btn[0].getBoundingClientRect();
+            var $ap = $('<span class="cumple-aplauso">👏</span>').css({
+                left: (r.left + r.width / 2 + (Math.random() * 26 - 13)) + 'px',
+                top: r.top + 'px'
+            });
+            $('body').append($ap);
+            setTimeout(function() { $ap.remove(); }, 1000);
+        }
+
+        // Sonido sintetizado con Web Audio: un toque corto por aplauso y una
+        // fanfarria de tres notas en la celebración. Sin archivos que cargar ni
+        // dependencias nuevas.
+        var audioCumple = null;
+        function ctxAudioCumple() {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            if (!audioCumple) audioCumple = new AC();
+            // Safari mantiene el contexto suspendido hasta que hay gesto del usuario.
+            if (audioCumple.state === 'suspended') audioCumple.resume();
+            return audioCumple;
+        }
+
+        function notaCumple(frecuencia, inicio, duracion, volumen) {
+            var ctx = ctxAudioCumple();
+            if (!ctx) return;
+            var osc = ctx.createOscillator();
+            var gan = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = frecuencia;
+            var t = ctx.currentTime + inicio;
+            gan.gain.setValueAtTime(0.0001, t);
+            gan.gain.linearRampToValueAtTime(volumen, t + 0.01);
+            gan.gain.exponentialRampToValueAtTime(0.0001, t + duracion);
+            osc.connect(gan);
+            gan.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + duracion + 0.02);
+        }
+
+        function sonarAplauso() {
+            notaCumple(660, 0, 0.12, 0.07);
+        }
+
+        function sonarFanfarria() {
+            notaCumple(523.25, 0.00, 0.16, 0.10); // do
+            notaCumple(659.25, 0.11, 0.16, 0.10); // mi
+            notaCumple(783.99, 0.22, 0.32, 0.11); // sol
+        }
+
+        // Confeti hecho a mano con divs y animación CSS; se limpian solos. Así no
+        // hay que sumarle otra librería al portal.
+        function lanzarConfeti(cantidad) {
+            var cont = document.getElementById('confetiCumple');
+            if (!cont) return;
+            var colores = ['#1c83f1', '#f5a623', '#059669', '#dc2626', '#8e44ad', '#ffd700'];
+            for (var i = 0; i < cantidad; i++) {
+                var p = document.createElement('span');
+                p.className = 'confeti-pieza';
+                p.style.left = (Math.random() * 100) + '%';
+                p.style.background = colores[Math.floor(Math.random() * colores.length)];
+                p.style.animationDelay = (Math.random() * 0.4) + 's';
+                p.style.animationDuration = (1.8 + Math.random() * 1.2) + 's';
+                cont.appendChild(p);
+                (function(el) {
+                    setTimeout(function() { el.remove(); }, 3400);
+                })(p);
+            }
+        }
+
+        function celebrarCumple($btn, nombre) {
+            lanzarConfeti(70);
+            sonarFanfarria();
+            $btn.addClass('cumple-festejo');
+            setTimeout(function() { $btn.removeClass('cumple-festejo'); }, 700);
+
+            // Mensaje efímero en vez de modal: celebra sin interrumpir lo que se
+            // esté haciendo, que es justo lo contrario del aviso de contraseña.
+            // Sin cifras: el mensaje festeja, no lleva marcador.
+            var $aviso = $('<div class="cumple-toast"></div>')
+                .text('🎉 ¡Fiesta para ' + nombre + '!');
+            $('body').append($aviso);
+            setTimeout(function() { $aviso.addClass('visible'); }, 10);
+            setTimeout(function() {
+                $aviso.removeClass('visible');
+                setTimeout(function() { $aviso.remove(); }, 400);
+            }, 2600);
         }
 
         // ===== ¿El usuario tiene gente a su cargo? =====
