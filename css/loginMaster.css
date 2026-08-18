@@ -109,7 +109,8 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
 
 #content > .container-fluid {
     background: var(--card-bg) !important;
-    min-height: calc(100vh - 56px);
+    /* Antes descontaba los 56px de la barra superior; ya no existe. */
+    min-height: 100vh;
     padding: 0 !important;
 }
 
@@ -550,7 +551,13 @@ body.theme-dark .profile-card .stat-box i {
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
+    /* La barra horizontal se dibuja DENTRO de la caja y, como las pestañas van
+       pegadas al borde inferior, tapaba su texto. Estilizarla no ayuda: al
+       definir ::-webkit-scrollbar, Safari deja de usar la barra superpuesta y
+       pasa a una clásica que ocupa alto real. Se oculta; la tira se sigue
+       desplazando con gesto táctil, arrastre y shift+rueda. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     justify-content: flex-start;
     position: relative;
 }
@@ -566,8 +573,12 @@ body.theme-dark .profile-card .stat-box i {
     z-index: 1;
 }
 
-.sidebar-expanded .nav-tabs-main {
-    padding-left: 0 !important;
+/* Con la barra lateral colapsada, la tira de pestañas ocupa todo el ancho y
+   pasaría por debajo del botón flotante. Se le reserva el hueco: el botón acaba
+   en x=48px (10 de left + 38 de ancho) y las pestañas arrancan en 58px. */
+.sidebar-expanded .nav-tabs-main,
+body.sidebar-hidden .nav-tabs-main {
+    padding-left: 58px !important;
 }
 
 .sidebar-expanded .nav-tabs-main::before {
@@ -575,16 +586,7 @@ body.theme-dark .profile-card .stat-box i {
 }
 
 .nav-tabs-main::-webkit-scrollbar {
-    height: 4px;
-}
-
-.nav-tabs-main::-webkit-scrollbar-track {
-    background: var(--card-soft);
-}
-
-.nav-tabs-main::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 2px;
+    display: none;
 }
 
 .nav-tabs-main .nav-link {
@@ -602,6 +604,23 @@ body.theme-dark .profile-card .stat-box i {
     transition: all 0.2s;
     white-space: nowrap;
     flex-shrink: 0;
+}
+
+/* Solo la pestaña activa muestra su nombre; el resto queda como icono, con el
+   nombre disponible en el title/aria-label. Con 9 pestañas la tira ya no
+   desborda, que era lo que obligaba a desplazarla. El icono se agranda un poco
+   al quedar solo para no perder área de clic. */
+.nav-tabs-main .nav-link .tab-label {
+    display: none;
+}
+
+.nav-tabs-main .nav-link.active .tab-label {
+    display: inline;
+}
+
+.nav-tabs-main .nav-link:not(.active) i {
+    font-size: 1rem;
+    vertical-align: middle;
 }
 
 .nav-tabs-main .nav-link:hover {
@@ -1514,7 +1533,8 @@ footer.sticky-footer .fb-footer-logo {
 
 /* ARREGLO SIDEBAR v3 - SOLO columna izquierda, no toca cards */
 #content > .container-fluid > .row {
-    min-height: calc(100vh - 56px);
+    /* Antes descontaba los 56px de la barra superior; ya no existe. */
+    min-height: 100vh;
     align-items: stretch !important;
 }
 
@@ -1592,6 +1612,9 @@ body.theme-dark .profile-card .stat-box,
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     border-radius: 0.5rem !important;
     box-shadow: none !important;
+    /* Safari exige el prefijo -webkit-: sin él ignora la regla en silencio y las
+       tarjetas del perfil se ven planas, sin el desenfoque del fondo. */
+    -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
 }
 

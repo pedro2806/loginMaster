@@ -1,75 +1,47 @@
 <style>
-    .fb-logo-img {
-        max-width: 320px;
-        width: 100%;
-        margin: 0 0 16px 0;
-        filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-        display: block;
-    }
-    
-    /* Botón toggle sidebar - SIN FONDO */
+    /* Se quitó la barra superior para que el bloque de pestañas gane altura y
+       quede mejor encuadrado; el logo se movió arriba de la tarjeta del usuario
+       (ver inicio.php). De la barra solo sobrevive el botón que colapsa el menú,
+       que ahora flota sobre el contenido en vez de vivir dentro del navbar.
+       Este archivo lo comparten inicio.php, inicio2.php, inicio_res.php e
+       inicioOld.php, por eso el modal de salir y la pila de avisos siguen aquí. */
     #toggleSidebarBtn {
-        background: transparent !important;
+        position: fixed;
+        /* Alineado con el logo, no pegado al borde: el logo arranca tras el pt-3
+           (16px) y mide 83px de alto, así que su centro cae en y≈57px; restando
+           media altura del botón (19px) da 38px. Tiene que seguir siendo fixed
+           porque la columna del perfil colapsa a ancho 0 y se lleva su contenido. */
+        top: 38px;
+        left: 10px;
+        z-index: 1040;
+        background: rgba(7, 68, 128, 0.85) !important;
         border: none !important;
         color: #fff;
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
         border-radius: 0.375rem;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s;
-        margin-right: 1.5rem;
         padding: 0;
     }
-    
+
     #toggleSidebarBtn:hover {
-        background: rgba(255,255,255,0.1) !important;
+        background: rgba(7, 68, 128, 1) !important;
     }
-    
+
     #toggleSidebarBtn i {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
     }
 </style>
 
-<!-- Topbar -->
-<nav class="navbar navbar-expand navbar-light bg-white mb-2 static-top shadow" style="background-color: #074480 !important;">
+<button id="toggleSidebarBtn" class="btn" type="button" title="Ocultar/Mostrar menú">
+    <i class="fa fa-bars"></i>
+</button>
 
-    <!-- BOTÓN TOGGLE SIDEBAR -->
-    <button id="toggleSidebarBtn" class="btn" type="button" title="Ocultar/Mostrar menú">
-        <i class="fa fa-bars"></i>
-    </button>
-
-    <!-- Sidebar Toggle (Topbar) Mobile -->
-    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-1">
-        <i class="fa fa-bars"></i>
-    </button>
-
-    <!-- Breadcrumb dinámico (se actualiza al cambiar de pestaña en #mainTabs) -->
-    <nav id="appBreadcrumb" class="app-breadcrumb" aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><i class="fas fa-home mr-1"></i>Inicio</li>
-            <li class="breadcrumb-item active" id="breadcrumbCurrent" aria-current="page">Mi Espacio</li>
-        </ol>
-    </nav>
-
-
-
-    <!-- Topbar Navbar -->
-    <ul class="navbar-nav ml-auto" style="height:60px; align-items:center;">
-        <!-- Nav Item - User Information -->
-        <li class="nav-item dropdown no-arrow" style="height:20px;">
-            <a class="nav-link dropdown-toggle py-1" id="userDropdown" role="button"
-                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height:20px; display:flex; align-items:center;">
-                <span class="mr-0 text-gray-600" style="font-size:15px; line-height:1;  color: #fff !important;">
-                  <br> 
-                <img src="../loginMaster/img/messbook_logo3.png" alt="Logo" class="fb-logo-img" style="height: 80px; margin-right: 10px;">
-                </span>
-            </a>
-        </li>
-    </ul>
-
+<div>
     <!-- Logout Modal-->
     <div class="modal fade" id="logoutModalN" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -90,7 +62,7 @@
             </div>
         </div>
     </div>
-</nav>
-<!-- End of Topbar -->
+</div>
 
-<div id="notificationStack" class="position-fixed" style="top: 70px; right: 20px; z-index: 1080; width: min(420px, calc(100vw - 2rem));"></div>
+<!-- Sube a 12px porque ya no hay barra superior de 56px que esquivar. -->
+<div id="notificationStack" class="position-fixed" style="top: 12px; right: 20px; z-index: 1080; width: min(420px, calc(100vw - 2rem));"></div>
