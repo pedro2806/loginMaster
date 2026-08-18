@@ -135,6 +135,56 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     }
     --- fin regla original --- */
 }
+
+// Aviso de contraseña de fábrica: la que se asigna al alta es la parte del correo
+// anterior al @. No siempre es "nombre.apellido" — hay cuentas de función como
+// adm_mess, contabilidad, atc_fza o cotizaciones2, y otras de solo nombre de pila.
+// Por eso se compara contra el correo y no contra un patrón de nombre.
+//
+// La comprobación va con password_verify contra el hash, no mirando si está en
+// texto plano. Esa distinción importa: login.php cifra la contraseña vieja en el
+// momento en que el empleado entra, así que para cuando carga esta página ya se
+// ve hasheada aunque siga siendo la misma de siempre. Verificando el VALOR y no
+// el formato, el aviso sigue funcionando en ambos casos.
+$passwordEsDefault = false;
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $noEmpPwd = intval($_COOKIE['noEmpleadoL']);
+    $stmtPwd = $conn->prepare("SELECT usuario, correo, password FROM mess_rrhh.usuarios
+                               WHERE noEmpleado = ? AND estatus = 1
+                               LIMIT 1");
+    if ($stmtPwd) {
+        $stmtPwd->bind_param("i", $noEmpPwd);
+        $stmtPwd->execute();
+        $rowPwd = $stmtPwd->get_result()->fetch_assoc();
+        $stmtPwd->close();
+        if ($rowPwd) {
+            // El correo manda; el usuario solo cubre el caso de que venga vacío.
+            $basePwd = ($rowPwd['correo'] !== null && $rowPwd['correo'] !== '')
+                     ? $rowPwd['correo']
+                     : (string) $rowPwd['usuario'];
+            $esperadoPwd = strtolower(trim(explode('@', $basePwd)[0]));
+            $guardadoPwd = (string) $rowPwd['password'];
+            if ($esperadoPwd !== '' && $guardadoPwd !== '') {
+                $esHashPwd = (strncmp($guardadoPwd, '$2y$', 4) === 0
+                           || strncmp($guardadoPwd, '$2a$', 4) === 0);
+                $passwordEsDefault = $esHashPwd
+                    ? password_verify($esperadoPwd, $guardadoPwd)
+                    : (strtolower($guardadoPwd) === $esperadoPwd);
+            }
+        }
+    }
+}
+
+// El aviso sale UNA VEZ POR LOGIN. Se marca en la sesión de PHP y no en el
+// navegador: recargar con F5 o moverse entre pestañas ya no lo repite, pero al
+// volver a entrar sí reaparece, porque logout.php borra PHPSESSID (la cookie no
+// es HttpOnly) y además muere al cerrar el navegador, así que el siguiente
+// acceso arranca con una sesión nueva.
+$mostrarAvisoPwd = false;
+if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
+    $mostrarAvisoPwd = true;
+    $_SESSION['avisoPwdMostrado'] = true;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -163,7 +213,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                     <div class="row">
                         <!-- ========== SIDEBAR PERFIL ========== -->
                         <div class="col-xl-3 col-md-4">
-                            <div class="profile-card text-center">      
+                            <!-- El logo bajó aquí desde el encabezado que se quitó: encabeza
+                                 la columna del usuario y deja despejada la zona de pestañas.
+                                 El filtro lo pinta de blanco sobre el fondo azul. -->
+                            <div class="text-center pt-3 pb-2">
+                                <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook"
+                                     style="max-width: 200px; width: 80%; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                            </div>
+                            <div class="profile-card text-center">
                                 <div id= "info_us_card" class="stat-box" style="border: .5px solid white;">                                                   
                                     <div class="profile-avatar">
                                         <i class="fas fa-user-circle"></i>
@@ -271,32 +328,32 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                         <div class="col-xl-9 col-md-8 d-flex flex-column" Style="padding-left: 0px !important; background: linear-gradient(180deg, #074480 0%, #0a1c61 100%) !important;">
                             <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #074480 !important;">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab">
-                                    <i class="fas fa-user-cog mr-1"></i> Mi Espacio
+                                <button class="nav-link active" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab" title="Mi Espacio" aria-label="Mi Espacio">
+                                    <i class="fas fa-user-cog"></i><span class="tab-label"> Mi Espacio</span>
                                     <span class="tab-badge"></span>
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab">
-                                        <i class="fas fa-th-large mr-1"></i> Sistemas
+                                    <button class="nav-link" id="tabSistemas-tab" data-toggle="tab" data-target="#tabSistemas" type="button" role="tab" title="Sistemas" aria-label="Sistemas">
+                                        <i class="fas fa-th-large"></i><span class="tab-label"> Sistemas</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabAgenda-tab" data-toggle="tab" data-target="#tabAgenda" type="button" role="tab">
-                                        <i class="fas fa-calendar-alt mr-1"></i> Sala de Juntas
+                                    <button class="nav-link" id="tabAgenda-tab" data-toggle="tab" data-target="#tabAgenda" type="button" role="tab" title="Sala de Juntas" aria-label="Sala de Juntas">
+                                        <i class="fas fa-calendar-alt"></i><span class="tab-label"> Sala de Juntas</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabAvisos-tab" data-toggle="tab" data-target="#tabAvisos" type="button" role="tab">
-                                        <i class="fas fa-bullhorn mr-1"></i> Avisos
+                                    <button class="nav-link" id="tabAvisos-tab" data-toggle="tab" data-target="#tabAvisos" type="button" role="tab" title="Avisos" aria-label="Avisos">
+                                        <i class="fas fa-bullhorn"></i><span class="tab-label"> Avisos</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabTickets-tab" data-toggle="tab" data-target="#tabTickets" type="button" role="tab">
-                                        <i class="fas fa-ticket-alt mr-1"></i> Tickets
+                                    <button class="nav-link" id="tabTickets-tab" data-toggle="tab" data-target="#tabTickets" type="button" role="tab" title="Tickets" aria-label="Tickets">
+                                        <i class="fas fa-ticket-alt"></i><span class="tab-label"> Tickets</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -311,8 +368,8 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 --->
                                 <?php if ($tieneVehiculo): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab">
-                                        <i class="fas fa-car mr-1"></i> Vehículo
+                                    <button class="nav-link" id="tabVehiculo-tab" data-toggle="tab" data-target="#tabVehiculo" type="button" role="tab" title="Vehículo" aria-label="Vehículo">
+                                        <i class="fas fa-car"></i><span class="tab-label"> Vehículo</span>
                                         <span class="tab-badge"></span>
                                         <span id="statusTabVehiculo" class="tab-status" title="Estatus de vehículo"></span>
                                     </button>
@@ -320,24 +377,24 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 <?php endif; ?>
                                 <?php if ($tieneKpis): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab">
-                                        <i class="fas fa-chart-line mr-1"></i> KPI's
+                                    <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab" title="KPI's" aria-label="KPI's">
+                                        <i class="fas fa-chart-line"></i><span class="tab-label"> KPI's</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <?php endif; ?>
                                 <?php if ($tieneAnalisisBI): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabAnalisisBI-tab" data-toggle="tab" data-target="#tabAnalisisBI" type="button" role="tab">
-                                        <i class="fas fa-chart-pie mr-1"></i> Análisis BI
+                                    <button class="nav-link" id="tabAnalisisBI-tab" data-toggle="tab" data-target="#tabAnalisisBI" type="button" role="tab" title="Análisis BI" aria-label="Análisis BI">
+                                        <i class="fas fa-chart-pie"></i><span class="tab-label"> Análisis BI</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
                                 <?php endif; ?>
                                 <?php if ($tieneSivacSolicitante): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab">
-                                        <i class="fas fa-briefcase mr-1"></i> Mis Vacantes
+                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab" title="Mis Vacantes" aria-label="Mis Vacantes">
+                                        <i class="fas fa-briefcase"></i><span class="tab-label"> Mis Vacantes</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -351,8 +408,8 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                 </li>
                                 <?php endif; ?> -->
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab">
-                                        <i class="fas fa-address-book mr-1"></i> Directorio
+                                    <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab" title="Directorio" aria-label="Directorio">
+                                        <i class="fas fa-address-book"></i><span class="tab-label"> Directorio</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -575,13 +632,17 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                         </div>
                                         <?php endif; ?>
 
-                                        <!-- SIVAC (Vacantes y Contratación) -->
+                                        <!-- NEST — Núcleo de Evaluación y Selección de Talento.
+                                             La carpeta sigue llamándose SIVAC (la URL no cambió);
+                                             lo que cambió es la marca. -->
                                         <?php if ($tieneSivac): ?>
                                         <div class="col-md-3 mb-3" id="divSivac">
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../SIVAC/" class="btn btn-outline-primary btn-block">
-                                                        <i class="fas fa-user-tie fa-lg d-block mb-2"></i> SIVAC
+                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt=""
+                                                             class="d-block mx-auto mb-2" style="height:34px;width:auto">
+                                                        NEST
                                                     </a>
                                                 </div>
                                             </div>
@@ -768,6 +829,9 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 
                                 <!-- ===== TAB 5: PERSONAL ===== -->
                                 <div class="tab-pane fade show active" id="tabPersonal" role="tabpanel">
+                                    <!-- Cumpleaños del día. La tarjeta solo se dibuja si hay
+                                         alguien que cumpla hoy; si no, este contenedor queda vacío. -->
+                                    <div id="cumpleanosHoy"></div>
                                     <div class="row">
                                         <!-- Columna izquierda: Notificaciones + En Resguardo -->
                                         <div class="col-lg-5 mb-4 d-flex flex-column">
@@ -916,16 +980,20 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                                     </ul>
                                     <div class="tab-content pt-2" id="subTabsTicketsContent">
                                         <div class="tab-pane fade show active" id="subTabNuevo" role="tabpanel">
+                                            <!-- scrolling="auto" a propósito: con scrolling="no" Safari reporta un
+                                                 scrollHeight recortado al alto visible, así que autoAjustarIframe medía
+                                                 78vh, nunca crecía y "Enviar Ticket" quedaba fuera sin forma de bajar.
+                                                 Además deja scroll propio como red de seguridad si la medición falla. -->
                                             <iframe id="iframeTicketsNuevo"
                                                     data-src="../Tickets/embed_nuevo.php"
-                                                    scrolling="no"
-                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem; overflow:hidden;"></iframe>
+                                                    scrolling="auto"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
                                         </div>
                                         <div class="tab-pane fade" id="subTabMis" role="tabpanel">
                                             <iframe id="iframeTicketsMis"
                                                     data-src="../Tickets/embed_mis.php"
-                                                    scrolling="no"
-                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem; overflow:hidden;"></iframe>
+                                                    scrolling="auto"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
                                         </div>
                                     </div>
                                 </div>
@@ -1006,6 +1074,15 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                     </button>
                 </div>
                 <div class="modal-body">
+                    <!-- Solo se descubre cuando el modal lo abre el aviso automático,
+                         no cuando el usuario entra por el botón "Password". -->
+                    <div id="avisoPwdDefault" class="alert alert-warning d-none">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        <strong>Sigues usando la contraseña que te asignamos al darte de alta.</strong>
+                        Es la parte de tu correo anterior a la <strong>@</strong>, así que
+                        cualquiera que conozca tu correo puede entrar a tu cuenta.
+                        Por seguridad, elige una nueva; toma menos de un minuto.
+                    </div>
                     <div class="form-group">
                         <label for="contrasena_actual">Contraseña actual</label>
                         <input type="password" class="form-control" id="contrasena_actual" name="contrasena_actual" required>
@@ -1022,6 +1099,22 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" onclick="cambiarCont()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Felicitación de cumpleaños: se le muestra al propio cumpleañero, una vez al día. -->
+    <div class="modal fade" id="modalCumple" tabindex="-1" role="dialog" aria-labelledby="modalCumpleLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content text-center">
+                <div class="modal-body py-4">
+                    <i class="fas fa-birthday-cake fa-3x mb-3" style="color: var(--accent);"></i>
+                    <h4 class="mb-2" id="modalCumpleLabel">¡Feliz cumpleaños, <span id="cumpleNombre"></span>!</h4>
+                    <p class="text-muted mb-0">De parte de todo Grupo MESS, te deseamos un excelente día.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">¡Gracias!</button>
                 </div>
             </div>
         </div>
@@ -1284,10 +1377,25 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 if (calendarVacaciones) calendarVacaciones.render();
             });
 
+            <?php if ($mostrarAvisoPwd): ?>
+            // Sigue con la contraseña de fábrica: se sugiere cambiarla. Es cerrable;
+            // el control de "una vez por login" ya se resolvió en PHP, aquí solo se
+            // muestra. Sin marcas en el navegador, para que no sobrevivan al logout.
+            $('#avisoPwdDefault').removeClass('d-none');
+            $('#modalCambiarContrasena').modal('show');
+            <?php endif; ?>
+
+            // Si el usuario abre el modal por su cuenta desde el botón "Password",
+            // el aviso no viene al caso: se oculta para no repetir la advertencia.
+            $('[data-target="#modalCambiarContrasena"]').on('click', function() {
+                $('#avisoPwdDefault').addClass('d-none');
+            });
+
             // ===== Inicialización original =====
             validaOpciones();
             infoEmpleado();
             verificarEsJefe();
+            cargarCumpleanos();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
             registrarNotificacionPlaneacion();
@@ -1368,24 +1476,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                     subtree: true
                 });
             })();
-
-            // Breadcrumb del topbar: refleja la pestaña activa
-            var breadcrumbMap = {
-                'tabSistemas-tab':   'Sistemas',
-                'tabAgenda-tab':     'Sala de Juntas',
-                'tabAvisos-tab':     'Avisos',
-                'tabTickets-tab':    'Tickets',
-                'tabPersonal-tab':   'Mi Espacio',
-                'tabVehiculo-tab':   'Vehículo',
-                'tabKpis-tab':       "KPI's",
-                'tabAnalisisBI-tab': 'Análisis BI',
-                'tabCotizador-tab':  'Cotizador IA',
-                'tabDirectorio-tab': 'Directorio'
-            };
-            $('#mainTabs button[data-toggle="tab"]').on('shown.bs.tab', function(e) {
-                var label = breadcrumbMap[e.target.id];
-                if (label) $('#breadcrumbCurrent').text(label);
-            });
 
             // Calendario de Sala de Juntas: lazy-init al mostrar el tab
             // (FullCalendar mide 0px si se crea con el contenedor en display:none)
@@ -1972,6 +2062,46 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                     }
                 }
             });
+        }
+
+        // ===== Cumpleaños del día =====
+        // Dos cosas distintas con una sola consulta: al cumpleañero se le felicita
+        // con un modal (una vez al día, aunque recargue), y al resto se le avisa
+        // con una tarjeta en Mi Espacio para que puedan felicitar.
+        function cargarCumpleanos() {
+            var noEmp = getCookie('noEmpleadoL') || '';
+            $.post('acciones_inicio.php', {
+                accion: 'cumpleanos_hoy',
+                noEmpleado: noEmp
+            }, function(resp) {
+                if (!resp || !resp.success) return;
+
+                if (resp.es_mi_cumple) {
+                    var hoy = new Date().toISOString().slice(0, 10);
+                    if (localStorage.getItem('mess_cumple_visto') !== hoy) {
+                        localStorage.setItem('mess_cumple_visto', hoy);
+                        $('#cumpleNombre').text(resp.mi_nombre || '');
+                        $('#modalCumple').modal('show');
+                    }
+                }
+
+                if (!resp.otros || !resp.otros.length) return;
+
+                // Se arma con .text() en vez de concatenar HTML: los nombres vienen
+                // de la BD y no tienen por qué inyectarse crudos en el DOM.
+                var plural = resp.otros.length > 1;
+                var $texto = $('<div></div>').append(
+                    $('<strong></strong>').text('Hoy cumple' + (plural ? 'n' : '') + ' años:')
+                ).append('<br>');
+                resp.otros.forEach(function(u) {
+                    $texto.append($('<span class="badge badge-light mr-1"></span>').text(u.nombre));
+                });
+                $('#cumpleanosHoy').empty().append(
+                    $('<div class="alert alert-info d-flex align-items-center mb-3"></div>')
+                        .append('<i class="fas fa-birthday-cake fa-lg mr-3"></i>')
+                        .append($texto)
+                );
+            }, 'json');
         }
 
         // ===== ¿El usuario tiene gente a su cargo? =====

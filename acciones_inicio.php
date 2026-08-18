@@ -176,8 +176,56 @@ if ($accion == 'cargar_cursos') {
     exit;
 }
 
+// CUMPLEAÑOS DEL DÍA
+// Se compara mes y día, nunca el año: fechaNacimiento guarda el año real.
+// Devuelve por separado si le toca al usuario de la sesión, para que el portal
+// pueda felicitarlo a él y, aparte, listar a los demás para todos.
+if ($accion == 'cumpleanos_hoy') {
+    ob_clean();
+    header('Content-Type: application/json');
+
+    $noEmpSesion = intval($noEmpleado);
+
+    $sqlCump = "SELECT noEmpleado, nombre, fechaNacimiento
+                FROM usuarios
+                WHERE estatus = 1
+                  AND fechaNacimiento IS NOT NULL
+                  AND MONTH(fechaNacimiento) = MONTH(CURDATE())
+                  AND DAY(fechaNacimiento)   = DAY(CURDATE())
+                ORDER BY nombre";
+    $resCump = $conn->query($sqlCump);
+
+    $otros = [];
+    $esMiCumple = false;
+    $miNombre = '';
+
+    if ($resCump) {
+        while ($row = $resCump->fetch_assoc()) {
+            if ($noEmpSesion > 0 && intval($row['noEmpleado']) === $noEmpSesion) {
+                // Al cumpleañero lo felicitamos aparte; no se lista a sí mismo.
+                $esMiCumple = true;
+                $miNombre = $row['nombre'];
+                continue;
+            }
+            $otros[] = [
+                'noEmpleado' => intval($row['noEmpleado']),
+                'nombre'     => $row['nombre']
+            ];
+        }
+    }
+
+    echo json_encode([
+        'success'     => true,
+        'es_mi_cumple' => $esMiCumple,
+        'mi_nombre'   => $miNombre,
+        'otros'       => $otros
+    ]);
+    $conn->close();
+    exit;
+}
+
 // VERIFICAR USUARIO POR CORREO
-if ($accion == 'validar_usuario') {    
+if ($accion == 'validar_usuario') {
     ob_clean(); 
     header('Content-Type: application/json');
 
