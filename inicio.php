@@ -633,16 +633,14 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         <?php endif; ?>
 
                                         <!-- NEST — Núcleo de Evaluación y Selección de Talento.
-                                             La carpeta sigue llamándose SIVAC (la URL no cambió);
-                                             lo que cambió es la marca. -->
+                                            La carpeta sigue llamándose SIVAC (la URL no cambió);
+                                            lo que cambió es la marca. -->
                                         <?php if ($tieneSivac): ?>
                                         <div class="col-md-3 mb-3" id="divSivac">
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../SIVAC/" class="btn btn-outline-primary btn-block">
-                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt=""
-                                                             class="d-block mx-auto mb-2" style="height:34px;width:auto">
-                                                        NEST
+                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt="" class="d-block mx-auto mb-0" style="height:48px;width:auto">
                                                     </a>
                                                 </div>
                                             </div>
@@ -2043,8 +2041,17 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 success: function(response) {
                     if (response.status === 'success') {
                         $.each(response.info, function (index, infoUsr) {
-                            $('#diasDisp').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
-                            $('#diasDispPanel').text((infoUsr.diasdisponibles || 0) - (infoUsr.diasSol || 0));
+                        // 1. Convertimos los valores a números enteros (usando 0 si vienen vacíos o nulos)
+                            let diasLey = parseInt(infoUsr.dias_ley_actual || 0, 10);
+                            let diasSol = parseInt(infoUsr.diasSol || 0, 10);
+                            let diasSolPend = parseInt(infoUsr.diasSolPend || 0, 10);
+
+                            // 2. Hacemos la operación matemática de forma segura
+                            let diasDisponibles = infoUsr.diasdisponibles;
+
+                            // 3. Asignamos el resultado a los elementos
+                            $('#diasDisp').text(diasDisponibles);
+                            $('#diasDispPanel').text(diasDisponibles);
                             $('#diasSolPanel').text(infoUsr.diasSol || 0);
                             $('#lblArea').text(infoUsr.departamento || '—');
                             $('#lblJefe').text(infoUsr.jefe || '—');
