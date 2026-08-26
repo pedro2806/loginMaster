@@ -1936,8 +1936,10 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 { campo: 'estereos_aire',     label: 'Estéreos y aire' },
                 { campo: 'faros',             label: 'Faros' },
                 { campo: 'golpes_exterior',   label: 'Golpes exterior' },
+                // 'graficas' sustituye a 'limpieza': el formulario del checklist captura
+                // gráficas y ya no captura limpieza, así que limpieza salía gris siempre.
+                { campo: 'graficas',          label: 'Gráficas' },
                 { campo: 'limpiaparabrisas',  label: 'Limpiaparabrisas' },
-                { campo: 'limpieza',          label: 'Limpieza' },
                 { campo: 'llantas',           label: 'Llantas' },
                 { campo: 'placas',            label: 'Placas' },
                 { campo: 'puertas_llave',     label: 'Puertas y llave' }
@@ -2068,7 +2070,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             // Checklist (10 subáreas)
             var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
             ['asientos','espejos_ventanas','estereos_aire','faros','golpes_exterior',
-             'limpiaparabrisas','limpieza','llantas','placas','puertas_llave'].forEach(function(k){
+             'graficas','limpiaparabrisas','llantas','placas','puertas_llave'].forEach(function(k){
                 total++;
                 if (subareas[k] === 'ok') ok++;
             });

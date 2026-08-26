@@ -41,6 +41,11 @@
     <i class="fa fa-bars"></i>
 </button>
 
+<!-- Logo de respaldo para cuando la tarjeta del usuario está colapsada: el logo
+     grande vive dentro de esa columna, que al colapsar queda en width:0 con
+     overflow:hidden y se lo lleva consigo. Este solo se muestra en ese estado. -->
+<img id="logoColapsado" src="../loginMaster/img/messbook_logo3.png" alt="Messbook">
+
 <div>
     <!-- Logout Modal-->
     <div class="modal fade" id="logoutModalN" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

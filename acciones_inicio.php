@@ -186,13 +186,22 @@ if ($accion == 'cumpleanos_hoy') {
 
     $noEmpSesion = intval($noEmpleado);
 
-    $sqlCump = "SELECT noEmpleado, nombre, fechaNacimiento
-                FROM usuarios
-                WHERE estatus = 1
-                  AND fechaNacimiento IS NOT NULL
-                  AND MONTH(fechaNacimiento) = MONTH(CURDATE())
-                  AND DAY(fechaNacimiento)   = DAY(CURDATE())
-                ORDER BY nombre";
+    // Quien pidió no aparecer se marca con una fila centinela en cumple_aplausos:
+    // origen 0 y fecha 1000-01-01. No estorba a los aplausos reales porque su
+    // origen sale de la cookie y siempre es mayor que 0, y la consulta de "quién
+    // me felicitó" hace INNER JOIN con usuarios, donde el empleado 0 nunca empata.
+    $sqlCump = "SELECT u.noEmpleado, u.nombre, u.fechaNacimiento
+                FROM usuarios u
+                WHERE u.estatus = 1
+                  AND u.fechaNacimiento IS NOT NULL
+                  AND MONTH(u.fechaNacimiento) = MONTH(CURDATE())
+                  AND DAY(u.fechaNacimiento)   = DAY(CURDATE())
+                  AND NOT EXISTS (
+                        SELECT 1 FROM cumple_aplausos x
+                        WHERE x.no_empleado_destino = u.noEmpleado
+                          AND x.no_empleado_origen = 0
+                  )
+                ORDER BY u.nombre";
     $resCump = $conn->query($sqlCump);
 
     $otros = [];
@@ -241,6 +250,60 @@ if ($accion == 'cumpleanos_hoy') {
         'otros'          => $otros,
         'me_felicitaron' => $meFelicitaron
     ]);
+    $conn->close();
+    exit;
+}
+
+// PREFERENCIA: APARECER O NO EN CUMPLEAÑOS
+// Se guarda como la fila centinela descrita arriba (origen 0, fecha 1000-01-01)
+// en lugar de una columna nueva en usuarios. La tabla pasa a significar dos
+// cosas, así que conviene leer este bloque junto con el de cumpleanos_hoy.
+if ($accion == 'cumple_visibilidad') {
+    ob_clean();
+    header('Content-Type: application/json');
+
+    $noEmp = intval($_COOKIE['noEmpleadoL'] ?? 0);
+    if ($noEmp <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Sesión no válida.']);
+        $conn->close();
+        exit;
+    }
+
+    // Sin 'visible' en el POST solo se consulta el estado actual.
+    if (isset($_POST['visible'])) {
+        if ($_POST['visible'] == '1') {
+            $stmtV = $conn->prepare(
+                "DELETE FROM cumple_aplausos
+                 WHERE no_empleado_destino = ? AND no_empleado_origen = 0"
+            );
+        } else {
+            $stmtV = $conn->prepare(
+                "INSERT IGNORE INTO cumple_aplausos
+                    (no_empleado_destino, no_empleado_origen, fecha)
+                 VALUES (?, 0, '1000-01-01')"
+            );
+        }
+        if ($stmtV) {
+            $stmtV->bind_param('i', $noEmp);
+            $stmtV->execute();
+            $stmtV->close();
+        }
+    }
+
+    $stmtQ = $conn->prepare(
+        "SELECT 1 FROM cumple_aplausos
+         WHERE no_empleado_destino = ? AND no_empleado_origen = 0
+         LIMIT 1"
+    );
+    $oculto = false;
+    if ($stmtQ) {
+        $stmtQ->bind_param('i', $noEmp);
+        $stmtQ->execute();
+        $oculto = $stmtQ->get_result()->num_rows > 0;
+        $stmtQ->close();
+    }
+
+    echo json_encode(['success' => true, 'visible' => !$oculto]);
     $conn->close();
     exit;
 }

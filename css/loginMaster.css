@@ -47,6 +47,53 @@ body.sidebar-hidden {
     background: var(--header-gradient) !important;
 }
 
+/* Tarjetas de Sistemas que llevan logo en vez de icono + texto (QRide, NEST).
+   48px es lo que mide el bloque icono + texto de las demás: el icono aporta
+   ~16px (Font Awesome le pone line-height 0.75em a .fa-lg, no los 32px que
+   sugiere su tamaño de fuente), más 8px del mb-2 y 24px de la línea de texto.
+   Con ese alto el recuadro queda al ras de sus vecinos y el logo se ve grande. */
+.card-action .logo-sistema {
+    display: block;
+    margin: 0 auto;
+    height: 48px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* ===== Móvil: la columna del perfil deja de ser una barra lateral =====
+   Fuera de móvil está clavada a 340px con min/max-width; aquí se suelta a ancho
+   completo y el bloque de pestañas cae debajo, en lugar de competir por el ancho. */
+@media (max-width: 768px) {
+    #content > .container-fluid > .row {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .col-xl-3, .col-lg-3, .col-md-4, .col-md-3,
+    .col-xl-9, .col-lg-9, .col-md-8, .col-md-9 {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* El botón flotante estorbaría sobre la tarjeta a ancho completo. */
+    #toggleSidebarBtn {
+        display: none !important;
+    }
+
+    /* Con la tarjeta arriba, las pestañas ya no necesitan el hueco del botón. */
+    .nav-tabs-main {
+        padding-left: 12px !important;
+    }
+
+    /* En una pantalla angosta conviene ver menos activos todavía. */
+    .activos-lista {
+        max-height: 160px;
+    }
+}
+
 /* ===== Adorno del portal el día de tu cumpleaños =====
    La clase la pone el JS cuando el endpoint confirma que hoy cumple el usuario.
    A diferencia del modal, que se ve una vez, esto acompaña todo el día. */
@@ -68,6 +115,28 @@ body.es-mi-cumple .profile-card::before {
 @keyframes cumpleFlota {
     0%, 100% { transform: translateY(0) rotate(-6deg); }
     50%      { transform: translateY(-7px) rotate(6deg); }
+}
+
+/* Tarjetas de cumpleaños con la marca, en lugar del azul claro de alert-info y
+   el amarillo de alert-warning que traía Bootstrap. */
+.cumple-card {
+    background: var(--header-gradient) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: .5rem;
+    padding: .85rem 1rem;
+}
+
+/* La del propio festejado se distingue con el naranja de marca, el mismo de la
+   leyenda del calendario. */
+.cumple-card-mia {
+    background: linear-gradient(135deg, #F5A623 0%, #e08600 100%) !important;
+    color: #fff !important;
+}
+
+.cumple-card .text-muted,
+.cumple-card-mia .text-muted {
+    color: rgba(255, 255, 255, .8) !important;
 }
 
 /* ===== Minijuego de cumpleaños: felicitar a clics ===== */
@@ -237,10 +306,33 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
     background-color: var(--bg) !important;
 }
 
+/* El alto se mide solo en vez de restar píxeles a mano. Los offsets antiguos
+   (100vh - 140px, -103px) se calibraron cuando existía la barra superior de
+   56px; al quitarla quedaron obsoletos y dejaban una franja vacía bajo los
+   tableros, más una segunda barra de desplazamiento por sumar 100vh + el pie.
+   Ahora #content-wrapper reparte el alto: el contenido toma lo que sobra tras
+   el pie, y cada eslabón lo cede al siguiente hasta el iframe. */
+#wrapper,
+#content-wrapper {
+    min-height: 100vh;
+}
+
+#content-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 #content > .container-fluid {
     background: var(--card-bg) !important;
-    /* Antes descontaba los 56px de la barra superior; ya no existe. */
-    min-height: 100vh;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 0 !important;
 }
 
@@ -703,12 +795,29 @@ body.theme-dark .profile-card .stat-box i {
     z-index: 1;
 }
 
+/* Logo de respaldo: solo visible con la tarjeta del usuario colapsada. Se alinea
+   con el botón flotante (que ocupa y=38..76) para leerse como una sola barra. */
+#logoColapsado {
+    display: none;
+}
+
+body.sidebar-hidden #logoColapsado {
+    display: block;
+    position: fixed;
+    top: 40px;
+    left: 56px;
+    height: 34px;
+    width: auto;
+    z-index: 1040;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+}
+
 /* Con la barra lateral colapsada, la tira de pestañas ocupa todo el ancho y
-   pasaría por debajo del botón flotante. Se le reserva el hueco: el botón acaba
-   en x=48px (10 de left + 38 de ancho) y las pestañas arrancan en 58px. */
+   pasaría por debajo del botón y el logo flotantes. Se les reserva el hueco:
+   botón hasta x=48, logo de 56 a ~138, y las pestañas arrancan en 148. */
 .sidebar-expanded .nav-tabs-main,
 body.sidebar-hidden .nav-tabs-main {
-    padding-left: 58px !important;
+    padding-left: 148px !important;
 }
 
 .sidebar-expanded .nav-tabs-main::before {
@@ -963,9 +1072,13 @@ body.sidebar-hidden .nav-tabs-main {
 }
 
 /* ===== Activos (lista compacta dentro de "Mi Espacio") ===== */
+/* Se acota a unos 3 activos (cada .activo-item mide ~65px) y el resto se
+   desplaza dentro. Sin el tope, la lista crecía con flex y dominaba la vista,
+   sobre todo en móvil. */
 .activos-lista {
-    flex: 1 1 auto;
-    min-height: 150px;
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: 200px;
     overflow-y: auto;
 }
 
@@ -1423,10 +1536,38 @@ body.theme-dark .fc-col-header-cell {
     margin-bottom: 0 !important;
 }
 
+/* ===== Tableros embebidos (KPI, Análisis BI, Cotizador) =====
+   El panel activo ocupa el alto que le cede .tab-content y el iframe lo llena
+   por completo. Sin restas de píxeles, así que ya no se descalibra cuando
+   cambia el encabezado o el pie. */
+.tab-content {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#tabKpis.active,
+#tabAnalisisBI.active,
+#tabCotizador.active {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+#tabKpis #frameKPIs,
+#tabAnalisisBI #frameAnalisisBI,
+#tabCotizador #frameCotizador {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+}
+
 #tabKpis iframe {
     display: block !important;
     width: 100% !important;
-    height: calc(100vh - 140px) !important;
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
     border: none !important;
     margin: 0 !important;
 }
@@ -1438,16 +1579,20 @@ body.theme-dark .fc-col-header-cell {
     margin: 0 !important;
 }
 
+/* La barra inferior de Power BI (logo + iconos de compartir) se oculta haciendo
+   el iframe 37px más alto que su caja y recortando el sobrante. Antes se usaba
+   clip-path, que con alto flexible dejaría un hueco de 37px al final. */
+#tabAnalisisBI #frameAnalisisBI {
+    overflow: hidden;
+}
+
 #tabAnalisisBI iframe {
     display: block !important;
     width: 100% !important;
-    /* KPIs usa -140px; +37px extra para compensar el recorte del clip-path */
-    height: calc(100vh - 103px) !important;
+    height: calc(100% + 37px) !important;
+    min-height: 0 !important;
     border: none !important;
     margin: 0 !important;
-    /* Oculta la barra inferior de Power BI (logo + iconos de compartir)
-       recortando los últimos 37px (mismo truco que .quitarbarra en planeacion). */
-    clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 37px), 0% calc(100% - 37px));
 }
 
 #tabCotizador #frameCotizador {
@@ -1458,7 +1603,9 @@ body.theme-dark .fc-col-header-cell {
 #tabCotizador iframe {
     display: block !important;
     width: 100% !important;
-    height: calc(100vh - 140px) !important;
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
     border: none !important;
     margin: 0 !important;
 }
@@ -1663,8 +1810,10 @@ footer.sticky-footer .fb-footer-logo {
 
 /* ARREGLO SIDEBAR v3 - SOLO columna izquierda, no toca cards */
 #content > .container-fluid > .row {
-    /* Antes descontaba los 56px de la barra superior; ya no existe. */
-    min-height: 100vh;
+    /* Toma el alto del contenedor en vez de forzar 100vh, que sumado al pie
+       provocaba la segunda barra de desplazamiento. */
+    height: 100%;
+    min-height: 0;
     align-items: stretch !important;
 }
 

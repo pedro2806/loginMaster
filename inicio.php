@@ -197,9 +197,19 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <link rel="icon" type="image/png" href="../loginMaster/img/fav.png">
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
-    <link href="css/sb-admin-2.min.css" rel="stylesheet">
-    <link href="css/loginMaster.css" rel="stylesheet">
-    <link href="css/modales.css" rel="stylesheet">
+    <?php
+    // Versión = fecha de modificación del archivo. Sin esto el navegador conserva
+    // el CSS viejo tras un despliegue: llega el HTML nuevo pero no las reglas que
+    // lo acompañan, y los cambios "no se ven" hasta un refresco forzado. La URL
+    // solo cambia cuando el archivo cambia, así que la caché se sigue aprovechando.
+    function assetVer($rel) {
+        $abs = __DIR__ . '/' . $rel;
+        return $rel . '?v=' . (is_file($abs) ? filemtime($abs) : '1');
+    }
+    ?>
+    <link href="<?php echo assetVer('css/sb-admin-2.min.css'); ?>" rel="stylesheet">
+    <link href="<?php echo assetVer('css/loginMaster.css'); ?>" rel="stylesheet">
+    <link href="<?php echo assetVer('css/modales.css'); ?>" rel="stylesheet">
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
   
 </head>
@@ -311,6 +321,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <button class="btn btn-outline-warning btn-block mt-2" data-toggle="modal" data-target="#modalCambiarContrasena">
                                     <i class="fas fa-key"></i> Password
                                 </button>
+                                <!-- Cada quien decide si aparece en los cumpleaños del portal.
+                                     Es un dato personal, así que no pasa por RRHH. -->
+                                <button class="btn btn-outline-info btn-block mt-2" id="btnCumpleVisible" type="button">
+                                    <i class="fas fa-birthday-cake"></i> <span id="txtCumpleVisible">Cumpleaños</span>
+                                </button>
                                 <a class="btn btn-outline-danger btn-block mt-2" href="#" data-toggle="modal" data-target="#logoutModalN">
                                     <i class="fas fa-sign-out-alt"></i> Salir
                                 </a>
@@ -393,8 +408,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <?php endif; ?>
                                 <?php if ($tieneSivacSolicitante): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab" title="Mis Vacantes" aria-label="Mis Vacantes">
-                                        <i class="fas fa-briefcase"></i><span class="tab-label"> Mis Vacantes</span>
+                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab" title="Nest" aria-label="Nest">
+                                        <i class="fas fa-briefcase"></i><span class="tab-label"> Nest</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -447,7 +462,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
                                                         <input type="hidden" name="correoCV" id="correoCV" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-car fa-lg d-block mb-2"></i> Ctrl Vehicular
+                                                            <img src="../ControlVehicular/img/QRide_grande.png" alt="QRide"
+                                                                 class="logo-sistema">
                                                         </button>
                                                     </form>
                                                 </div>
@@ -640,9 +656,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../SIVAC/" class="btn btn-outline-primary btn-block">
-                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt=""
-                                                             class="d-block mx-auto mb-2" style="height:34px;width:auto">
-                                                        NEST
+                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt="NEST"
+                                                             class="logo-sistema">
                                                     </a>
                                                 </div>
                                             </div>
@@ -1006,7 +1021,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             <footer class="sticky-footer">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
                         <div class="fb-footer-links">
                             Business Intelligence | Messbook © <?php echo date("Y"); ?>
                         </div>
@@ -1339,7 +1353,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <script src="vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
     <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="js/sb-admin-2.min.js"></script>
+    <script src="<?php echo assetVer('js/sb-admin-2.min.js'); ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1400,6 +1414,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             infoEmpleado();
             verificarEsJefe();
             cargarCumpleanos();
+            cargarCumpleVisible();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
             registrarNotificacionPlaneacion();
@@ -1504,6 +1519,27 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             $('#tabVehiculo-tab').on('shown.bs.tab', function() {
                 if (!vehiculosDocsCargados) cargarVehiculosDocs();
             });
+
+            // El panel se arma una sola vez (vehiculosDocsCargados), así que si el usuario
+            // sale a llenar el checklist en Control Vehicular y vuelve, sigue viendo el
+            // estado viejo hasta recargar a mano. Al recuperar el foco se vuelve a pedir,
+            // pero solo si la pestaña de vehículo es la que está a la vista: si no, se
+            // deja marcado para que se recargue cuando la abra.
+            var recargandoPanelVeh = false;
+            function refrescarPanelVehiculos() {
+                if (recargandoPanelVeh || document.hidden || !vehiculosDocsCargados) return;
+                if (!$('#tabVehiculo-tab').hasClass('active')) {
+                    vehiculosDocsCargados = false;   // se recargará al volver a la pestaña
+                    return;
+                }
+                recargandoPanelVeh = true;
+                cargarVehiculosDocs();
+                // Margen para no encadenar recargas: visibilitychange y focus suelen
+                // dispararse juntos.
+                setTimeout(function () { recargandoPanelVeh = false; }, 1500);
+            }
+            document.addEventListener('visibilitychange', refrescarPanelVehiculos);
+            window.addEventListener('pageshow', function (e) { if (e.persisted) refrescarPanelVehiculos(); });
             <?php endif; ?>
             $('#tabExpediente-tab').on('shown.bs.tab', function() {
                 if (!expedienteCargado) cargarMiExpediente();
@@ -1559,7 +1595,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 if ($f.attr('src')) $f.attr('src', $f.attr('src'));
             });
 
-            // SIVAC "Mis Vacantes": lazy-load del iframe al mostrar la pestaña
+            // SIVAC, pestaña "Nest": lazy-load del iframe al mostrarla
             $('#tabSivacSol-tab').on('shown.bs.tab', function() {
                 cargarIframeTickets('#iframeSivacSol');
             });
@@ -2112,7 +2148,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         );
                     }
                     $cont.append(
-                        $('<div class="alert alert-warning d-flex align-items-center mb-3"></div>')
+                        $('<div class="cumple-card cumple-card-mia d-flex align-items-center mb-3"></div>')
                             .append('<i class="fas fa-birthday-cake fa-lg mr-3"></i>')
                             .append($mia)
                     );
@@ -2134,12 +2170,44 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         .text('Da clic en su nombre para felicitarlo. Cada 3, fiesta.')
                 );
                 $cont.append(
-                    $('<div class="alert alert-info d-flex align-items-center mb-3"></div>')
+                    $('<div class="cumple-card d-flex align-items-center mb-3"></div>')
                         .append('<i class="fas fa-birthday-cake fa-lg mr-3"></i>')
                         .append($texto)
                 );
             }, 'json');
         }
+
+        // ===== Preferencia de aparecer en cumpleaños =====
+        // El botón refleja el estado actual y lo alterna al pulsarlo. Quien se
+        // oculta deja de salir en la tarjeta de los demás y tampoco recibe el
+        // modal ni el adorno: si no quiere que se sepa, la felicitación sobra.
+        function pintarCumpleVisible(visible) {
+            var $b = $('#btnCumpleVisible');
+            $b.data('visible', visible);
+            $('#txtCumpleVisible').text(visible ? 'Aparezco en cumpleaños' : 'Oculto en cumpleaños');
+            $b.toggleClass('btn-outline-info', visible)
+              .toggleClass('btn-outline-secondary', !visible);
+        }
+
+        function cargarCumpleVisible() {
+            $.post('acciones_inicio.php', { accion: 'cumple_visibilidad' }, function(r) {
+                if (r && r.success) pintarCumpleVisible(r.visible);
+            }, 'json');
+        }
+
+        $(document).on('click', '#btnCumpleVisible', function() {
+            var nuevo = $('#btnCumpleVisible').data('visible') ? 0 : 1;
+            $.post('acciones_inicio.php', {
+                accion: 'cumple_visibilidad',
+                visible: nuevo
+            }, function(r) {
+                if (!r || !r.success) return;
+                pintarCumpleVisible(r.visible);
+                // Se repinta la tarjeta para que el cambio se vea sin recargar.
+                cargarCumpleanos();
+                if (!r.visible) $('body').removeClass('es-mi-cumple');
+            }, 'json');
+        });
 
         // ===== Minijuego: felicitar a clics =====
         // Cada clic en el nombre suma un aplauso y cada 3 dispara la celebración.
@@ -2527,8 +2595,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 { campo: 'estereos_aire',     label: 'Estéreos y aire' },
                 { campo: 'faros',             label: 'Faros' },
                 { campo: 'golpes_exterior',   label: 'Golpes exterior' },
+                // 'graficas' sustituye a 'limpieza': el formulario del checklist captura
+                // gráficas y ya no captura limpieza, así que limpieza salía gris siempre.
+                { campo: 'graficas',          label: 'Gráficas' },
                 { campo: 'limpiaparabrisas',  label: 'Limpiaparabrisas' },
-                { campo: 'limpieza',          label: 'Limpieza' },
                 { campo: 'llantas',           label: 'Llantas' },
                 { campo: 'placas',            label: 'Placas' },
                 { campo: 'puertas_llave',     label: 'Puertas y llave' }
@@ -2659,7 +2729,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             // Checklist (10 subáreas)
             var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
             ['asientos','espejos_ventanas','estereos_aire','faros','golpes_exterior',
-             'limpiaparabrisas','limpieza','llantas','placas','puertas_llave'].forEach(function(k){
+             'graficas','limpiaparabrisas','llantas','placas','puertas_llave'].forEach(function(k){
                 total++;
                 if (subareas[k] === 'ok') ok++;
             });
@@ -2808,10 +2878,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 +     '<div class="activo-item-tipo">' + tipo + badgeAcc + '</div>'
                 +     '<div class="activo-item-desc">' + desc + '</div>'
                 +     '<div class="activo-item-meta">' + metaMarca + '<span><i class="fas fa-map-marker-alt"></i> ' + ubic + '</span></div>'
-                +   '</div>'
-                +   '<div class="activo-item-acciones">'
-                +     '<button type="button" class="btn-activo-accion btn-activo-ok" title="Sí, lo tengo en resguardo"><i class="fas fa-check"></i></button>'
-                +     '<button type="button" class="btn-activo-accion btn-activo-ko" title="Ya no lo tengo"><i class="fas fa-times"></i></button>'
                 +   '</div>'
                 + '</div>';
         }
