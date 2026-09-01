@@ -248,7 +248,14 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
     background: var(--card-bg) !important;
 }
 
-.col-xl-3, .col-lg-3, .col-md-4, .col-md-3 {
+/* Acotado a la columna del sidebar dentro del layout principal: las clases
+   Bootstrap col-md-4/col-md-8/etc. son genéricas y se reutilizan en grids
+   sin relación con el sidebar (modales, acordeón de vehículos); sin este
+   scope el hack de 340px se les colaba también a esos grids. */
+#content > .container-fluid > .row > .col-xl-3,
+#content > .container-fluid > .row > .col-lg-3,
+#content > .container-fluid > .row > .col-md-4,
+#content > .container-fluid > .row > .col-md-3 {
     padding: 0 !important;
     width: 340px !important;
     max-width: 340px !important;
@@ -259,10 +266,10 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
     flex-direction: column;
 }
 
-.col-xl-3.sidebar-hidden, 
-.col-lg-3.sidebar-hidden, 
-.col-md-4.sidebar-hidden,
-.col-md-3.sidebar-hidden {
+#content > .container-fluid > .row > .col-xl-3.sidebar-hidden,
+#content > .container-fluid > .row > .col-lg-3.sidebar-hidden,
+#content > .container-fluid > .row > .col-md-4.sidebar-hidden,
+#content > .container-fluid > .row > .col-md-3.sidebar-hidden {
     width: 0 !important;
     min-width: 0 !important;
     max-width: 0 !important;
@@ -273,7 +280,10 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
     opacity: 0;
 }
 
-.col-xl-9, .col-lg-9, .col-md-8, .col-md-9 {
+#content > .container-fluid > .row > .col-xl-9,
+#content > .container-fluid > .row > .col-lg-9,
+#content > .container-fluid > .row > .col-md-8,
+#content > .container-fluid > .row > .col-md-9 {
     padding-left: 0 !important;
     padding-right: 0 !important;
     flex: 1 1 auto !important;
@@ -283,17 +293,68 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
     flex-direction: column;
 }
 
-.col-xl-9.sidebar-expanded,
-.col-lg-9.sidebar-expanded,
-.col-md-8.sidebar-expanded,
-.col-md-9.sidebar-expanded,
-body.sidebar-hidden .col-xl-9,
-body.sidebar-hidden .col-lg-9,
-body.sidebar-hidden .col-md-8,
-body.sidebar-hidden .col-md-9 {
+#content > .container-fluid > .row > .col-xl-9.sidebar-expanded,
+#content > .container-fluid > .row > .col-lg-9.sidebar-expanded,
+#content > .container-fluid > .row > .col-md-8.sidebar-expanded,
+#content > .container-fluid > .row > .col-md-9.sidebar-expanded,
+body.sidebar-hidden #content > .container-fluid > .row > .col-xl-9,
+body.sidebar-hidden #content > .container-fluid > .row > .col-lg-9,
+body.sidebar-hidden #content > .container-fluid > .row > .col-md-8,
+body.sidebar-hidden #content > .container-fluid > .row > .col-md-9 {
     max-width: 100% !important;
     flex: 0 0 100% !important;
     padding-left: 0 !important;
+}
+
+/* MÓVIL: no hay espacio para perfil y dashboard lado a lado (ni siquiera
+   apilados uno arriba del otro tiene buen uso del espacio con una tarjeta
+   de perfil tan alta). En vez de eso, cada uno ocupa la pantalla completa
+   y el botón #toggleSidebarBtn (hamburguesa) cambia de uno a otro: al
+   entrar se ve el perfil completo; con el toggle se oculta el perfil y
+   aparece el dashboard (pestañas, cards, etc.) a pantalla completa.
+   Reutiliza el JS existente tal cual (sidebarCol.classList.toggle
+   ('sidebar-hidden'), contentCol.classList.toggle('sidebar-expanded')) —
+   solo cambia qué le hacen esas clases a cada columna en este breakpoint. */
+@media (max-width: 768px) {
+    #content > .container-fluid > .row > .col-xl-3,
+    #content > .container-fluid > .row > .col-lg-3,
+    #content > .container-fluid > .row > .col-md-4,
+    #content > .container-fluid > .row > .col-md-3 {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 0 0 100% !important;
+    }
+
+    /* Toggle activado: se oculta el perfil, no solo se encoge a 0. */
+    #content > .container-fluid > .row > .col-xl-3.sidebar-hidden,
+    #content > .container-fluid > .row > .col-lg-3.sidebar-hidden,
+    #content > .container-fluid > .row > .col-md-4.sidebar-hidden,
+    #content > .container-fluid > .row > .col-md-3.sidebar-hidden {
+        display: none !important;
+    }
+
+    /* Dashboard oculto por defecto: en móvil se ve una vista completa a la vez. */
+    #content > .container-fluid > .row > .col-xl-9,
+    #content > .container-fluid > .row > .col-lg-9,
+    #content > .container-fluid > .row > .col-md-8,
+    #content > .container-fluid > .row > .col-md-9 {
+        display: none !important;
+    }
+
+    /* Toggle activado: el dashboard pasa a ocupar toda la pantalla. */
+    #content > .container-fluid > .row > .col-xl-9.sidebar-expanded,
+    #content > .container-fluid > .row > .col-lg-9.sidebar-expanded,
+    #content > .container-fluid > .row > .col-md-8.sidebar-expanded,
+    #content > .container-fluid > .row > .col-md-9.sidebar-expanded,
+    body.sidebar-hidden #content > .container-fluid > .row > .col-xl-9,
+    body.sidebar-hidden #content > .container-fluid > .row > .col-lg-9,
+    body.sidebar-hidden #content > .container-fluid > .row > .col-md-8,
+    body.sidebar-hidden #content > .container-fluid > .row > .col-md-9 {
+        display: flex !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+    }
 }
 
 .profile-card {
@@ -659,6 +720,17 @@ body.theme-dark .profile-card .stat-box i {
     transform: translateY(-2px);
 }
 
+/* Las 15 tarjetas de acceso rápido (#tabSistemas) van a 4 por fila
+   (col-md-3) sin ninguna regla para pantallas chicas; en móvil pasan a
+   2 por fila. Acotado a #tabSistemas para no tocar col-md-3 en otras
+   partes de la página. */
+@media (max-width: 576px) {
+    #tabSistemas [class*="col-md-3"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+}
+
 .card-action .btn-outline-primary {
     border-color: var(--border);
     color: var(--text);
@@ -709,6 +781,15 @@ body.theme-dark .profile-card .stat-box i {
 .sidebar-expanded .nav-tabs-main,
 body.sidebar-hidden .nav-tabs-main {
     padding-left: 58px !important;
+}
+
+/* En móvil el perfil se apila arriba en vez de colapsar al lado, así que
+   la tira de pestañas ya no necesita ceder espacio al botón flotante. */
+@media (max-width: 768px) {
+    .sidebar-expanded .nav-tabs-main,
+    body.sidebar-hidden .nav-tabs-main {
+        padding-left: 12px !important;
+    }
 }
 
 .sidebar-expanded .nav-tabs-main::before {
@@ -1100,6 +1181,32 @@ body.sidebar-hidden .nav-tabs-main {
     background-color: rgba(40, 167, 69, .06);
 }
 
+#headerResguardo .fa-chevron-down {
+    transition: transform 0.2s ease-in-out;
+}
+
+#headerResguardo.collapsed .fa-chevron-down {
+    transform: rotate(-90deg);
+}
+
+/* El colapsable de En Resguardo es solo para móvil; en desktop se ve y se
+   comporta exactamente como antes (siempre abierto, sin flechita ni
+   cursor de "clickeable"). */
+@media (min-width: 769px) {
+    #headerResguardo {
+        cursor: default;
+    }
+
+    #headerResguardo .fa-chevron-down {
+        display: none;
+    }
+
+    #collapseResguardo {
+        display: block !important;
+        height: auto !important;
+    }
+}
+
 .theme-toggle {
     display: flex;
     align-items: center;
@@ -1361,6 +1468,19 @@ body.theme-dark .fc-col-header-cell {
     height: 100%;
 }
 
+/* En móvil no hay "barra lateral" con la que alinear la altura (perfil y
+   dashboard se turnan la pantalla completa, no van lado a lado) — forzar
+   height:100% aquí solo apretaba el calendario de Mis Vacaciones dentro
+   de una tarjeta más baja de lo que necesita, y FullCalendar respondía
+   agregando su propio scroll interno junto al de la página (de ahí los
+   dos scrollbars). Se deja fluir según el contenido. */
+@media (max-width: 768px) {
+    #tabPersonal,
+    #tabPersonal > .row {
+        height: auto;
+    }
+}
+
 .notif-item {
     padding: 0.75rem;
     border-bottom: 1px solid var(--border);
@@ -1432,22 +1552,39 @@ body.theme-dark .fc-col-header-cell {
 }
 
 /* Pestaña Análisis BI: tablero Power BI embebido */
-#tabAnalisisBI,
-#tabAnalisisBI #frameAnalisisBI {
+#tabAnalisisBI {
     padding: 0 !important;
     margin: 0 !important;
 }
 
+/* Los tableros se diseñan en un lienzo de 1080x920, así que el alto natural
+   del reporte es siempre el ancho x 920/1080 = 85.1852%. Amarrando el alto al
+   ancho con el truco de padding-bottom (el porcentaje se calcula sobre el
+   ancho), la caja mide exactamente lo que el reporte necesita y Power BI ya no
+   tiene sobrante que rellenar con blanco — a cualquier anchura, y se reajusta
+   solo al colapsar la barra lateral. */
+#tabAnalisisBI #frameAnalisisBI {
+    position: relative;
+    width: 100%;
+    height: 0 !important;
+    padding: 0 0 85.1852% 0 !important;
+    margin: 0 !important;
+    /* Recorta de verdad la barra inferior de Power BI (ver el +37px del iframe).
+       El clip-path anterior solo la ocultaba: seguía ocupando su espacio. */
+    overflow: hidden;
+}
+
 #tabAnalisisBI iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
     display: block !important;
     width: 100% !important;
-    /* KPIs usa -140px; +37px extra para compensar el recorte del clip-path */
-    height: calc(100vh - 103px) !important;
+    /* 37px más que el contenedor: la barra inferior de Power BI (logo, zoom,
+       compartir) cae fuera y la recorta el overflow:hidden de arriba. */
+    height: calc(100% + 37px) !important;
     border: none !important;
     margin: 0 !important;
-    /* Oculta la barra inferior de Power BI (logo + iconos de compartir)
-       recortando los últimos 37px (mismo truco que .quitarbarra en planeacion). */
-    clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 37px), 0% calc(100% - 37px));
 }
 
 #tabCotizador #frameCotizador {

@@ -359,15 +359,21 @@ function ae_mostrarTablaVacia() {
     ae_inicializarDataTableAccesos();
 }
 
+var ae_datosBaseCargados = false;
+
 function ae_inicializarEventos() {
     if (typeof window.jQuery === 'undefined') return;
 
-    //  Inicializar al abrir el modal 
+    //  Inicializar al abrir el modal (solo la primera vez: sistemas y
+    //  usuarios activos casi no cambian dentro de una misma sesión, y
+    //  recargarlos en cada apertura era lo que hacía sentir lento el modal)
     $('#modalAccesosEspeciales').on('show.bs.modal', function () {
+        if (ae_datosBaseCargados) return;
+        ae_datosBaseCargados = true;
         ae_cargarSistemas();
         ae_cargarTodosUsuarios();
     });
-    
+
     //  Inicializar Select2 para el campo de usuario (si está disponible)
     if (typeof $.fn.select2 !== 'undefined') {
         $('#ae_selectUsuario').select2({
@@ -474,16 +480,13 @@ function ae_cargarTodosUsuarios() {
             });
         }
         $('#ae_selectUsuario').html(opts);
-        
-        // Reinicializar Select2 después de cargar los usuarios
+
+        // Select2 ya está inicializado desde ae_inicializarEventos; solo hay
+        // que avisarle que el <select> que envuelve cambió de opciones
+        // (reinicializarlo sin destruir la instancia anterior era lo que
+        // dejaba widgets duplicados y volvía cada apertura más lenta).
         if (typeof $.fn.select2 !== 'undefined') {
-            $('#ae_selectUsuario').select2({
-                theme: 'bootstrap4',
-                placeholder: 'Filtra / selecciona usuario',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#modalAccesosEspeciales')
-            });
+            $('#ae_selectUsuario').trigger('change');
         }
     }, 'json');
 }
