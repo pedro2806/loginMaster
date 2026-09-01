@@ -846,15 +846,20 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             </div>
                                             <!-- Mis Activos -->
                                             <div class="card shadow-sm flex-grow-1">
-                                                <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--card-soft); border-color: var(--border);">
+                                                <div id="headerResguardo" class="card-header d-flex justify-content-between align-items-center collapsed" style="background: var(--card-soft); border-color: var(--border); cursor:pointer;" data-toggle="collapse" data-target="#collapseResguardo" role="button" aria-expanded="false" aria-controls="collapseResguardo">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-box mr-2"></i>En Resguardo</h6>
-                                                    <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
+                                                    <span class="d-flex align-items-center" style="gap:.5rem;">
+                                                        <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
+                                                        <i class="fas fa-chevron-down"></i>
+                                                    </span>
                                                 </div>
-                                                <div class="card-body p-0 d-flex flex-column">
-                                                    <div id="contenedorActivos" class="activos-lista">
-                                                        <div class="activos-empty text-center text-muted py-4">
-                                                            <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
-                                                            <small>Cargando activos...</small>
+                                                <div class="collapse" id="collapseResguardo">
+                                                    <div class="card-body p-0 d-flex flex-column">
+                                                        <div id="contenedorActivos" class="activos-lista">
+                                                            <div class="activos-empty text-center text-muted py-4">
+                                                                <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>
+                                                                <small>Cargando activos...</small>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -926,7 +931,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <?php if ($tieneAnalisisBI): ?>
                                 <div class="tab-pane fade" id="tabAnalisisBI" role="tabpanel">
                                     <div id="frameAnalisisBI">
-                                        <iframe src="https://app.powerbi.com/view?r=eyJrIjoiNDhiOWRmY2QtNzg2Mi00ZGQ2LTk1Y2UtMDI4OGFhODZkNjgzIiwidCI6ImZlMGNmZmU4LTkxMjYtNGRmYS1iNjE2LTU3MGM2YWViYTdiNiJ9"
+                                        <!-- pageView=fitToWidth: sin esto Power BI usa "fit to page",
+                                             encoge el reporte hasta que quepa completo (se veía al 21%)
+                                             y rellena el sobrante con su propio fondo blanco. Con
+                                             fitToWidth el reporte ocupa todo el ancho del iframe. -->
+                                        <iframe src="https://app.powerbi.com/view?r=eyJrIjoiNDhiOWRmY2QtNzg2Mi00ZGQ2LTk1Y2UtMDI4OGFhODZkNjgzIiwidCI6ImZlMGNmZmU4LTkxMjYtNGRmYS1iNjE2LTU3MGM2YWViYTdiNiJ9&amp;pageView=fitToWidth"
                                                 title="Análisis BI" allowfullscreen></iframe>
                                     </div>
                                 </div>
@@ -1816,10 +1825,18 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             var el = document.getElementById('calendarVacaciones');
             if (!el) return;
             var noEmp = getCookie('noEmpleadoL') || '';
+            var esMovil = window.matchMedia('(max-width: 768px)').matches;
             calendarVacaciones = new FullCalendar.Calendar(el, {
-                initialView: 'dayGridMonth',
+                // Lista (agrupada por fecha) en móvil; en desktop se queda
+                // como antes, en vista de mes.
+                initialView: esMovil ? 'listMonth' : 'dayGridMonth',
                 locale: 'es',
-                height: '100%',
+                // En móvil el contenedor ya no fuerza height:100% (no hay
+                // barra lateral con la que alinear), así que el calendario
+                // usa 'auto' y crece con su contenido en vez de pelear por
+                // un 100% indefinido — eso era lo que le hacía agregar su
+                // propio scroll interno.
+                height: esMovil ? 'auto' : '100%',
                 expandRows: true,
                 headerToolbar: {
                     left: 'prev,next today',
@@ -3591,18 +3608,42 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
         // ===== Cambiar contraseña =====
         function cambiarCont() {
+            // Los required del HTML no aplican: el botón es type="button" con
+            // onclick, no un submit, así que nunca corre la validación nativa.
+            var actual = $('#contrasena_actual').val();
+            var nueva = $('#nueva_contrasena').val();
+            var confirmar = $('#confirmar_contrasena').val();
+
+            if (!actual || !nueva || !confirmar) {
+                Swal.fire({ title: 'Llena los tres campos para cambiar tu contraseña.', icon: 'warning' });
+                return;
+            }
+            if (nueva !== confirmar) {
+                Swal.fire({ title: 'Las contraseñas nuevas no coinciden.', icon: 'warning' });
+                return;
+            }
+            if (nueva.length < 8) {
+                Swal.fire({ title: 'La nueva contraseña debe tener al menos 8 caracteres.', icon: 'warning' });
+                return;
+            }
+
             $.ajax({
                 url: 'cambiar_contrasena.php',
                 type: 'POST',
                 dataType: 'json',
                 data: {
                     accion: 'CambiarPass',
-                    contrasena_actual: $('#contrasena_actual').val(),
-                    nueva_contrasena: $('#nueva_contrasena').val(),
-                    confirmar_contrasena: $('#confirmar_contrasena').val()
+                    contrasena_actual: actual,
+                    nueva_contrasena: nueva,
+                    confirmar_contrasena: confirmar
                 },
                 success: function(response) {
-                    $('#modalCambiarContrasena').modal('hide');
+                    // Solo se cierra si de verdad se guardó; si hubo error, el
+                    // modal se queda abierto para corregir sin reescribir todo.
+                    if (response.status === 'success') {
+                        $('#modalCambiarContrasena').modal('hide');
+                        $('#contrasena_actual, #nueva_contrasena, #confirmar_contrasena').val('');
+                    }
                     Swal.fire({
                         title: response.message,
                         icon: response.status,
