@@ -244,6 +244,41 @@ body.theme-dark.sidebar-hidden #wrapper #content-wrapper #content {
     padding: 0 !important;
 }
 
+/* El footer de ancho completo que vivía al fondo de #content-wrapper se quitó
+   (su contenido pasó al pie de la columna del perfil). Ese footer era azul y
+   tenía margin-top:auto, o sea absorbía el espacio sobrante al fondo de la
+   página; sin él quedó a la vista el fondo claro de estos contenedores, como
+   una franja gris bajo el contenido. Se dejan transparentes para que se vea
+   el #074480 del body, que es lo que pintaba el footer. Las columnas, las
+   tarjetas y el contenido de pestañas conservan su propio fondo, así que esto
+   solo afecta al hueco.
+   Acotado a body.sin-footer: inicio2, inicioOld e inicio_res comparten esta
+   hoja y SI conservan su footer, no hay que tocarles el fondo. */
+body.sin-footer #wrapper,
+body.sin-footer #content-wrapper,
+body.sin-footer #content,
+body.sin-footer #content > .container-fluid,
+/* Las variantes .theme-dark existen porque más abajo hay un bloque
+   body.theme-dark #wrapper ... con la MISMA especificidad que este y, al ir
+   después, ganaría en modo oscuro y devolvería el fondo claro del hueco. */
+body.sin-footer.theme-dark #wrapper,
+body.sin-footer.theme-dark #wrapper #content-wrapper,
+body.sin-footer.theme-dark #wrapper #content-wrapper #content {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Segundo scrollbar: sb-admin-2 trae #wrapper #content-wrapper{overflow-x:hidden}
+   y por especificación, con un eje en hidden el otro deja de ser visible y pasa
+   a auto — o sea ese contenedor se convierte en su propia área de scroll
+   vertical, encima del scroll de la página. De ahí las dos barras, y el hueco
+   que quedaba dentro de esa área era lo que mostraba la franja clara. Con
+   overflow:visible el scroll lo maneja solo la página. */
+body.sin-footer #wrapper #content-wrapper,
+body.sin-footer #content-wrapper {
+    overflow: visible !important;
+}
+
 .tab-content {
     background: var(--card-bg) !important;
 }
@@ -728,6 +763,30 @@ body.theme-dark .profile-card .stat-box i {
     #tabSistemas [class*="col-md-3"] {
         flex: 0 0 50% !important;
         max-width: 50% !important;
+    }
+
+    /* Capacitación es la única tarjeta con dos botones en un .btn-group
+       (las demás son un solo btn-block). A la mitad del ancho de pantalla
+       la suma de sus anchos mínimos no cabe y el botón del PDF se sale del
+       recuadro. Se apilan en vertical, como las demás. El !important del
+       flex es para vencer el style="flex:0 0 auto" inline del segundo. */
+    #tabSistemas .card-action .btn-group {
+        flex-direction: column;
+    }
+
+    #tabSistemas .card-action .btn-group > .btn {
+        flex: 0 0 auto !important;
+        width: 100%;
+    }
+
+    #tabSistemas .card-action .btn-group > .btn:first-child {
+        border-radius: 0.25rem 0.25rem 0 0;
+    }
+
+    #tabSistemas .card-action .btn-group > .btn:last-child {
+        border-radius: 0 0 0.25rem 0.25rem;
+        margin-left: 0;
+        border-top-width: 0;
     }
 }
 
@@ -1479,6 +1538,17 @@ body.theme-dark .fc-col-header-cell {
     #tabPersonal > .row {
         height: auto;
     }
+
+    /* Por la misma razón, el contenedor de pestañas no debe estirarse a
+       llenar la columna: con contenido corto (p.ej. Analisis BI, que mide
+       ~305px de alto por su proporcion 1080x920) el sobrante se veia como
+       un bloque blanco de ~490px debajo del tablero. Con flex:0 0 auto
+       toma solo el alto de su contenido y lo que resta de la columna
+       muestra su degradado azul. Va despues de la declaracion de arriba a
+       proposito: misma especificidad, gana la ultima. */
+    #mainTabsContent {
+        flex: 0 0 auto;
+    }
 }
 
 .notif-item {
@@ -1504,18 +1574,79 @@ body.theme-dark .fc-col-header-cell {
     padding: 2rem 0;
 }
 
+/* Pestaña KPI's: los tableros salen de mess_rrhh.enlaces_kpis y se embeben
+   directo, sin la página intermedia kpis_pbi. Mismo tratamiento que Análisis
+   BI: el lienzo mide 1080x920, así que el alto natural es el ancho x 85.1852%.
+   Amarrarlo con padding-bottom (el porcentaje va sobre el ancho) hace que la
+   caja mida exactamente lo que el reporte necesita y Power BI no tenga
+   sobrante que rellenar de blanco. */
 #tabKpis {
     padding: 0 !important;
 }
 
 #tabKpis #frameKPIs {
-    padding: 0 !important;
+    position: relative;
+    width: 100%;
+    height: 0 !important;
+    padding: 0 0 85.1852% 0 !important;
     margin: 0 !important;
+    /* Recorta la barra inferior de Power BI, que el iframe deja fuera con sus
+       37px extra (ver regla del iframe). */
+    overflow: hidden;
 }
 
-#tabKpis .py-5 {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+/* Selector de tablero: solo se dibuja si el usuario tiene más de uno. */
+.kpis-selector {
+    padding: 0.75rem;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+}
+
+/* Escritorio: los nombres como botones, todos a la vista. */
+.kpis-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.kpis-boton {
+    background: #143d73;
+    color: #fff;
+    border: 1px solid #143d73;
+    border-radius: 0.375rem;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.kpis-boton:hover {
+    background: #0a1c61;
+    color: #fff;
+}
+
+.kpis-boton.activo {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* El desplegable es el camino en móvil; en escritorio manda la botonera. */
+#kpisSelect {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    #kpisSelect {
+        display: block;
+        /* 16px evita que iOS haga zoom al enfocar el campo. */
+        font-size: 16px;
+    }
+
+    .kpis-botones {
+        display: none;
+    }
 }
 
   .profile-avatar {
@@ -1535,18 +1666,15 @@ body.theme-dark .fc-col-header-cell {
       overflow: hidden;
   }
   .profile-avatar.has-photo i { display: none; }
-#tabKpis .text-center {
-    margin: 0 !important;
-}
-
-#tabKpis .mb-2 {
-    margin-bottom: 0 !important;
-}
-
 #tabKpis iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
     display: block !important;
     width: 100% !important;
-    height: calc(100vh - 140px) !important;
+    /* 37px más que el contenedor: la barra inferior de Power BI (logo, zoom,
+       compartir) cae fuera y la recorta el overflow:hidden de #frameKPIs. */
+    height: calc(100% + 37px) !important;
     border: none !important;
     margin: 0 !important;
 }
@@ -1789,6 +1917,23 @@ footer.sticky-footer .fb-footer-logo {
     opacity: 0.95;
     display: block;
     margin: 0 auto 3px;
+}
+
+/* En inicio.php el logo y el copyright se movieron del footer al pie de la
+   columna del perfil. La regla de arriba está acotada a footer.sticky-footer,
+   asi que no alcanzaba a la nueva ubicación; se repite aquí. El invert lo
+   vuelve blanco sobre el degradado azul de la columna, igual que antes. */
+.perfil-footer .fb-footer-logo {
+    max-height: 66px !important;
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.95;
+    display: block;
+    margin: 0 auto 3px;
+    max-width: 100%;
+}
+
+.perfil-footer {
+    padding-bottom: 0.5rem;
 }
 
 .fb-footer-links {
