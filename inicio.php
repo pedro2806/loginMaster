@@ -27,6 +27,33 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     $stmtKpis->close();
 }
 
+// Tableros de la pestaña KPI's, desde mess_rrhh.enlaces_kpis (Password_KPI,
+// Nombre, Enlace). Antes esto se resolvía embebiendo kpis_pbi/index.php, que
+// consultaba esta misma tabla y dibujaba un botón por fila; se traía además su
+// propio scroll y un min-height:2000px que dejaba una franja en blanco bajo el
+// tablero. Al leer la tabla aquí, el reporte de Power BI se embebe directo y
+// esa página intermedia deja de hacer falta.
+$kpisTableros = [];
+if ($tieneKpis) {
+    // El pk sale del acceso especial; la cookie queda como respaldo, igual que
+    // cuando se le pasaba por querystring a la página intermedia.
+    $passkpis = $kpisPk !== '' ? $kpisPk : (isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '');
+    if ($passkpis !== '') {
+        $stmtTab = $conn->prepare("SELECT Nombre, Enlace FROM mess_rrhh.enlaces_kpis
+                                   WHERE Password_KPI = ?
+                                   ORDER BY id_registro");
+        if ($stmtTab) {
+            $stmtTab->bind_param("s", $passkpis);
+            $stmtTab->execute();
+            $resTab = $stmtTab->get_result();
+            while ($t = $resTab->fetch_assoc()) {
+                $kpisTableros[] = $t;
+            }
+            $stmtTab->close();
+        }
+    }
+}
+
 // Acceso a la pestaña Cotizador IA (tabla accesos, sistema = 'divCotizadorIA',
 // gestionada desde el modal "ACCESOS" → modalAccesoSistemas.php).
 $tieneCotizador = false;
@@ -204,7 +231,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
   
 </head>
 
-<body id="page-top" class="theme-light">
+<!-- sin-footer: esta vista ya no tiene el footer de ancho completo (su
+     contenido pasó al pie de la columna del perfil). La clase deja que el CSS
+     apague el fondo claro que ese footer tapaba, sin afectar a inicio2,
+     inicioOld ni inicio_res, que comparten la hoja y sí lo conservan. -->
+<body id="page-top" class="theme-light sin-footer">
     <div id="wrapper">
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
@@ -300,6 +331,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#modalAccesoSistemas">
                                                 <i class="fas fa-desktop"></i>
                                             </button>
+                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalDashboards" title="Administrar Dashboards">
+                                                <i class="fas fa-chart-pie"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -320,6 +354,20 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     <i class="fas fa-sun sun"></i>
                                     <div class="switch"></div>
                                     <i class="fas fa-moon moon"></i>
+                                </div>
+
+                                <!-- Cierre de la columna del perfil: antes esto vivía en un
+                                     <footer class="sticky-footer"> a lo ancho de la página.
+                                     Se movió aquí para no gastar una franja completa abajo,
+                                     sobre todo en móvil, donde el perfil ya es su propia
+                                     pantalla. Las otras vistas (inicio2, inicioOld,
+                                     inicio_res) siguen usando el footer viejo, por eso su
+                                     CSS sigue en loginMaster.css. -->
+                                <div class="perfil-footer text-center mt-4">
+                                    <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
+                                    <div class="fb-footer-links">
+                                        Business Intelligence | Messbook © <?php echo date("Y"); ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -377,8 +425,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <?php endif; ?>
                                 <?php if ($tieneKpis): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab" title="KPI's" aria-label="KPI's">
-                                        <i class="fas fa-chart-line"></i><span class="tab-label"> KPI's</span>
+                                    <button class="nav-link" id="tabKpis-tab" data-toggle="tab" data-target="#tabKpis" type="button" role="tab" title="Dashboards" aria-label="Dashboards">
+                                        <i class="fas fa-chart-line"></i><span class="tab-label"> Dashboards</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -915,15 +963,45 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <!-- ===== TAB 6: KPI'S (frame con los KPI's segun permisos) ===== -->
                                 <?php if ($tieneKpis): ?>
                                 <div class="tab-pane fade" id="tabKpis" role="tabpanel">
-                                    <div id="frameKPIs">
+                                    <?php if (empty($kpisTableros)): ?>
                                         <div class="text-center text-muted py-5">
-                                            <?php
-                                            // pk = inf_adicional del acceso especial; si está vacío, se usa la cookie como respaldo.
-                                            $passkpis = $kpisPk !== '' ? $kpisPk : (isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '');
-                                            ?>
-                                            <iframe src="https://messbook.com.mx/kpis_pbi/index.php?pk=<?php echo urlencode($passkpis); ?>" title="KPIs"></iframe>
+                                            <i class="fas fa-chart-line fa-2x mb-2 d-block"></i>
+                                            <small>No hay tableros asignados a tu acceso.</small>
                                         </div>
-                                    </div>
+                                    <?php else: ?>
+                                        <?php if (count($kpisTableros) > 1): ?>
+                                            <!-- El selector solo aparece si hay mas de un tablero: 57 de los 83
+                                                 accesos tienen uno solo, y ahi cualquier selector es ruido.
+                                                 Desplegable en movil (compacto, un toque) y botones en
+                                                 escritorio (se ven todos de un vistazo); ambos llaman a la
+                                                 misma funcion, se alternan por CSS. -->
+                                            <div class="kpis-selector">
+                                                <select id="kpisSelect" class="form-control" aria-label="Elegir tablero">
+                                                    <?php foreach ($kpisTableros as $i => $t): ?>
+                                                        <option value="<?php echo htmlspecialchars($t['Enlace'], ENT_QUOTES, 'UTF-8'); ?>"<?php echo $i === 0 ? ' selected' : ''; ?>>
+                                                            <?php echo htmlspecialchars($t['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+
+                                                <div class="kpis-botones">
+                                                    <?php foreach ($kpisTableros as $i => $t): ?>
+                                                        <button type="button"
+                                                                class="btn btn-sm kpis-boton<?php echo $i === 0 ? ' activo' : ''; ?>"
+                                                                data-enlace="<?php echo htmlspecialchars($t['Enlace'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                            <?php echo htmlspecialchars($t['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                        </button>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div id="frameKPIs">
+                                            <iframe id="iframeKpis"
+                                                    src="<?php echo htmlspecialchars($kpisTableros[0]['Enlace'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    title="KPIs" allowfullscreen></iframe>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                                 <?php endif; ?>
 
@@ -1009,17 +1087,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     </div>
                 </div>
             </div>
-            <!-- Footer -->
-            <footer class="sticky-footer">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
-                        <div class="fb-footer-links">
-                            Business Intelligence | Messbook © <?php echo date("Y"); ?>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 
@@ -1263,6 +1330,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
     <!-- Modal Acceso a Sistemas -->
     <?php include 'modalAccesoSistemas.php'; ?>
+
+    <!-- Modal Administrar Dashboards (alta/baja de mess_rrhh.enlaces_kpis) -->
+    <?php include 'modalDashboards.php'; ?>
 
     <!-- Modales Mis Vacaciones: Solicitar + Estatus -->
     <?php include 'modalVacaciones.php'; ?>
@@ -1543,6 +1613,28 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     } catch (e) {}
                 });
             }
+
+            // KPIs: cambiar de tablero. El iframe apunta directo al reporte de
+            // Power BI (los enlaces salen de mess_rrhh.enlaces_kpis, ver el
+            // bloque PHP del inicio del archivo), asi que basta con cambiarle el
+            // src. El desplegable y los botones son la misma lista: se muestran
+            // segun el ancho de pantalla y se mantienen sincronizados.
+            function kpisMostrarTablero(enlace) {
+                if (!enlace) return;
+                $('#iframeKpis').attr('src', enlace);
+                $('#kpisSelect').val(enlace);
+                $('.kpis-boton').each(function() {
+                    $(this).toggleClass('activo', $(this).data('enlace') === enlace);
+                });
+            }
+
+            $('#kpisSelect').on('change', function() {
+                kpisMostrarTablero($(this).val());
+            });
+
+            $('.kpis-boton').on('click', function() {
+                kpisMostrarTablero($(this).data('enlace'));
+            });
 
             // Tickets: lazy-load del iframe activo (evita cargar ambos al inicio)
             function cargarIframeTickets(target) {
