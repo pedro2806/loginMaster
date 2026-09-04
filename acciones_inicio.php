@@ -16,6 +16,136 @@ if (empty($_POST) && empty($_FILES) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 
 $accion = isset($_POST['accion']) ? $_POST['accion'] : '';
 $noEmpleado = isset($_POST['noEmpleado']) ? $_POST['noEmpleado'] : '';
 
+// ===== MessbookID =====
+// Apodo corto para la profile card. Se guarda SIN la arroba (es prefijo de
+// presentación) en usuarios.messbookID, con índice único. La columna admite
+// NULL a propósito: sin valor, se deriva de la parte del correo anterior al @,
+// que es el default que se acordó. Se deriva en vez de precargarse para que no
+// haya que migrar 268 filas y para que siga al correo si este cambia.
+// 20 caracteres: el default más largo de la plantilla actual mide 19
+// (sebastian.gutierrez), así que a nadie le sale truncado.
+define('MESSBOOKID_MAX', 20);
+
+function messbookIdDefault($correo) {
+    $correo = (string) $correo;
+    $pos = strpos($correo, '@');
+    $base = $pos === false ? $correo : substr($correo, 0, $pos);
+    return substr($base, 0, MESSBOOKID_MAX);
+}
+
+// Devuelve el MessbookID efectivo: el guardado, o el derivado del correo.
+function messbookIdEfectivo($guardado, $correo) {
+    $guardado = trim((string) $guardado);
+    return $guardado !== '' ? $guardado : messbookIdDefault($correo);
+}
+
+// Reglas de personalización: letras, números, punto, guion y guion bajo. Sin
+// espacios ni arrobas, para que se pueda escribir de corrido y usarse después
+// en menciones. Devuelve '' si es válido, o el motivo del rechazo.
+function messbookIdInvalido($valor) {
+    if ($valor === '') return 'El MessbookID no puede quedar vacío.';
+    if (mb_strlen($valor) > MESSBOOKID_MAX) {
+        return 'El MessbookID no puede pasar de ' . MESSBOOKID_MAX . ' caracteres.';
+    }
+    if (mb_strlen($valor) < 3) return 'El MessbookID debe tener al menos 3 caracteres.';
+    if (!preg_match('/^[A-Za-z0-9._-]+$/', $valor)) {
+        return 'Solo se permiten letras, números, punto, guion y guion bajo.';
+    }
+    return '';
+}
+
+if ($accion == 'messbookid_leer' || $accion == 'messbookid_guardar') {
+    ob_clean();
+    header('Content-Type: application/json');
+
+    $noEmpSesion = intval($noEmpleado);
+    if ($noEmpSesion <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Sesión no válida']);
+        $conn->close();
+        exit;
+    }
+
+    if ($accion == 'messbookid_guardar') {
+        // Se guarda sin la arroba aunque el usuario la escriba por costumbre.
+        $nuevo = ltrim(trim((string)($_POST['messbookID'] ?? '')), '@');
+
+        $error = messbookIdInvalido($nuevo);
+        if ($error !== '') {
+            echo json_encode(['success' => false, 'message' => $error]);
+            $conn->close();
+            exit;
+        }
+
+        // Choque con otro empleado. Se revisa antes de escribir para responder
+        // con un mensaje claro en vez de dejar que reviente el índice único.
+        $stmtDup = $conn->prepare(
+            "SELECT noEmpleado FROM usuarios WHERE messbookID = ? AND noEmpleado <> ? LIMIT 1"
+        );
+        if ($stmtDup) {
+            $stmtDup->bind_param('si', $nuevo, $noEmpSesion);
+            $stmtDup->execute();
+            $ocupado = (bool) $stmtDup->get_result()->fetch_assoc();
+            $stmtDup->close();
+            if ($ocupado) {
+                echo json_encode(['success' => false, 'message' => 'Ese MessbookID ya está en uso.']);
+                $conn->close();
+                exit;
+            }
+        }
+
+        // Choque contra el default de alguien más: esa persona aún no guarda
+        // nada, pero el portal la muestra así, y dos @pedro dejarían de
+        // identificar a nadie.
+        $stmtDef = $conn->prepare(
+            "SELECT noEmpleado FROM usuarios
+             WHERE messbookID IS NULL AND noEmpleado <> ?
+               AND SUBSTRING_INDEX(correo, '@', 1) = ?
+             LIMIT 1"
+        );
+        if ($stmtDef) {
+            $stmtDef->bind_param('is', $noEmpSesion, $nuevo);
+            $stmtDef->execute();
+            $chocaDefault = (bool) $stmtDef->get_result()->fetch_assoc();
+            $stmtDef->close();
+            if ($chocaDefault) {
+                echo json_encode(['success' => false, 'message' => 'Ese MessbookID ya está en uso.']);
+                $conn->close();
+                exit;
+            }
+        }
+
+        $stmtUp = $conn->prepare("UPDATE usuarios SET messbookID = ? WHERE noEmpleado = ?");
+        if ($stmtUp) {
+            $stmtUp->bind_param('si', $nuevo, $noEmpSesion);
+            $stmtUp->execute();
+            $stmtUp->close();
+        }
+    }
+
+    $stmtL = $conn->prepare("SELECT messbookID, correo FROM usuarios WHERE noEmpleado = ? LIMIT 1");
+    $messbookID = '';
+    $personalizado = false;
+    if ($stmtL) {
+        $stmtL->bind_param('i', $noEmpSesion);
+        $stmtL->execute();
+        $row = $stmtL->get_result()->fetch_assoc();
+        $stmtL->close();
+        if ($row) {
+            $personalizado = trim((string)$row['messbookID']) !== '';
+            $messbookID = messbookIdEfectivo($row['messbookID'], $row['correo']);
+        }
+    }
+
+    echo json_encode([
+        'success'       => true,
+        'messbookID'    => $messbookID,
+        'personalizado' => $personalizado,
+        'max'           => MESSBOOKID_MAX
+    ]);
+    $conn->close();
+    exit;
+}
+
 //MOSTRAR TALLAS
 if ($accion == 'ver_tallas') {
 
@@ -180,24 +310,39 @@ if ($accion == 'cargar_cursos') {
 // Se compara mes y día, nunca el año: fechaNacimiento guarda el año real.
 // Devuelve por separado si le toca al usuario de la sesión, para que el portal
 // pueda felicitarlo a él y, aparte, listar a los demás para todos.
+// Fecha centinela de la preferencia de cumpleaños. Va fuera del rango de
+// cualquier felicitación real, que siempre se registra con CURDATE().
+define('CUMPLE_PREF_FECHA', '1900-01-01');
+
 if ($accion == 'cumpleanos_hoy') {
     ob_clean();
     header('Content-Type: application/json');
 
     $noEmpSesion = intval($noEmpleado);
 
-    $sqlCump = "SELECT noEmpleado, nombre, fechaNacimiento
-                FROM usuarios
-                WHERE estatus = 1
-                  AND fechaNacimiento IS NOT NULL
-                  AND MONTH(fechaNacimiento) = MONTH(CURDATE())
-                  AND DAY(fechaNacimiento)   = DAY(CURDATE())
-                ORDER BY nombre";
+    // La preferencia de "no compartir mi cumpleaños" se guarda en la misma tabla
+    // cumple_aplausos, como fila centinela: origen = destino y fecha CUMPLE_PREF_FECHA.
+    // No hay riesgo de chocar con una felicitación real porque esas siempre se
+    // insertan con CURDATE(), y nadie se felicita a sí mismo. Es un apaño para no
+    // crear tabla nueva; si algún día hay más preferencias, conviene separarlas.
+    $sqlCump = "SELECT u.noEmpleado, u.nombre, u.fechaNacimiento,
+                       (pref.no_empleado_destino IS NULL) AS mostrar
+                FROM usuarios u
+                LEFT JOIN cumple_aplausos pref
+                       ON pref.no_empleado_destino = u.noEmpleado
+                      AND pref.no_empleado_origen  = u.noEmpleado
+                      AND pref.fecha = '" . CUMPLE_PREF_FECHA . "'
+                WHERE u.estatus = 1
+                  AND u.fechaNacimiento IS NOT NULL
+                  AND MONTH(u.fechaNacimiento) = MONTH(CURDATE())
+                  AND DAY(u.fechaNacimiento)   = DAY(CURDATE())
+                ORDER BY u.nombre";
     $resCump = $conn->query($sqlCump);
 
     $otros = [];
     $esMiCumple = false;
     $miNombre = '';
+    $miPrefMostrar = true;
 
     if ($resCump) {
         while ($row = $resCump->fetch_assoc()) {
@@ -207,10 +352,31 @@ if ($accion == 'cumpleanos_hoy') {
                 $miNombre = $row['nombre'];
                 continue;
             }
+            // Quien pidió no compartirlo no aparece en la lista de los demás.
+            if (!$row['mostrar']) continue;
+
             $otros[] = [
                 'noEmpleado' => intval($row['noEmpleado']),
                 'nombre'     => $row['nombre']
             ];
+        }
+    }
+
+    // La preferencia se lee aparte y NO dentro del bucle de arriba: ese solo
+    // recorre a quienes cumplen hoy, así que en cualquier otro día del año la
+    // respuesta salía con el valor por defecto y el botón se revertía solo.
+    if ($noEmpSesion > 0) {
+        $stmtPref = $conn->prepare(
+            "SELECT 1 FROM cumple_aplausos
+             WHERE no_empleado_destino = ? AND no_empleado_origen = ? AND fecha = ?
+             LIMIT 1"
+        );
+        if ($stmtPref) {
+            $fechaPref = CUMPLE_PREF_FECHA;
+            $stmtPref->bind_param('iis', $noEmpSesion, $noEmpSesion, $fechaPref);
+            $stmtPref->execute();
+            $miPrefMostrar = !$stmtPref->get_result()->fetch_assoc();
+            $stmtPref->close();
         }
     }
 
@@ -235,12 +401,72 @@ if ($accion == 'cumpleanos_hoy') {
     }
 
     echo json_encode([
-        'success'        => true,
-        'es_mi_cumple'   => $esMiCumple,
-        'mi_nombre'      => $miNombre,
-        'otros'          => $otros,
-        'me_felicitaron' => $meFelicitaron
+        'success'         => true,
+        'es_mi_cumple'    => $esMiCumple,
+        'mi_nombre'       => $miNombre,
+        'otros'           => $otros,
+        'me_felicitaron'  => $meFelicitaron,
+        'mi_pref_mostrar' => $miPrefMostrar
     ]);
+    $conn->close();
+    exit;
+}
+
+// PREFERENCIA: compartir o no mi cumpleaños con los demás.
+// Se guarda como fila centinela en cumple_aplausos (ver CUMPLE_PREF_FECHA):
+// existe la fila = NO compartir. Sin fila = compartir, que es el comportamiento
+// por defecto y el que ya tenían todos.
+// Solo se guarda: la lectura viaja dentro de la respuesta de cumpleanos_hoy
+// (campo mi_pref_mostrar), que el portal ya pide al cargar. Un endpoint de
+// lectura aparte obligaría a una segunda petición para el mismo dato.
+if ($accion == 'cumple_pref_guardar') {
+    ob_clean();
+    header('Content-Type: application/json');
+
+    $noEmpSesion = intval($noEmpleado);
+    if ($noEmpSesion <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Sesión no válida']);
+        $conn->close();
+        exit;
+    }
+
+    // mostrar = 1 borra la fila centinela; mostrar = 0 la crea.
+    $mostrar = isset($_POST['mostrar']) && $_POST['mostrar'] !== '0';
+
+    if ($mostrar) {
+        $stmt = $conn->prepare(
+            "DELETE FROM cumple_aplausos
+             WHERE no_empleado_destino = ? AND no_empleado_origen = ? AND fecha = ?"
+        );
+    } else {
+        $stmt = $conn->prepare(
+            "INSERT IGNORE INTO cumple_aplausos (no_empleado_destino, no_empleado_origen, fecha)
+             VALUES (?, ?, ?)"
+        );
+    }
+    if ($stmt) {
+        $fecha = CUMPLE_PREF_FECHA;
+        $stmt->bind_param('iis', $noEmpSesion, $noEmpSesion, $fecha);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Se relee siempre, para que la respuesta refleje lo que quedó en la base.
+    $mostrarActual = true;
+    $stmtL = $conn->prepare(
+        "SELECT 1 FROM cumple_aplausos
+         WHERE no_empleado_destino = ? AND no_empleado_origen = ? AND fecha = ?
+         LIMIT 1"
+    );
+    if ($stmtL) {
+        $fecha = CUMPLE_PREF_FECHA;
+        $stmtL->bind_param('iis', $noEmpSesion, $noEmpSesion, $fecha);
+        $stmtL->execute();
+        $mostrarActual = !$stmtL->get_result()->fetch_assoc();
+        $stmtL->close();
+    }
+
+    echo json_encode(['success' => true, 'mostrar' => $mostrarActual]);
     $conn->close();
     exit;
 }

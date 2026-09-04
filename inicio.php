@@ -38,15 +38,47 @@ if ($tieneKpis) {
     // El pk sale del acceso especial; la cookie queda como respaldo, igual que
     // cuando se le pasaba por querystring a la página intermedia.
     $passkpis = $kpisPk !== '' ? $kpisPk : (isset($_COOKIE['UsrKpis']) ? $_COOKIE['UsrKpis'] : '');
-    if ($passkpis !== '') {
+
+    // inf_adicional admite VARIAS contraseñas separadas por coma
+    // ("Seguimiento_Labs26, aM04_LOP"): hay jefes que necesitan los tableros de
+    // dos áreas y la tabla no tiene cómo darles dos accesos — el modal rechaza
+    // la fila duplicada (modalAccesosEspeciales.php, "El usuario ya tiene este
+    // acceso") y la consulta de arriba trae LIMIT 1, así que una segunda fila
+    // se elegiría sin criterio definido. Se resuelve aquí, partiendo el campo.
+    $kpisPks = [];
+    foreach (explode(',', $passkpis) as $p) {
+        $p = trim($p);
+        // Se filtra con in_array en vez de array_unique al final porque hay que
+        // conservar el orden en que se escribieron: de él depende cuál tablero
+        // abre por defecto.
+        if ($p !== '' && !in_array($p, $kpisPks, true)) {
+            $kpisPks[] = $p;
+        }
+    }
+
+    if ($kpisPks) {
+        $marcas = implode(',', array_fill(0, count($kpisPks), '?'));
+        // FIELD() ordena por la posición de la contraseña dentro del campo, así
+        // que los tableros de la primera van primero. Con una sola contraseña
+        // devuelve 1 para todas las filas y el orden queda igual que antes: quien
+        // ya tenía acceso ve exactamente la misma lista y el mismo tablero inicial.
         $stmtTab = $conn->prepare("SELECT Nombre, Enlace FROM mess_rrhh.enlaces_kpis
-                                   WHERE Password_KPI = ?
-                                   ORDER BY id_registro");
+                                   WHERE Password_KPI IN ($marcas)
+                                   ORDER BY FIELD(Password_KPI, $marcas), id_registro");
         if ($stmtTab) {
-            $stmtTab->bind_param("s", $passkpis);
+            // Las contraseñas van dos veces: una para el IN y otra para el FIELD.
+            $args  = array_merge($kpisPks, $kpisPks);
+            $stmtTab->bind_param(str_repeat('s', count($args)), ...$args);
             $stmtTab->execute();
             $resTab = $stmtTab->get_result();
+            $kpisVistos = [];
             while ($t = $resTab->fetch_assoc()) {
+                // Dos contraseñas pueden traer el mismo reporte. El enlace es lo
+                // que identifica al tablero en el selector y en los botones
+                // (data-enlace), así que dejarlo repetido encendería dos botones
+                // a la vez al elegirlo. Se queda el de la primera contraseña.
+                if (isset($kpisVistos[$t['Enlace']])) continue;
+                $kpisVistos[$t['Enlace']] = true;
                 $kpisTableros[] = $t;
             }
             $stmtTab->close();
@@ -259,8 +291,19 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     <h6>
                                         <?php echo isset($_COOKIE['nombredelusuarioL']) ? htmlspecialchars($_COOKIE['nombredelusuarioL'], ENT_QUOTES, 'UTF-8') : 'Usuario Desconocido'; ?>
                                     </h6>
-                                    <p class="text-muted mb-2" style="font-size:0.85rem;">
+                                    <p class="text-muted mb-1" style="font-size:0.85rem;">
                                         No. Empleado: <?php echo isset($_COOKIE['noEmpleadoL']) ? htmlspecialchars($_COOKIE['noEmpleadoL']) : '0000'; ?>
+                                    </p>
+                                    <!-- MessbookID: identidad corta y algo mas informal. Se llena por
+                                         JS al cargar; si el usuario no ha elegido uno, se muestra el
+                                         derivado de su correo. El lapiz abre el modal para cambiarlo. -->
+                                    <p class="mb-2">
+                                        <span id="lblMessbookID" class="messbook-id"></span>
+                                        <button type="button" class="btn btn-link p-0 ml-1 messbook-id-editar"
+                                                title="Cambiar mi MessbookID" aria-label="Cambiar mi MessbookID"
+                                                data-toggle="modal" data-target="#modalMessbookID">
+                                            <i class="fas fa-pen fa-xs"></i>
+                                        </button>
                                     </p>
                                     <div class="profile-info small mb-2">
                                         <div class="profile-info-row" title="Jefe Directo">
@@ -339,6 +382,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <?php endif; ?>
 
                                 <!-- Botones acción -->
+                                <!-- Preferencia de cumpleaños: controla si los demás ven tu
+                                     cumpleaños en Mi Espacio. El texto y el icono se ponen por
+                                     JS al cargar, segun lo guardado. -->
+                                <button type="button" id="btnCumplePref" class="btn btn-outline-light btn-block mt-2" onclick="cumpleAlternarPref()">
+                                    <i class="fas fa-birthday-cake"></i> <span id="btnCumplePrefTexto">Mi cumpleaños</span>
+                                </button>
                                 <button class="btn btn-outline-mess-naranja btn-block mt-2" data-toggle="modal" data-target="#modalbuzon">
                                     <i class="fas fa-envelope-open-text"></i> Sugerencias
                                 </button>
@@ -494,8 +543,15 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="nombredelusuarioCV" id="nombredelusuarioCV" value="">
                                                         <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
                                                         <input type="hidden" name="correoCV" id="correoCV" value="">
+                                                        <!-- QRide es el branding de Control Vehicular; el logo
+                                                             vive en su propio repo. Misma altura que el de NEST
+                                                             (48px) y proporciones casi iguales, asi que la
+                                                             tarjeta conserva el tamano de las demas. El
+                                                             max-width evita que se desborde en la rejilla de 2
+                                                             columnas de movil. -->
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-car fa-lg d-block mb-2"></i> Ctrl Vehicular
+                                                            <img src="../ControlVehicular/img/QRide_grande.png" alt="Ctrl Vehicular"
+                                                                 class="d-block mx-auto mb-0" style="height:48px;width:auto;max-width:100%">
                                                         </button>
                                                     </form>
                                                 </div>
@@ -751,8 +807,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                     <input type="file" id="inputMural" accept="application/pdf" style="display:none" onchange="subirMural(this)">
                                                     <?php endif; ?>
                                                 </div>
-                                                <div class="card-body p-2">
-                                                    <embed id="vistaPrevia" src='<?php echo $muralSrc; ?>' type="application/pdf" width="100%" height="600px" />
+                                                <!-- El card-body pasa a flex y el visor crece con el:
+                                                     con height fijo de 600px el mural quedaba encerrado en
+                                                     su propio scroll y debajo sobraba media tarjeta. -->
+                                                <div class="card-body p-2 d-flex flex-column">
+                                                    <embed id="vistaPrevia" src='<?php echo $muralSrc; ?>' type="application/pdf" />
                                                 </div>
                                             </div>
                                         </div>
@@ -996,9 +1055,16 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             </div>
                                         <?php endif; ?>
 
+                                        <!-- data-src y no src: un embed de Power BI es una aplicación
+                                             completa y pesada. Cargándolo de entrada, el teléfono
+                                             levantaba este tablero MAS el de Análisis BI en cada visita
+                                             a inicio.php, aunque no se abriera ninguna de las dos
+                                             pestañas; eso agotaba la memoria y Safari mataba la pestaña
+                                             ("Ocurrió un problema varias veces"). Se carga al abrir la
+                                             pestaña, igual que SIVAC y Tickets. -->
                                         <div id="frameKPIs">
                                             <iframe id="iframeKpis"
-                                                    src="<?php echo htmlspecialchars($kpisTableros[0]['Enlace'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    data-src="<?php echo htmlspecialchars($kpisTableros[0]['Enlace'], ENT_QUOTES, 'UTF-8'); ?>"
                                                     title="KPIs" allowfullscreen></iframe>
                                         </div>
                                     <?php endif; ?>
@@ -1013,7 +1079,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                              encoge el reporte hasta que quepa completo (se veía al 21%)
                                              y rellena el sobrante con su propio fondo blanco. Con
                                              fitToWidth el reporte ocupa todo el ancho del iframe. -->
-                                        <iframe src="https://app.powerbi.com/view?r=eyJrIjoiNDhiOWRmY2QtNzg2Mi00ZGQ2LTk1Y2UtMDI4OGFhODZkNjgzIiwidCI6ImZlMGNmZmU4LTkxMjYtNGRmYS1iNjE2LTU3MGM2YWViYTdiNiJ9&amp;pageView=fitToWidth"
+                                        <!-- Diferido por lo mismo que el de Dashboards: ver el comentario
+                                             de #frameKPIs. -->
+                                        <iframe id="iframeAnalisisBI"
+                                                data-src="https://app.powerbi.com/view?r=eyJrIjoiNDhiOWRmY2QtNzg2Mi00ZGQ2LTk1Y2UtMDI4OGFhODZkNjgzIiwidCI6ImZlMGNmZmU4LTkxMjYtNGRmYS1iNjE2LTU3MGM2YWViYTdiNiJ9&amp;pageView=fitToWidth"
                                                 title="Análisis BI" allowfullscreen></iframe>
                                     </div>
                                 </div>
@@ -1334,6 +1403,44 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <!-- Modal Administrar Dashboards (alta/baja de mess_rrhh.enlaces_kpis) -->
     <?php include 'modalDashboards.php'; ?>
 
+    <!-- Modal MessbookID -->
+    <div class="modal fade" id="modalMessbookID" tabindex="-1" role="dialog" aria-labelledby="modalMessbookIDLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalMessbookIDLabel">Mi MessbookID</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        Es tu identidad corta dentro de Messbook. Solo se ve en tu tarjeta de
+                        perfil: no aparece en el directorio ni en los demás sistemas.
+                    </p>
+                    <div class="form-group mb-2">
+                        <label for="inputMessbookID" class="small mb-1">MessbookID</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">@</span>
+                            </div>
+                            <input type="text" class="form-control" id="inputMessbookID"
+                                   maxlength="20" autocomplete="off" spellcheck="false">
+                        </div>
+                        <small class="form-text text-muted">
+                            De 3 a 20 caracteres. Letras, números, punto, guion y guion bajo.
+                        </small>
+                    </div>
+                    <div id="msgMessbookID" class="small"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarMessbookID()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modales Mis Vacaciones: Solicitar + Estatus -->
     <?php include 'modalVacaciones.php'; ?>
 
@@ -1476,6 +1583,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             validaOpciones();
             infoEmpleado();
             verificarEsJefe();
+            cargarMessbookID();
             cargarCumpleanos();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
@@ -1634,6 +1742,24 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
             $('.kpis-boton').on('click', function() {
                 kpisMostrarTablero($(this).data('enlace'));
+            });
+
+            // Carga diferida de los dos tableros de Power BI. No usa
+            // autoAjustarIframe porque son de otro origen y no se pueden medir;
+            // su alto ya lo resuelve la proporcion del lienzo en el CSS.
+            function cargarIframePowerBI(selector) {
+                var $f = $(selector);
+                if (!$f.length) return;
+                var src = $f.data('src');
+                if (src && !$f.attr('src')) $f.attr('src', src);
+            }
+
+            $('#tabKpis-tab').on('shown.bs.tab', function() {
+                cargarIframePowerBI('#iframeKpis');
+            });
+
+            $('#tabAnalisisBI-tab').on('shown.bs.tab', function() {
+                cargarIframePowerBI('#iframeAnalisisBI');
             });
 
             // Tickets: lazy-load del iframe activo (evita cargar ambos al inicio)
@@ -1846,9 +1972,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
                 editable: false,
                 locale: 'es',
-                height: 450,
-                contentHeight: 4550,
-                aspectRatio: 2,
+                // Antes: height 450 con contentHeight 4550. Metia 4550px de
+                // contenido en una caja de 450, asi que la agenda quedaba
+                // encerrada en su propio scroll y debajo sobraba la mitad de la
+                // tarjeta. Ahora llena la altura de su columna, igual que las
+                // demas pestañas (ver #tabAgenda en loginMaster.css).
+                height: '100%',
                 eventContent: function(info) {
                     var nombreEmpleado = info.event.title;
                     var descripcion = info.event.extendedProps.descripcion || 'Sin descripción';
@@ -2184,6 +2313,73 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             });
         }
 
+        // ===== MessbookID =====
+        // Se pinta en la tarjeta de perfil. Si el usuario no ha elegido uno, el
+        // backend devuelve el derivado de su correo, asi que aqui siempre llega
+        // un valor con que llenar.
+        function cargarMessbookID() {
+            $.post('acciones_inicio.php', {
+                accion: 'messbookid_leer',
+                noEmpleado: getCookie('noEmpleadoL') || ''
+            }, function(resp) {
+                if (!resp || !resp.success) return;
+                $('#lblMessbookID').text('@' + resp.messbookID);
+                $('#inputMessbookID').val(resp.messbookID);
+            }, 'json');
+        }
+
+        function guardarMessbookID() {
+            var $msg = $('#msgMessbookID').removeClass('text-danger text-success').text('');
+            $.post('acciones_inicio.php', {
+                accion: 'messbookid_guardar',
+                noEmpleado: getCookie('noEmpleadoL') || '',
+                messbookID: $('#inputMessbookID').val()
+            }, function(resp) {
+                if (!resp) return;
+                if (!resp.success) {
+                    // El error se muestra dentro del modal, junto al campo, en vez
+                    // de en una alerta que taparia lo que se esta escribiendo.
+                    $msg.addClass('text-danger').text(resp.message || 'No se pudo guardar.');
+                    return;
+                }
+                $('#lblMessbookID').text('@' + resp.messbookID);
+                $('#inputMessbookID').val(resp.messbookID);
+                $('#modalMessbookID').modal('hide');
+            }, 'json');
+        }
+
+        // ===== Preferencia: compartir mi cumpleaños con los demás =====
+        // No es un "ocultar" local: al apagarlo, dejas de aparecer en la tarjeta
+        // de cumpleaños del resto. Tu propia felicitación no cambia.
+        var cumplePrefMostrar = true;
+
+        function cumplePintarBotonPref(mostrar) {
+            cumplePrefMostrar = !!mostrar;
+            var $b = $('#btnCumplePref');
+            if (!$b.length) return;
+            $('#btnCumplePrefTexto').text(cumplePrefMostrar ? 'Mi cumpleaños: visible' : 'Mi cumpleaños: oculto');
+            $b.attr('title', cumplePrefMostrar
+                ? 'Los demás ven tu cumpleaños. Clic para ocultarlo.'
+                : 'Tu cumpleaños no se le muestra a nadie. Clic para compartirlo.');
+            $b.find('i').attr('class', cumplePrefMostrar ? 'fas fa-birthday-cake' : 'fas fa-eye-slash');
+        }
+
+        function cumpleAlternarPref() {
+            var nuevo = cumplePrefMostrar ? 0 : 1;
+            $.post('acciones_inicio.php', {
+                accion: 'cumple_pref_guardar',
+                noEmpleado: getCookie('noEmpleadoL') || '',
+                mostrar: nuevo
+            }, function(resp) {
+                if (!resp || !resp.success) return;
+                // El propio botón ya dice en qué estado quedó, así que no hace
+                // falta avisarlo aparte.
+                cumplePintarBotonPref(resp.mostrar);
+                // Se recarga la tarjeta para que el cambio se note de inmediato.
+                cargarCumpleanos();
+            }, 'json');
+        }
+
         // ===== Cumpleaños del día =====
         // Dos cosas distintas con una sola consulta: al cumpleañero se le felicita
         // con un modal (una vez al día, aunque recargue), y al resto se le avisa
@@ -2196,12 +2392,14 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             }, function(resp) {
                 if (!resp || !resp.success) return;
 
+                var hoy = new Date().toISOString().slice(0, 10);
+                cumplePintarBotonPref(resp.mi_pref_mostrar !== false);
+
                 if (resp.es_mi_cumple) {
                     // Adorno festivo del portal: dura todo el día, a diferencia del
                     // modal, que se ve una vez. El CSS cuelga de esta clase.
                     $('body').addClass('es-mi-cumple');
 
-                    var hoy = new Date().toISOString().slice(0, 10);
                     if (localStorage.getItem('mess_cumple_visto') !== hoy) {
                         localStorage.setItem('mess_cumple_visto', hoy);
                         $('#cumpleNombre').text(resp.mi_nombre || '');
@@ -2227,6 +2425,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 .text('Cuando alguien te felicite desde el portal, aparecerá aquí.')
                         );
                     }
+
                     $cont.append(
                         $('<div class="alert alert-warning d-flex align-items-center mb-3"></div>')
                             .append('<i class="fas fa-birthday-cake fa-lg mr-3"></i>')

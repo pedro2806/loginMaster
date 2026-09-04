@@ -279,6 +279,28 @@ body.sin-footer #content-wrapper {
     overflow: visible !important;
 }
 
+/* El hueco donde estaba el footer: #content-wrapper es flex vertical con
+   min-height:100vh, pero #content no crecia para llenarlo, asi que la fila y
+   sus columnas —que son las que pintan el azul— se quedaban a la altura de su
+   contenido y debajo asomaba el fondo. Se hace que la cadena estire hasta
+   abajo: content crece dentro del wrapper, container-fluid dentro de content,
+   y la fila ya trae align-items:stretch, asi que las columnas llegan al fondo. */
+body.sin-footer #content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+body.sin-footer #content > .container-fluid {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+body.sin-footer #content > .container-fluid > .row {
+    flex: 1 1 auto;
+}
+
 .tab-content {
     background: var(--card-bg) !important;
 }
@@ -1527,6 +1549,43 @@ body.theme-dark .fc-col-header-cell {
     height: 100%;
 }
 
+/* Avisos y Agenda: mismo trato que Mi Espacio, para que sus tarjetas llenen la
+   altura de la columna en vez de dejar media pantalla vacia debajo. */
+#tabAvisos {
+    height: 100%;
+}
+#tabAvisos > .row {
+    height: 100%;
+}
+
+/* La agenda de Sala de Juntas ocupa el mismo alto que el resto de pestañas:
+   la tarjeta llena la pestaña y FullCalendar (height:'100%') llena la tarjeta. */
+#tabAgenda {
+    height: 100%;
+}
+#tabAgenda > .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+#tabAgenda > .card > .card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+#tabAgenda #calendar {
+    height: 100%;
+}
+
+/* El visor del mural crece con su tarjeta (antes tenia height=600px fijo, y
+   dentro de una tarjeta mas alta quedaba el hueco). El minimo evita que se
+   colapse a nada cuando la columna es corta. */
+#vistaPrevia {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 420px;
+    border: 0;
+}
+
 /* En móvil no hay "barra lateral" con la que alinear la altura (perfil y
    dashboard se turnan la pantalla completa, no van lado a lado) — forzar
    height:100% aquí solo apretaba el calendario de Mis Vacaciones dentro
@@ -1726,6 +1785,28 @@ body.theme-dark .fc-col-header-cell {
     height: calc(100vh - 140px) !important;
     border: none !important;
     margin: 0 !important;
+}
+
+/* MessbookID en la tarjeta de perfil: se lee como identidad, no como un dato
+   mas. El lapiz solo se distingue al pasar el mouse, para no competir con el
+   nombre. */
+.messbook-id {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    letter-spacing: 0.2px;
+}
+
+.messbook-id-editar {
+    color: rgba(255, 255, 255, 0.45);
+    vertical-align: baseline;
+    line-height: 1;
+}
+
+.messbook-id-editar:hover,
+.messbook-id-editar:focus {
+    color: #fff;
+    text-decoration: none;
 }
 
 .profile-avatar {
