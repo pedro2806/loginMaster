@@ -229,6 +229,13 @@ if (!in_array($_dsh_actual, $_dsh_permitidos, true)) return;
                     </table>
                 </div>
 
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted" id="dsh_conteo"></small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0" id="dsh_paginacion"></ul>
+                    </nav>
+                </div>
+
             </div>
         </div>
     </div>
@@ -252,42 +259,83 @@ function dsh_cargarPks() {
     }, 'json');
 }
 
+// Se guarda lo último listado para poder llenar el formulario al editar sin
+// volver a consultar al servidor, y para paginar del lado del cliente.
+var dsh_cache = [];
+var dsh_pagina = 1;
+var DSH_POR_PAGINA = 5;
+
 function dsh_listar() {
     $.post(DSH_URL, {
         accion: 'dsh_listar',
         pk: $('#dsh_filtroPk').val(),
         texto: $('#dsh_filtroTexto').val()
     }, function (res) {
-        var html = '';
-        if (res.success && res.tableros.length) {
-            res.tableros.forEach(function (t) {
-                // El enlace puede medir miles de caracteres: se recorta para que
-                // no reviente la tabla y el completo va en el title.
-                var corto = t.Enlace.length > 60 ? t.Enlace.substring(0, 60) + '...' : t.Enlace;
-                html += '<tr>'
-                     +  '<td>' + dsh_esc(t.Nombre) + '</td>'
-                     +  '<td><code class="small">' + dsh_esc(t.Password_KPI) + '</code></td>'
-                     +  '<td><span class="small text-muted" title="' + dsh_esc(t.Enlace) + '">'
-                     +      dsh_esc(corto) + '</span></td>'
-                     +  '<td>'
-                     +    '<button class="btn btn-sm btn-outline-primary mr-1" title="Editar" '
-                     +      'onclick="dsh_editar(' + t.id_registro + ')"><i class="fas fa-edit"></i></button>'
-                     +    '<button class="btn btn-sm btn-outline-danger" title="Eliminar" '
-                     +      'onclick="dsh_eliminar(' + t.id_registro + ')"><i class="fas fa-trash"></i></button>'
-                     +  '</td>'
-                     + '</tr>';
-            });
-        } else {
-            html = '<tr><td colspan="4" class="text-center text-muted py-3">Sin tableros que coincidan.</td></tr>';
-        }
-        $('#dsh_tabla').html(html);
         dsh_cache = (res.success ? res.tableros : []);
+        dsh_pagina = 1;
+        dsh_pintarPagina();
     }, 'json');
 }
 
-// Se guarda lo último listado para poder llenar el formulario al editar sin
-// volver a consultar al servidor.
-var dsh_cache = [];
+// La paginación es del lado del cliente: la consulta ya viene acotada a 300
+// filas y un usuario rara vez tiene más de 13 tableros, así que no vale la pena
+// ir al servidor por cada página.
+function dsh_pintarPagina() {
+    var total = dsh_cache.length;
+    var paginas = Math.max(1, Math.ceil(total / DSH_POR_PAGINA));
+    if (dsh_pagina > paginas) dsh_pagina = paginas;
+
+    var desde = (dsh_pagina - 1) * DSH_POR_PAGINA;
+    var visibles = dsh_cache.slice(desde, desde + DSH_POR_PAGINA);
+
+    var html = '';
+    if (visibles.length) {
+        visibles.forEach(function (t) {
+            // El enlace puede medir miles de caracteres: se recorta para que
+            // no reviente la tabla y el completo va en el title.
+            var corto = t.Enlace.length > 60 ? t.Enlace.substring(0, 60) + '...' : t.Enlace;
+            html += '<tr>'
+                 +  '<td>' + dsh_esc(t.Nombre) + '</td>'
+                 +  '<td><code class="small">' + dsh_esc(t.Password_KPI) + '</code></td>'
+                 +  '<td><span class="small text-muted" title="' + dsh_esc(t.Enlace) + '">'
+                 +      dsh_esc(corto) + '</span></td>'
+                 +  '<td>'
+                 +    '<button class="btn btn-sm btn-outline-primary mr-1" title="Editar" '
+                 +      'onclick="dsh_editar(' + t.id_registro + ')"><i class="fas fa-edit"></i></button>'
+                 +    '<button class="btn btn-sm btn-outline-danger" title="Eliminar" '
+                 +      'onclick="dsh_eliminar(' + t.id_registro + ')"><i class="fas fa-trash"></i></button>'
+                 +  '</td>'
+                 + '</tr>';
+        });
+    } else {
+        html = '<tr><td colspan="4" class="text-center text-muted py-3">Sin tableros que coincidan.</td></tr>';
+    }
+    $('#dsh_tabla').html(html);
+
+    $('#dsh_conteo').text(
+        total ? ('Mostrando ' + (desde + 1) + '-' + (desde + visibles.length) + ' de ' + total) : ''
+    );
+
+    var nav = '';
+    if (paginas > 1) {
+        nav += '<li class="page-item' + (dsh_pagina === 1 ? ' disabled' : '') + '">'
+             + '<a class="page-link" href="#" onclick="dsh_irPagina(' + (dsh_pagina - 1) + ');return false;">&laquo;</a></li>';
+        for (var p = 1; p <= paginas; p++) {
+            nav += '<li class="page-item' + (p === dsh_pagina ? ' active' : '') + '">'
+                 + '<a class="page-link" href="#" onclick="dsh_irPagina(' + p + ');return false;">' + p + '</a></li>';
+        }
+        nav += '<li class="page-item' + (dsh_pagina === paginas ? ' disabled' : '') + '">'
+             + '<a class="page-link" href="#" onclick="dsh_irPagina(' + (dsh_pagina + 1) + ');return false;">&raquo;</a></li>';
+    }
+    $('#dsh_paginacion').html(nav);
+}
+
+function dsh_irPagina(p) {
+    var paginas = Math.max(1, Math.ceil(dsh_cache.length / DSH_POR_PAGINA));
+    if (p < 1 || p > paginas) return;
+    dsh_pagina = p;
+    dsh_pintarPagina();
+}
 
 function dsh_editar(id) {
     var t = dsh_cache.filter(function (x) { return parseInt(x.id_registro, 10) === id; })[0];
