@@ -25,6 +25,23 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
 
     $accion = $_POST['accion'];
 
+    // Cuántos empleados tienen una contraseña dada. No basta con comparar
+    // inf_adicional = pk: el campo admite varias separadas por coma
+    // ("Seguimiento_Labs26, aM04_LOP", ver inicio.php), así que se le quitan los
+    // espacios y se busca con FIND_IN_SET. Ninguna Password_KPI contiene
+    // espacios, así que quitarlos no puede provocar un falso positivo.
+    function dsh_contarEmpleados($conn, $pk) {
+        $stmt = $conn->prepare("SELECT COUNT(*) AS n FROM accesos_especiales
+                                WHERE sistema = 'kpis' AND opcion = 'verKpis' AND estatus = 1
+                                  AND FIND_IN_SET(?, REPLACE(inf_adicional, ' ', '')) > 0");
+        if (!$stmt) return 0;
+        $stmt->bind_param("s", $pk);
+        $stmt->execute();
+        $n = (int) $stmt->get_result()->fetch_assoc()['n'];
+        $stmt->close();
+        return $n;
+    }
+
     //  Lista de contraseñas (pk) existentes, para el filtro
     if ($accion === 'dsh_pks') {
         $res = $conn->query("SELECT Password_KPI, COUNT(*) AS total
@@ -32,7 +49,10 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
                              GROUP BY Password_KPI
                              ORDER BY Password_KPI ASC");
         $pks = [];
-        while ($row = $res->fetch_assoc()) $pks[] = $row;
+        while ($row = $res->fetch_assoc()) {
+            $row['empleados'] = dsh_contarEmpleados($conn, $row['Password_KPI']);
+            $pks[] = $row;
+        }
         echo json_encode($pks);
         exit;
     }
@@ -67,7 +87,17 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
         $stmt->execute();
         $res = $stmt->get_result();
         $filas = [];
-        while ($row = $res->fetch_assoc()) $filas[] = $row;
+        // Se cuenta una vez por contraseña distinta, no una por fila: un mismo pk
+        // trae hasta 13 tableros y repetir la consulta por cada uno no aporta.
+        $conteos = [];
+        while ($row = $res->fetch_assoc()) {
+            $pk = $row['Password_KPI'];
+            if (!array_key_exists($pk, $conteos)) {
+                $conteos[$pk] = dsh_contarEmpleados($conn, $pk);
+            }
+            $row['empleados'] = $conteos[$pk];
+            $filas[] = $row;
+        }
         $stmt->close();
         echo json_encode(['success' => true, 'tableros' => $filas]);
         exit;
@@ -118,7 +148,16 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
         $ok = $stmt->execute();
         $err = $stmt->error;
         $stmt->close();
-        echo json_encode(['success' => $ok, 'message' => $ok ? $mensaje : 'Error al guardar: ' . $err]);
+        // Se devuelve a cuántos empleados les llega la contraseña. Guardar un
+        // tablero bajo un pk que nadie tiene es la causa más común de "lo di de
+        // alta y no sale": la fila queda bien en la base y el modal la lista,
+        // pero ninguna pestaña la muestra. Antes no había ninguna señal.
+        echo json_encode([
+            'success'   => $ok,
+            'message'   => $ok ? $mensaje : 'Error al guardar: ' . $err,
+            'empleados' => $ok ? dsh_contarEmpleados($conn, $dsh_pk) : 0,
+            'pk'        => $dsh_pk
+        ]);
         exit;
     }
 
@@ -251,8 +290,13 @@ function dsh_cargarPks() {
         var opts = '<option value="">Todas</option>';
         if (Array.isArray(data)) {
             data.forEach(function (p) {
+                // "(6 tableros, 2 empleados)". Las que no le llegan a nadie se
+                // marcan aquí mismo, que es donde se eligen.
+                var quien = p.empleados > 0
+                    ? p.empleados + (p.empleados == 1 ? ' empleado' : ' empleados')
+                    : 'SIN ASIGNAR';
                 opts += '<option value="' + dsh_esc(p.Password_KPI) + '">'
-                      + dsh_esc(p.Password_KPI) + ' (' + p.total + ')</option>';
+                      + dsh_esc(p.Password_KPI) + ' (' + p.total + ', ' + quien + ')</option>';
             });
         }
         $('#dsh_filtroPk').html(opts);
@@ -294,9 +338,19 @@ function dsh_pintarPagina() {
             // El enlace puede medir miles de caracteres: se recorta para que
             // no reviente la tabla y el completo va en el title.
             var corto = t.Enlace.length > 60 ? t.Enlace.substring(0, 60) + '...' : t.Enlace;
+            // Debajo de la contraseña, a quién le llega. Un tablero bajo una
+            // contraseña sin asignar no lo ve nadie, y hasta ahora eso solo se
+            // descubría cuando alguien reclamaba que su tablero no aparecía.
+            var aviso = t.empleados > 0
+                ? '<span class="small text-muted">' + t.empleados
+                  + (t.empleados == 1 ? ' empleado' : ' empleados') + '</span>'
+                : '<span class="small text-danger font-weight-bold" '
+                  + 'title="Ningún empleado tiene esta contraseña, así que nadie ve este tablero">'
+                  + '<i class="fas fa-exclamation-triangle"></i> Nadie lo ve</span>';
             html += '<tr>'
                  +  '<td>' + dsh_esc(t.Nombre) + '</td>'
-                 +  '<td><code class="small">' + dsh_esc(t.Password_KPI) + '</code></td>'
+                 +  '<td><code class="small">' + dsh_esc(t.Password_KPI) + '</code>'
+                 +      '<br>' + aviso + '</td>'
                  +  '<td><span class="small text-muted" title="' + dsh_esc(t.Enlace) + '">'
                  +      dsh_esc(corto) + '</span></td>'
                  +  '<td>'
@@ -370,7 +424,22 @@ function dsh_guardar() {
         id: $('#dsh_id').val(),
         pk: pk, nombre: nombre, enlace: enlace
     }, function (res) {
-        Swal.fire({ title: res.message, icon: res.success ? 'success' : 'error' });
+        if (res.success && res.empleados === 0) {
+            // Se guardó bien, pero no le llega a nadie. Se avisa aquí porque es
+            // el único momento en que la persona todavía tiene el contexto para
+            // corregir la contraseña sin tener que buscar el registro de nuevo.
+            Swal.fire({
+                title: res.message,
+                html: 'Pero <b>ningún empleado tiene la contraseña '
+                    + '<code>' + dsh_esc(res.pk) + '</code></b>, así que por ahora '
+                    + 'nadie va a ver este tablero.<br><br>'
+                    + 'Asígnala en <b>Accesos Especiales</b> (sistema <code>kpis</code>, '
+                    + 'opción <code>verKpis</code>), o corrige la contraseña aquí si fue un error.',
+                icon: 'warning'
+            });
+        } else {
+            Swal.fire({ title: res.message, icon: res.success ? 'success' : 'error' });
+        }
         if (res.success) {
             dsh_limpiarForm();
             dsh_cargarPks();
