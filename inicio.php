@@ -8,6 +8,12 @@ if (empty($_COOKIE['noEmpleadoL'])) {
 $empleadosAdmin = [276, 403, 569, 523, 183];
 $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $empleadosAdmin);
 
+// MessbookID: terminado pero todavía NO liberado. En false no se dibuja el dato
+// en la tarjeta de perfil, ni el lápiz, ni el modal, y tampoco se le pide al
+// servidor. Los endpoints de acciones_inicio.php se quedan como están (nadie los
+// llama), así que para liberarlo basta con poner true aquí.
+$mostrarMessbookID = false;
+
 // Acceso especial a la pestaña KPI's (tabla accesos_especiales, gestionada desde modalAccesosEspeciales.php).
 // El campo inf_adicional guarda el pk (contraseña) que se inyecta al iframe de KPIs.
 $tieneKpis = false;
@@ -296,7 +302,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </p>
                                     <!-- MessbookID: identidad corta y algo mas informal. Se llena por
                                          JS al cargar; si el usuario no ha elegido uno, se muestra el
-                                         derivado de su correo. El lapiz abre el modal para cambiarlo. -->
+                                         derivado de su correo. El lapiz abre el modal para cambiarlo.
+                                         Oculto hasta que se libere: ver $mostrarMessbookID arriba. -->
+                                    <?php if ($mostrarMessbookID): ?>
                                     <p class="mb-2">
                                         <span id="lblMessbookID" class="messbook-id"></span>
                                         <button type="button" class="btn btn-link p-0 ml-1 messbook-id-editar"
@@ -305,6 +313,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <i class="fas fa-pen fa-xs"></i>
                                         </button>
                                     </p>
+                                    <?php endif; ?>
                                     <div class="profile-info small mb-2">
                                         <div class="profile-info-row" title="Jefe Directo">
                                             <i class="fas fa-sitemap profile-info-icon" style="color: white !important" aria-hidden="true"></i>&nbsp;
@@ -1403,7 +1412,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <!-- Modal Administrar Dashboards (alta/baja de mess_rrhh.enlaces_kpis) -->
     <?php include 'modalDashboards.php'; ?>
 
-    <!-- Modal MessbookID -->
+    <!-- Modal MessbookID (oculto hasta liberar: ver $mostrarMessbookID) -->
+    <?php if ($mostrarMessbookID): ?>
     <div class="modal fade" id="modalMessbookID" tabindex="-1" role="dialog" aria-labelledby="modalMessbookIDLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -1440,6 +1450,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Modales Mis Vacaciones: Solicitar + Estatus -->
     <?php include 'modalVacaciones.php'; ?>
@@ -1583,7 +1594,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             validaOpciones();
             infoEmpleado();
             verificarEsJefe();
+            <?php if ($mostrarMessbookID): ?>
             cargarMessbookID();
+            <?php endif; ?>
             cargarCumpleanos();
             cargarTalla(getCookie('noEmpleadoL'));
             cargarCursosSeleccionados(getCookie('noEmpleadoL'));
