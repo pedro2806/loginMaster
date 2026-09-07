@@ -143,12 +143,15 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 }
 
 // Acceso a SIVAC (Vacantes y Contratación).
-// Card "Sistemas": RRHH (47) y Business Intelligence (27) en mess_rrhh.usuarios.
-// Debe coincidir con SIVAC_DEPTS_RRHH en SIVAC/auth.php.
-// Pestaña "Mis Vacantes": la ve cualquier jefe con personal a cargo y cualquier
-// dueño de vacante. GEMELA de puedeSolicitarVacante() en SIVAC/auth.php: si
-// cambia una cambia la otra, o alguien ve la pestaña con el botón muerto —o
-// tiene el permiso sin puerta por dónde entrar—.
+// La card "Sistemas" y la pestaña "Mis Vacantes" se deciden con la MISMA regla:
+// el puesto que trae mess_rrhh.usuarios.tipo_usr. Quien manda personal ve NEST y
+// ve su pestaña; quien no, ninguna de las dos.
+//
+// OJO, esto NO es la gemela de puedeSolicitarVacante() en SIVAC/auth.php, que
+// resuelve por jerarquía real (usuarios.jefe), por departamento de RRHH/BI y por
+// ser dueño de una vacante. Las dos reglas se cruzan pero no coinciden, así que
+// hay que revisarlas juntas cuando se toque cualquiera de las dos.
+//
 // Liberado el 2026-09-01: se quitó la lista $empleadosSivacTab de la prueba
 // cerrada, junto con su gemela SIVAC_EMPLEADOS_TAB.
 $tieneSivac = false;
@@ -164,39 +167,11 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
         $stmtSvc->close();
     }
-    $tieneSivacSolicitante = in_array($noEmpSvc, true);
 
-    // Dueño de CUALQUIER vacante (en cualquier estado: así un jefe con una
-    // requisición pendiente de VoBo o rechazada también sigue su estado). Va
-    // primero porque cubre a quien ya trae un proceso empezado aunque hoy no
-    // figure como jefe: cuando RRHH captura una vacante y pone a alguien como
-    // solicitante, esa persona ve la pestaña sola, sin darla de alta a mano.
-    if (!$tieneSivacSolicitante) {
-        $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
-                                      WHERE no_empleado_solicitante = ?
-                                      LIMIT 1");
-        if ($stmtSvcSol) {
-            $stmtSvcSol->bind_param("i", $noEmpSvc);
-            $stmtSvcSol->execute();
-            $tieneSivacSolicitante = (bool) $stmtSvcSol->get_result()->fetch_assoc();
-            $stmtSvcSol->close();
-        }
-    }
-
-    // Jefe con personal a cargo: aunque no tenga vacante todavía, debe ver la
-    // pestaña para poder levantar una requisición (mess_rrhh.usuarios.jefe apunta
-    // a él; la columna es VARCHAR pero MySQL la castea a número al comparar).
-    if (!$tieneSivacSolicitante) {
-        $stmtSvcJefe = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
-                                       WHERE jefe = ? AND estatus = 1 AND noEmpleado <> ?
-                                       LIMIT 1");
-        if ($stmtSvcJefe) {
-            $stmtSvcJefe->bind_param("ii", $noEmpSvc, $noEmpSvc);
-            $stmtSvcJefe->execute();
-            $tieneSivacSolicitante = (bool) $stmtSvcJefe->get_result()->fetch_assoc();
-            $stmtSvcJefe->close();
-        }
-    }
+    // Misma población que la card, por asignación y no repitiendo la consulta:
+    // dos consultas iguales son dos cosas que se pueden editar por separado, y
+    // que se desincronizaran es justo lo que ya pasó una vez aquí.
+    $tieneSivacSolicitante = $tieneSivac;
 }
 
 // Aviso de contraseña de fábrica: la que se asigna al alta es la parte del correo
