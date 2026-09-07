@@ -154,7 +154,7 @@ $tieneSivacSolicitante = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $noEmpSvc = intval($_COOKIE['noEmpleadoL']);
     $stmtSvc = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
-                               WHERE tipo_usr IN ('SUPER_USUARIO','JEFE','GERENTE', 'JEFE_LAB', 'JEFE_ENCARGADO') AND estatus = 1
+                               WHERE noEmpleado = ? AND tipo_usr IN ('SUPER_USUARIO','JEFE','GERENTE', 'JEFE_LAB', 'JEFE_ENCARGADO') AND estatus = 1
                                LIMIT 1");
     if ($stmtSvc) {
         $stmtSvc->bind_param("i", $noEmpSvc);
