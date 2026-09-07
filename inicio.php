@@ -145,11 +145,12 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 // Acceso a SIVAC (Vacantes y Contratación).
 // Card "Sistemas": RRHH (47) y Business Intelligence (27) en mess_rrhh.usuarios.
 // Debe coincidir con SIVAC_DEPTS_RRHH en SIVAC/auth.php.
-// Pestaña "Mis Vacantes": HARDCODEADA mientras dura la prueba en producción.
-// Solo estos empleados la ven; al terminar la prueba, quitar $empleadosSivacTab
-// y volver a habilitar el bloque comentado (solicitante de vacante o jefe con
-// personal a cargo).
-$empleadosSivacTab = [523, 360, 569, 403, 487,183, 276, 161,45, 260];
+// Pestaña "Mis Vacantes": la ve cualquier jefe con personal a cargo y cualquier
+// dueño de vacante. GEMELA de puedeSolicitarVacante() en SIVAC/auth.php: si
+// cambia una cambia la otra, o alguien ve la pestaña con el botón muerto —o
+// tiene el permiso sin puerta por dónde entrar—.
+// Liberado el 2026-09-01: se quitó la lista $empleadosSivacTab de la prueba
+// cerrada, junto con su gemela SIVAC_EMPLEADOS_TAB.
 $tieneSivac = false;
 $tieneSivacSolicitante = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
@@ -163,14 +164,12 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
         $stmtSvc->close();
     }
-    $tieneSivacSolicitante = in_array($noEmpSvc, $empleadosSivacTab, true);
 
     // Dueño de CUALQUIER vacante (en cualquier estado: así un jefe con una
     // requisición pendiente de VoBo o rechazada también sigue su estado). Va
-    // ADEMÁS de la lista de la prueba: cuando RRHH captura una vacante y pone a
-    // un jefe como solicitante, ese jefe ve la pestaña solo, sin que nadie tenga
-    // que agregarlo aquí a mano. La lista sigue para los jefes que todavía no
-    // tienen vacante y necesitan entrar a levantar su requisición.
+    // primero porque cubre a quien ya trae un proceso empezado aunque hoy no
+    // figure como jefe: cuando RRHH captura una vacante y pone a alguien como
+    // solicitante, esa persona ve la pestaña sola, sin darla de alta a mano.
     if (!$tieneSivacSolicitante) {
         $stmtSvcSol = $conn->prepare("SELECT 1 FROM mess_sivac.vacantes
                                       WHERE no_empleado_solicitante = ?
@@ -183,7 +182,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         }
     }
 
-    /* --- Resto de la regla original, deshabilitado durante la prueba cerrada ---
     // Jefe con personal a cargo: aunque no tenga vacante todavía, debe ver la
     // pestaña para poder levantar una requisición (mess_rrhh.usuarios.jefe apunta
     // a él; la columna es VARCHAR pero MySQL la castea a número al comparar).
@@ -198,7 +196,6 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
             $stmtSvcJefe->close();
         }
     }
-    --- fin regla original --- */
 }
 
 // Aviso de contraseña de fábrica: la que se asigna al alta es la parte del correo
