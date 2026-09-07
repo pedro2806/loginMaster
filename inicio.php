@@ -149,13 +149,12 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 // Solo estos empleados la ven; al terminar la prueba, quitar $empleadosSivacTab
 // y volver a habilitar el bloque comentado (solicitante de vacante o jefe con
 // personal a cargo).
-$empleadosSivacTab = [523, 360, 569, 403, 487,183, 276, 161,45, 260];
 $tieneSivac = false;
 $tieneSivacSolicitante = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $noEmpSvc = intval($_COOKIE['noEmpleadoL']);
     $stmtSvc = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
-                               WHERE noEmpleado = ? AND departamento IN (27, 47) AND estatus = 1
+                               WHERE tipo_usr IN ('SUPER_USUARIO','JEFE','GERENTE', 'JEFE_LAB', 'JEFE_ENCARGADO') AND estatus = 1
                                LIMIT 1");
     if ($stmtSvc) {
         $stmtSvc->bind_param("i", $noEmpSvc);
@@ -163,7 +162,7 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
         $stmtSvc->close();
     }
-    $tieneSivacSolicitante = in_array($noEmpSvc, $empleadosSivacTab, true);
+    $tieneSivacSolicitante = in_array($noEmpSvc, true);
 
     // Dueño de CUALQUIER vacante (en cualquier estado: así un jefe con una
     // requisición pendiente de VoBo o rechazada también sigue su estado). Va
