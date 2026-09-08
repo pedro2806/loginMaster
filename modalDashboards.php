@@ -25,21 +25,53 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
 
     $accion = $_POST['accion'];
 
-    // Cuántos empleados tienen una contraseña dada. No basta con comparar
-    // inf_adicional = pk: el campo admite varias separadas por coma
-    // ("Seguimiento_Labs26, aM04_LOP", ver inicio.php), así que se le quitan los
-    // espacios y se busca con FIND_IN_SET. Ninguna Password_KPI contiene
-    // espacios, así que quitarlos no puede provocar un falso positivo.
-    function dsh_contarEmpleados($conn, $pk) {
-        $stmt = $conn->prepare("SELECT COUNT(*) AS n FROM accesos_especiales
-                                WHERE sistema = 'kpis' AND opcion = 'verKpis' AND estatus = 1
-                                  AND FIND_IN_SET(?, REPLACE(inf_adicional, ' ', '')) > 0");
-        if (!$stmt) return 0;
-        $stmt->bind_param("s", $pk);
-        $stmt->execute();
-        $n = (int) $stmt->get_result()->fetch_assoc()['n'];
-        $stmt->close();
-        return $n;
+    // Quién tiene cada contraseña: mapa Password_KPI => [['noEmpleado','nombre'], …].
+    //
+    // No basta con comparar inf_adicional = pk: el campo admite varias separadas
+    // por coma ("Seguimiento_Labs26, aM04_LOP", ver inicio.php), así que se le
+    // quitan los espacios y se busca con FIND_IN_SET. Ninguna Password_KPI
+    // contiene espacios, así que quitarlos no puede provocar un falso positivo.
+    //
+    // El cruce se hace en SQL y no partiendo inf_adicional en PHP a propósito:
+    // FIND_IN_SET compara con la collation de la columna, que no distingue
+    // mayúsculas, y un explode() sí lo haría. Emparejar 'Calidad2024*' con
+    // 'calidad2024*' es el comportamiento que ya tenía el modal.
+    //
+    // Se arma una sola vez por request. Antes se contaba con una consulta por
+    // contraseña distinta (83 en la práctica) y solo devolvía el número.
+    function dsh_mapaEmpleados($conn) {
+        static $mapa = null;
+        if ($mapa !== null) return $mapa;
+
+        $mapa = [];
+        $res = $conn->query(
+            "SELECT e.Password_KPI, a.noEmpleado, u.nombre
+             FROM (SELECT DISTINCT Password_KPI FROM enlaces_kpis) e
+             JOIN accesos_especiales a
+               ON a.sistema = 'kpis' AND a.opcion = 'verKpis' AND a.estatus = 1
+              AND FIND_IN_SET(e.Password_KPI, REPLACE(a.inf_adicional, ' ', '')) > 0
+             LEFT JOIN usuarios u ON u.noEmpleado = a.noEmpleado
+             ORDER BY u.nombre ASC"
+        );
+        if (!$res) return $mapa;
+
+        while ($row = $res->fetch_assoc()) {
+            // Un acceso puede apuntar a un noEmpleado que ya no está en usuarios;
+            // se muestra el número para que la fila no aparezca sin dueño.
+            $mapa[$row['Password_KPI']][] = [
+                'noEmpleado' => (int) $row['noEmpleado'],
+                'nombre'     => ($row['nombre'] !== null && $row['nombre'] !== '')
+                                ? $row['nombre']
+                                : ('Empleado ' . $row['noEmpleado'])
+            ];
+        }
+        return $mapa;
+    }
+
+    // Los empleados de una contraseña, o [] si no la tiene nadie.
+    function dsh_empleadosDe($conn, $pk) {
+        $mapa = dsh_mapaEmpleados($conn);
+        return isset($mapa[$pk]) ? $mapa[$pk] : [];
     }
 
     //  Lista de contraseñas (pk) existentes, para el filtro
@@ -50,10 +82,35 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
                              ORDER BY Password_KPI ASC");
         $pks = [];
         while ($row = $res->fetch_assoc()) {
-            $row['empleados'] = dsh_contarEmpleados($conn, $row['Password_KPI']);
+            $row['empleados'] = count(dsh_empleadosDe($conn, $row['Password_KPI']));
             $pks[] = $row;
         }
         echo json_encode($pks);
+        exit;
+    }
+
+    //  Empleados con acceso a KPIs, para el filtro por usuario. Se listan todos
+    //  los que tienen verKpis, incluso los que hoy no tienen ningún tablero: ese
+    //  caso (contraseña asignada a alguien pero sin tableros dados de alta) es el
+    //  reverso del "Nadie lo ve" y conviene poder verlo desde aquí.
+    if ($accion === 'dsh_usuarios') {
+        $res = $conn->query(
+            "SELECT a.noEmpleado, u.nombre, a.inf_adicional,
+                    (SELECT COUNT(*) FROM enlaces_kpis e
+                      WHERE FIND_IN_SET(e.Password_KPI, REPLACE(a.inf_adicional, ' ', '')) > 0) AS tableros
+             FROM accesos_especiales a
+             LEFT JOIN usuarios u ON u.noEmpleado = a.noEmpleado
+             WHERE a.sistema = 'kpis' AND a.opcion = 'verKpis' AND a.estatus = 1
+             ORDER BY u.nombre ASC"
+        );
+        $usuarios = [];
+        while ($row = $res->fetch_assoc()) {
+            if ($row['nombre'] === null || $row['nombre'] === '') {
+                $row['nombre'] = 'Empleado ' . $row['noEmpleado'];
+            }
+            $usuarios[] = $row;
+        }
+        echo json_encode($usuarios);
         exit;
     }
 
@@ -61,6 +118,7 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
     if ($accion === 'dsh_listar') {
         $dsh_pk    = trim($_POST['pk'] ?? '');
         $dsh_texto = trim($_POST['texto'] ?? '');
+        $dsh_emp   = intval($_POST['noEmpleado'] ?? 0);
 
         $sql    = "SELECT id_registro, Password_KPI, Nombre, Enlace FROM enlaces_kpis WHERE 1=1";
         $params = [];
@@ -70,6 +128,17 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
             $sql     .= " AND Password_KPI = ?";
             $types   .= "s";
             $params[] = $dsh_pk;
+        }
+        // Filtro por usuario: los tableros cuya contraseña está en el
+        // inf_adicional de ese empleado. Mismo FIND_IN_SET que el resto del
+        // archivo, para que la coincidencia sea la misma en los dos sentidos.
+        if ($dsh_emp > 0) {
+            $sql     .= " AND FIND_IN_SET(Password_KPI, (
+                             SELECT REPLACE(inf_adicional, ' ', '') FROM accesos_especiales
+                             WHERE noEmpleado = ? AND sistema = 'kpis'
+                               AND opcion = 'verKpis' AND estatus = 1 LIMIT 1)) > 0";
+            $types   .= "i";
+            $params[] = $dsh_emp;
         }
         if ($dsh_texto !== '') {
             $sql     .= " AND Nombre LIKE ?";
@@ -87,15 +156,12 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
         $stmt->execute();
         $res = $stmt->get_result();
         $filas = [];
-        // Se cuenta una vez por contraseña distinta, no una por fila: un mismo pk
-        // trae hasta 13 tableros y repetir la consulta por cada uno no aporta.
-        $conteos = [];
         while ($row = $res->fetch_assoc()) {
-            $pk = $row['Password_KPI'];
-            if (!array_key_exists($pk, $conteos)) {
-                $conteos[$pk] = dsh_contarEmpleados($conn, $pk);
-            }
-            $row['empleados'] = $conteos[$pk];
+            // El mapa ya viene armado de una sola consulta, así que resolver
+            // quién ve cada fila no cuesta nada aunque el pk se repita.
+            $emps = dsh_empleadosDe($conn, $row['Password_KPI']);
+            $row['empleados'] = count($emps);
+            $row['usuarios']  = array_column($emps, 'nombre');
             $filas[] = $row;
         }
         $stmt->close();
@@ -155,7 +221,7 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'dsh_') === 0) {
         echo json_encode([
             'success'   => $ok,
             'message'   => $ok ? $mensaje : 'Error al guardar: ' . $err,
-            'empleados' => $ok ? dsh_contarEmpleados($conn, $dsh_pk) : 0,
+            'empleados' => $ok ? count(dsh_empleadosDe($conn, $dsh_pk)) : 0,
             'pk'        => $dsh_pk
         ]);
         exit;
@@ -236,13 +302,19 @@ if (!in_array($_dsh_actual, $_dsh_permitidos, true)) return;
 
                 <!-- Filtros -->
                 <div class="form-row align-items-end mb-2">
-                    <div class="col-md-5 mb-2">
+                    <div class="col-md-3 mb-2">
                         <label class="small mb-1" for="dsh_filtroPk">Filtrar por contraseña</label>
                         <select id="dsh_filtroPk" class="form-control form-control-sm">
                             <option value="">Todas</option>
                         </select>
                     </div>
-                    <div class="col-md-5 mb-2">
+                    <div class="col-md-3 mb-2">
+                        <label class="small mb-1" for="dsh_filtroUsuario">Filtrar por usuario</label>
+                        <select id="dsh_filtroUsuario" class="form-control form-control-sm">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
                         <label class="small mb-1" for="dsh_filtroTexto">Buscar por nombre</label>
                         <input type="text" class="form-control form-control-sm" id="dsh_filtroTexto"
                                placeholder="Ej. Forecast">
@@ -259,6 +331,7 @@ if (!in_array($_dsh_actual, $_dsh_permitidos, true)) return;
                         <thead class="thead-light small text-uppercase">
                             <tr>
                                 <th>Nombre</th>
+                                <th>Usuario</th>
                                 <th>Contraseña</th>
                                 <th>Enlace</th>
                                 <th style="width:130px;">Acciones</th>
@@ -303,6 +376,41 @@ function dsh_cargarPks() {
     }, 'json');
 }
 
+function dsh_cargarUsuarios() {
+    // Se conserva la selección: esta función se vuelve a llamar después de
+    // guardar o eliminar, y perder el filtro dejaría la tabla mostrando algo
+    // distinto de lo que dice el select.
+    var elegido = $('#dsh_filtroUsuario').val();
+
+    $.post(DSH_URL, { accion: 'dsh_usuarios' }, function (data) {
+        var opts = '<option value="">Todos</option>';
+        if (Array.isArray(data)) {
+            data.forEach(function (u) {
+                // "(sin tableros)" es el reverso del "Nadie lo ve" de la tabla:
+                // la persona tiene contraseña, pero no hay tableros bajo ella.
+                var cuantos = u.tableros > 0
+                    ? u.tableros + (u.tableros == 1 ? ' tablero' : ' tableros')
+                    : 'sin tableros';
+                opts += '<option value="' + u.noEmpleado + '">'
+                      + dsh_esc(u.nombre) + ' (' + cuantos + ')</option>';
+            });
+        }
+        $('#dsh_filtroUsuario').html(opts).val(elegido || '');
+
+        // select2 si está disponible, igual que en modalAccesoSistemas.php: son
+        // 95 empleados y sin buscador hay que recorrerlos a mano.
+        if ($.fn.select2) {
+            $('#dsh_filtroUsuario').select2({
+                theme: 'bootstrap4',
+                placeholder: 'Todos',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#modalDashboards')
+            });
+        }
+    }, 'json');
+}
+
 // Se guarda lo último listado para poder llenar el formulario al editar sin
 // volver a consultar al servidor, y para paginar del lado del cliente.
 var dsh_cache = [];
@@ -313,6 +421,7 @@ function dsh_listar() {
     $.post(DSH_URL, {
         accion: 'dsh_listar',
         pk: $('#dsh_filtroPk').val(),
+        noEmpleado: $('#dsh_filtroUsuario').val() || 0,
         texto: $('#dsh_filtroTexto').val()
     }, function (res) {
         dsh_cache = (res.success ? res.tableros : []);
@@ -338,19 +447,25 @@ function dsh_pintarPagina() {
             // El enlace puede medir miles de caracteres: se recorta para que
             // no reviente la tabla y el completo va en el title.
             var corto = t.Enlace.length > 60 ? t.Enlace.substring(0, 60) + '...' : t.Enlace;
-            // Debajo de la contraseña, a quién le llega. Un tablero bajo una
+            // Quién ve el tablero. Casi siempre es una sola persona (la
+            // contraseña va prácticamente 1:1 con el empleado), pero hay pks
+            // compartidas, así que se listan todos. Un tablero bajo una
             // contraseña sin asignar no lo ve nadie, y hasta ahora eso solo se
             // descubría cuando alguien reclamaba que su tablero no aparecía.
-            var aviso = t.empleados > 0
-                ? '<span class="small text-muted">' + t.empleados
-                  + (t.empleados == 1 ? ' empleado' : ' empleados') + '</span>'
-                : '<span class="small text-danger font-weight-bold" '
-                  + 'title="Ningún empleado tiene esta contraseña, así que nadie ve este tablero">'
-                  + '<i class="fas fa-exclamation-triangle"></i> Nadie lo ve</span>';
+            var quien;
+            if (t.empleados > 0) {
+                quien = (t.usuarios || []).map(function (n) {
+                    return '<div class="small">' + dsh_esc(n) + '</div>';
+                }).join('');
+            } else {
+                quien = '<span class="small text-danger font-weight-bold" '
+                      + 'title="Ningún empleado tiene esta contraseña, así que nadie ve este tablero">'
+                      + '<i class="fas fa-exclamation-triangle"></i> Nadie lo ve</span>';
+            }
             html += '<tr>'
                  +  '<td>' + dsh_esc(t.Nombre) + '</td>'
-                 +  '<td><code class="small">' + dsh_esc(t.Password_KPI) + '</code>'
-                 +      '<br>' + aviso + '</td>'
+                 +  '<td>' + quien + '</td>'
+                 +  '<td><code class="small">' + dsh_esc(t.Password_KPI) + '</code></td>'
                  +  '<td><span class="small text-muted" title="' + dsh_esc(t.Enlace) + '">'
                  +      dsh_esc(corto) + '</span></td>'
                  +  '<td>'
@@ -362,7 +477,7 @@ function dsh_pintarPagina() {
                  + '</tr>';
         });
     } else {
-        html = '<tr><td colspan="4" class="text-center text-muted py-3">Sin tableros que coincidan.</td></tr>';
+        html = '<tr><td colspan="5" class="text-center text-muted py-3">Sin tableros que coincidan.</td></tr>';
     }
     $('#dsh_tabla').html(html);
 
@@ -443,6 +558,7 @@ function dsh_guardar() {
         if (res.success) {
             dsh_limpiarForm();
             dsh_cargarPks();
+            dsh_cargarUsuarios(); // cambia el conteo de tableros por usuario
             dsh_listar();
         }
     }, 'json');
@@ -465,7 +581,7 @@ function dsh_eliminar(id) {
         if (!r.isConfirmed) return;
         $.post(DSH_URL, { accion: 'dsh_eliminar', id: id }, function (res) {
             Swal.fire({ title: res.message, icon: res.success ? 'success' : 'error' });
-            if (res.success) { dsh_cargarPks(); dsh_listar(); }
+            if (res.success) { dsh_cargarPks(); dsh_cargarUsuarios(); dsh_listar(); }
         }, 'json');
     });
 }
@@ -479,9 +595,11 @@ function dsh_inicializarEventos() {
 
     $('#modalDashboards').on('show.bs.modal', function () {
         dsh_cargarPks();
+        dsh_cargarUsuarios();
         dsh_listar();
     });
     $('#dsh_filtroPk').on('change', dsh_listar);
+    $('#dsh_filtroUsuario').on('change', dsh_listar);
     $('#dsh_filtroTexto').on('keyup', function (e) {
         if (e.key === 'Enter') dsh_listar();
     });
