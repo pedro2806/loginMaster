@@ -142,37 +142,62 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     }
 }
 
-// Acceso a SIVAC (Vacantes y Contratación).
-// La card "Sistemas" y la pestaña "Mis Vacantes" se deciden con la MISMA regla:
-// el puesto que trae mess_rrhh.usuarios.tipo_usr. Quien manda personal ve NEST y
-// ve su pestaña; quien no, ninguna de las dos.
+// Acceso a NEST (Vacantes y Contratación).
 //
-// OJO, esto NO es la gemela de puedeSolicitarVacante() en SIVAC/auth.php, que
-// resuelve por jerarquía real (usuarios.jefe), por departamento de RRHH/BI y por
-// ser dueño de una vacante. Las dos reglas se cruzan pero no coinciden, así que
-// hay que revisarlas juntas cuando se toque cualquiera de las dos.
+// Aquí se deciden DOS permisos distintos, y ninguno implica al otro:
+//
+//   - La CARD de "Sistemas" ya NO se calcula en este archivo. Se maneja como las
+//     demás cards del portal: por la fila 'divNest' de mess_rrhh.accesos,
+//     que administra el modal «Acceso a sistemas» y que revela validaOpciones()
+//     con $('#' + infoAccesos.sistema).show(). Es la ÚNICA llave para entrar a
+//     NEST (ver SIVAC_SISTEMA_CARD en SIVAC/auth.php).
+//   - La PESTAÑA «Mis Vacantes» sigue decidiéndose por puesto (tipo_usr), porque
+//     es una vista EMBEBIDA del portal y no da acceso al sistema.
+//
+// Hasta el 2026-09-08 las dos salían de la misma consulta a tipo_usr, y por eso
+// un jefe de cualquier área veía la card y NEST lo rebotaba al portal.
 //
 // Liberado el 2026-09-01: se quitó la lista $empleadosSivacTab de la prueba
 // cerrada, junto con su gemela SIVAC_EMPLEADOS_TAB.
-$tieneSivac = false;
+
+// Pestaña «Mis Vacantes»: la ve quien tiene puesto de jefe. NO es lo mismo que
+// entrar a NEST (eso lo decide mess_rrhh.accesos, vía el modal de sistemas).
+// GEMELA de SIVAC_TIPOS_USR_JEFE en SIVAC/auth.php: si cambia una, cambia la otra.
+//
+// Tampoco es la gemela de puedeSolicitarVacante() en SIVAC/auth.php, que resuelve
+// por jerarquía real (usuarios.jefe), por departamento de RRHH/BI y por ser dueño
+// de una vacante. Ese es el gate de verdad de embed_solicitante.php; esta regla
+// sólo decide si se pinta la pestaña.
 $tieneSivacSolicitante = false;
+$tieneNestDocs         = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $noEmpSvc = intval($_COOKIE['noEmpleadoL']);
-    $stmtSvc = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
-                               WHERE noEmpleado = ? AND tipo_usr IN ('SUPER_USUARIO','JEFE','GERENTE', 'JEFE_LAB', 'JEFE_ENCARGADO') AND estatus = 1
+    $stmtSol = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
+                               WHERE noEmpleado = ? AND estatus = 1
+                                 AND tipo_usr IN ('SUPER_USUARIO','JEFE','GERENTE','JEFE_LAB','JEFE_ENCARGADO')
                                LIMIT 1");
-    if ($stmtSvc) {
-        $stmtSvc->bind_param("i", $noEmpSvc);
-        $stmtSvc->execute();
-        $tieneSivac = (bool) $stmtSvc->get_result()->fetch_assoc();
-        $stmtSvc->close();
+    if ($stmtSol) {
+        $stmtSol->bind_param("i", $noEmpSvc);
+        $stmtSol->execute();
+        $tieneSivacSolicitante = (bool) $stmtSol->get_result()->fetch_assoc();
+        $stmtSol->close();
     }
 
-    // Misma población que la card, por asignación y no repitiendo la consulta:
-    // dos consultas iguales son dos cosas que se pueden editar por separado, y
-    // que se desincronizaran es justo lo que ya pasó una vez aquí.
-    $tieneSivacSolicitante = $tieneSivac;
+    // Documentos validados (alta de nómina): permiso en accesos_especiales.
+    $stmtNd = $conn->prepare("SELECT 1 FROM mess_rrhh.accesos_especiales
+                              WHERE noEmpleado = ? AND sistema = 'NEST'
+                                AND opcion = 'verDocumentos' AND estatus = 1 LIMIT 1");
+    if ($stmtNd) {
+        $stmtNd->bind_param("i", $noEmpSvc);
+        $stmtNd->execute();
+        $tieneNestDocs = (bool) $stmtNd->get_result()->fetch_assoc();
+        $stmtNd->close();
+    }
 }
+
+// Fuera del if de la cookie: la vista las lee siempre, haya sesión o no.
+$tieneNest      = $tieneSivacSolicitante || $tieneNestDocs;
+$tieneAmbasNest = $tieneSivacSolicitante && $tieneNestDocs;
 
 // Aviso de contraseña de fábrica: la que se asigna al alta es la parte del correo
 // anterior al @. No siempre es "nombre.apellido" — hay cuentas de función como
@@ -470,10 +495,16 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </button>
                                 </li>
                                 <?php endif; ?>
-                                <?php if ($tieneSivacSolicitante): ?>
+                                <?php if ($tieneNest): ?>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab" title="Mis Vacantes" aria-label="Mis Vacantes">
-                                        <i class="fas fa-briefcase"></i><span class="tab-label"> Mis Vacantes</span>
+                                    <?php
+                                      // El título depende de lo que tenga cada quien: a un jefe que sólo levanta
+                                      // requisiciones la pestaña le sigue diciendo «Mis Vacantes», igual que antes.
+                                      $nestTitulo = $tieneAmbasNest ? 'NEST' : ($tieneSivacSolicitante ? 'Mis Vacantes' : 'Documentos');
+                                      $nestIcono  = ($tieneNestDocs && !$tieneSivacSolicitante) ? 'fa-folder-open' : 'fa-briefcase';
+                                    ?>
+                                    <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab" title="<?= $nestTitulo ?>" aria-label="<?= $nestTitulo ?>">
+                                        <i class="fas <?= $nestIcono ?>"></i><span class="tab-label"> <?= $nestTitulo ?></span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
@@ -720,28 +751,58 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
                                         <!-- NEST — Núcleo de Evaluación y Selección de Talento.
                                             La carpeta sigue llamándose SIVAC (la URL no cambió);
-                                            lo que cambió es la marca. -->
-                                        <?php if ($tieneSivac): ?>
-                                        <div class="col-md-3 mb-3" id="divSivac">
+                                            lo que cambió es la marca.
+                                            El id 'divNest' es la fila de mess_rrhh.accesos que la
+                                            revela: se da de alta desde el modal «Acceso a sistemas». -->
+                                        <div class="col-md-3 mb-3" id="divNest" style="display:none">
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../SIVAC/" class="btn btn-outline-primary btn-block">
-                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt="" class="d-block mx-auto mb-0" style="height:48px;width:auto">
+                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt="NEST" class="d-block mx-auto mb-0" style="height:48px;width:auto">
                                                     </a>
                                                 </div>
                                             </div>
                                         </div>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
 
-                                <!-- ===== TAB: MIS VACANTES (SIVAC, solo solicitantes) ===== -->
-                                <?php if ($tieneSivacSolicitante): ?>
+                                <!-- ===== TAB: NEST (vistas embebidas: Mis Vacantes / Documentos) ===== -->
+                                <?php if ($tieneNest): ?>
                                 <div class="tab-pane fade" id="tabSivacSol" role="tabpanel">
-                                    <iframe id="iframeSivacSol"
-                                            data-src="../SIVAC/embed_solicitante.php"
-                                            scrolling="auto"
-                                            style="width:100%; height:78vh; border:0; background:transparent; border-radius:.5rem;"></iframe>
+                                    <?php if ($tieneAmbasNest): ?>
+                                    <!-- La barra sólo con los dos accesos: con uno solo sería una fila con un
+                                         único botón, y quien ya usaba «Mis Vacantes» vería un cambio que nadie pidió. -->
+                                    <ul class="nav nav-tabs" id="subTabsNest" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="subTabVacantes-tab" data-toggle="tab" data-target="#subTabVacantes" type="button" role="tab">
+                                                <i class="fas fa-briefcase mr-1"></i> Mis Vacantes
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="subTabDocs-tab" data-toggle="tab" data-target="#subTabDocs" type="button" role="tab">
+                                                <i class="fas fa-folder-open mr-1"></i> Documentos
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <?php endif; ?>
+                                    <div class="tab-content<?= $tieneAmbasNest ? ' pt-2' : '' ?>" id="subTabsNestContent">
+                                        <?php if ($tieneSivacSolicitante): ?>
+                                        <div class="tab-pane fade show active" id="subTabVacantes" role="tabpanel">
+                                            <iframe id="iframeSivacSol"
+                                                    data-src="../SIVAC/embed_solicitante.php"
+                                                    scrolling="auto"
+                                                    style="width:100%; height:78vh; border:0; background:transparent; border-radius:.5rem;"></iframe>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if ($tieneNestDocs): ?>
+                                        <div class="tab-pane fade<?= $tieneSivacSolicitante ? '' : ' show active' ?>" id="subTabDocs" role="tabpanel">
+                                            <iframe id="iframeNestDocs"
+                                                    data-src="../SIVAC/embed_documentos.php"
+                                                    scrolling="auto"
+                                                    style="width:100%; height:78vh; border:0; background:transparent; border-radius:.5rem;"></iframe>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 <?php endif; ?>
 
@@ -1770,10 +1831,13 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 if ($f.attr('src')) $f.attr('src', $f.attr('src'));
             });
 
-            // SIVAC "Mis Vacantes": lazy-load del iframe al mostrar la pestaña
+            // NEST: lazy-load del iframe al mostrar la pestaña y al cambiar de sub-pestaña
             $('#tabSivacSol-tab').on('shown.bs.tab', function() {
-                cargarIframeTickets('#iframeSivacSol');
+                // Cuál es la sub-pestaña activa depende de los accesos, así que se busca.
+                cargarIframeTickets($('#subTabsNestContent .tab-pane.active iframe'));
             });
+            $('#subTabVacantes-tab').on('shown.bs.tab', function() { cargarIframeTickets('#iframeSivacSol'); });
+            $('#subTabDocs-tab').on('shown.bs.tab', function() { cargarIframeTickets('#iframeNestDocs'); });
 
             // El tab "Mi Espacio" (#tabPersonal) arranca activo, por lo que
             // `shown.bs.tab` no se dispara al cargar la página. Inicializamos
