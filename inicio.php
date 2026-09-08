@@ -500,11 +500,13 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     <?php
                                       // El título depende de lo que tenga cada quien: a un jefe que sólo levanta
                                       // requisiciones la pestaña le sigue diciendo «Mis Vacantes», igual que antes.
+                                      // El ícono NO cambia: el maletín identifica a NEST en la barra, sea cual sea
+                                      // la vista que le toque a cada quien. La carpeta se queda para la
+                                      // sub-pestaña «Documentos», que es donde sí distingue una vista de la otra.
                                       $nestTitulo = $tieneAmbasNest ? 'NEST' : ($tieneSivacSolicitante ? 'Mis Vacantes' : 'Documentos');
-                                      $nestIcono  = ($tieneNestDocs && !$tieneSivacSolicitante) ? 'fa-folder-open' : 'fa-briefcase';
                                     ?>
                                     <button class="nav-link" id="tabSivacSol-tab" data-toggle="tab" data-target="#tabSivacSol" type="button" role="tab" title="<?= $nestTitulo ?>" aria-label="<?= $nestTitulo ?>">
-                                        <i class="fas <?= $nestIcono ?>"></i><span class="tab-label"> <?= $nestTitulo ?></span>
+                                        <i class="fas fa-briefcase"></i><span class="tab-label"> <?= $nestTitulo ?></span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
