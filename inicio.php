@@ -108,8 +108,14 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
 
 // Acceso a la pestaña "Análisis BI" (tabla accesos, sistema = 'divAnalisisBI',
 // gestionada desde el modal "ACCESOS" → modalAccesoSistemas.php).
+//
+// Oculta desde el 2026-09-10: la pestaña ya no se usa. En false no se dibuja ni
+// el botón ni el panel, y tampoco se consulta la tabla. Los permisos
+// 'divAnalisisBI' se quedan en mess_rrhh.accesos sin tocar, así que para
+// volver a mostrarla basta con poner true aquí.
+$mostrarAnalisisBI = false;
 $tieneAnalisisBI = false;
-if (!empty($_COOKIE['noEmpleadoL'])) {
+if ($mostrarAnalisisBI && !empty($_COOKIE['noEmpleadoL'])) {
     $noEmpAbi = intval($_COOKIE['noEmpleadoL']);
     $stmtAbi = $conn->prepare("SELECT id FROM accesos
                                WHERE noEmpleado = ? AND sistema = 'divAnalisisBI' AND estatus = 1
