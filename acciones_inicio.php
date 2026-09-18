@@ -821,4 +821,24 @@ if ($accion == 'subir_mural') {
     ]);
     exit;
 }
+
+if($accion == 'obtener_todos_accesos_ingenieros'){
+    $sql = "SELECT ap.id, ap.noEmpleado, u.nombre, ap.cliente, ap.vigencia, d.departamento as area
+            FROM accesos_plantas_ingenieros ap
+            INNER JOIN usuarios u ON ap.noEmpleado = u.noEmpleado
+            INNER JOIN departamento d ON u.departamento = d.id            
+            ORDER BY u.nombre ASC";
+    $result = $conn->query($sql);
+
+    $accesosData = [];
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $accesosData[] = $row;
+        }
+    }
+
+    echo json_encode(['success' => true, 'accesos' => $accesosData]);
+    $conn->close();
+    exit;
+}
 ?>
