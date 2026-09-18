@@ -1149,6 +1149,13 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <h4 class="mb-1" style="color: var(--accent);">Directorio</h4>
                                             <p class="text-muted mb-0 small">Busca a cualquier compañero por nombre, área, puesto o correo.</p>
                                         </div>
+                                        <div class="directorio-filtros">
+                                            <div class="form-group mb-0">
+                                                <button type="button" class="btn btn-link btn-sm text-secondary text-decoration-none px-2" onclick="verAccesosPlanta()">
+                                                    <i class="fas fa-building mr-1 text-gray-500"></i> Ver Accesos a plantas
+                                                </button>
+                                            </div>
+                                        </div>
                                         <div class="directorio-search">
                                             <i class="fas fa-search"></i>
                                             <input type="text" id="directorioBuscar" class="form-control form-control-sm" placeholder="Buscar empleado..." autocomplete="off">
@@ -1564,6 +1571,74 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         </div>
     </div>
 
+    <!-- Modal accesos a plantas -->
+    <div class="modal fade" id="modalAccesosPlantas" tabindex="-1" role="dialog" aria-labelledby="modalAccesosPlantasLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="modalAccesosPlantasLabel">
+                        <i class="fas fa-building mr-2"></i>Accesos a Plantas
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body bg-light">
+                    <!-- Filtros Dinámicos con Select2 -->
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-body py-3 px-3">
+                            <div class="form-row align-items-end">
+                                <div class="form-group col-md-3 mb-2 mb-md-0">
+                                    <label class="small font-weight-bold text-dark mb-1"><i class="fas fa-sitemap mr-1"></i>Área:</label>
+                                    <select id="filtroArea" class="form-control form-control-sm select2-filtro" style="width: 100%;">
+                                        <option value="">-- Todas las Áreas --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4 mb-2 mb-md-0">
+                                    <label class="small font-weight-bold text-dark mb-1"><i class="fas fa-industry mr-1"></i>Planta / Cliente:</label>
+                                    <select id="filtroCliente" class="form-control form-control-sm select2-filtro" style="width: 100%;">
+                                        <option value="">-- Todos los Clientes --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3 mb-2 mb-md-0">
+                                    <label class="small font-weight-bold text-dark mb-1"><i class="fas fa-user-tag mr-1"></i>Estatus:</label>
+                                    <select id="filtroEstatus" class="form-control form-control-sm select2-filtro" style="width: 100%;">
+                                        <option value="">-- Todos los Estatus --</option>
+                                        <option value="Vigente">Vigente</option>
+                                        <option value="Por vencer">Por vencer</option>
+                                        <option value="Vencido">Vencido</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-2 mb-0 text-right">
+                                    <button type="button" id="btnLimpiarFiltros" class="btn btn-sm btn-outline-secondary btn-block">
+                                        <i class="fas fa-undo mr-1"></i>Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Datos -->
+                    <div class="table-responsive bg-white p-3 rounded shadow-sm">
+                        <table id="TablaAccesosPlantas" class="table table-bordered table-hover table-striped w-100">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Planta / Cliente</th>
+                                    <th>Vigencia</th>
+                                    <th>Área</th>
+                                    <th>Estatus</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
     <!-- ============== SCRIPTS ============== -->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -1596,6 +1671,38 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         var vehiculosEstado = {};
 
         $(document).ready(function() {
+            // Filtro por Área (Columna 3)
+    $('#filtroArea').on('change', function() {
+        if (dtAccesosPlantas) {
+            dtAccesosPlantas.column(3).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
+        }
+    });
+
+    // Filtro por Planta / Cliente (Columna 1)
+    $('#filtroCliente').on('change', function() {
+        if (dtAccesosPlantas) {
+            dtAccesosPlantas.column(1).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
+        }
+    });
+
+    // Filtro por Estatus (Columna 4)
+    $('#filtroEstatus').on('change', function() {
+        if (dtAccesosPlantas) {
+            dtAccesosPlantas.column(4).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
+        }
+    });
+
+    // Botón Limpiar Filtros
+    $('#btnLimpiarFiltros').on('click', function() {
+        $('#filtroArea').val('').trigger('change.select2');
+        $('#filtroCliente').val('').trigger('change.select2');
+        $('#filtroEstatus').val('').trigger('change.select2');
+
+        if (dtAccesosPlantas) {
+            dtAccesosPlantas.search('').columns().search('').draw();
+        }
+    });
+
             // ===== Tema claro/oscuro =====
             const guardado = localStorage.getItem('mess_theme');
             if (guardado === 'dark') document.body.classList.replace('theme-light', 'theme-dark');
@@ -4390,6 +4497,111 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                             }
                         }
                     });
+                }
+            });
+        }
+
+        let dtAccesosPlantas = null;
+
+        function verAccesosPlanta() {
+            $('#modalAccesosPlantas').modal('show');
+
+            // Inicializar Select2 en los 3 selects dentro del modal
+            $('.select2-filtro').select2({
+                dropdownParent: $('#modalAccesosPlantas'),
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    }
+                }
+            });
+
+            $.ajax({
+                url: 'acciones_inicio.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    accion: 'obtener_todos_accesos_ingenieros'
+                },
+                success: function(response) {
+                    // Destruir instancia previa de DataTables si existe
+                    if ($.fn.DataTable.isDataTable('#TablaAccesosPlantas')) {
+                        dtAccesosPlantas.destroy();
+                    }
+
+                    var tablaBody = $('#TablaAccesosPlantas tbody').empty();
+                    
+                    var selectArea = $('#filtroArea').empty().append('<option value="">-- Todas las Áreas --</option>');
+                    var selectCliente = $('#filtroCliente').empty().append('<option value="">-- Todos los Clientes --</option>');
+                    
+                    let areasSet = new Set();
+                    let clientesSet = new Set();
+
+                    if (response.success && response.accesos.length > 0) {
+                        let hoy = new Date();
+                        hoy.setHours(0, 0, 0, 0);
+
+                        response.accesos.forEach(function(acc) {
+                            let fechaParts = acc.vigencia.split('-');
+                            let fechaVigencia = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]);
+                            
+                            let diferenciaMs = fechaVigencia - hoy;
+                            let diasRestantes = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+
+                            let estatus = 'Vigente';
+                            let badgeClass = 'badge-success';
+
+                            if (diasRestantes < 0) {
+                                estatus = 'Vencido';
+                                badgeClass = 'badge-danger';
+                            } else if (diasRestantes <= 30) {
+                                estatus = 'Por vencer';
+                                badgeClass = 'badge-warning';
+                            }
+
+                            // Guardar áreas y clientes únicos para los select2
+                            if (acc.area) areasSet.add(acc.area);
+                            if (acc.cliente) clientesSet.add(acc.cliente);
+
+                            tablaBody.append(
+                                '<tr>' +
+                                    '<td class="font-weight-bold text-dark">' + acc.noEmpleado + ' - ' + acc.nombre + '</td>' +
+                                    '<td>' + acc.cliente + '</td>' +
+                                    '<td>' + acc.vigencia + '</td>' +
+                                    '<td>' + acc.area + '</td>' +
+                                    '<td class="text-center"><span class="badge ' + badgeClass + ' px-2 py-1">' + estatus + '</span></td>' +
+                                '</tr>'
+                            );
+                        });
+
+                        // Llenar select de áreas únicas
+                        areasSet.forEach(function(area) {
+                            selectArea.append('<option value="' + area + '">' + area + '</option>');
+                        });
+
+                        // Llenar select de clientes únicos
+                        clientesSet.forEach(function(cliente) {
+                            selectCliente.append('<option value="' + cliente + '">' + cliente + '</option>');
+                        });
+
+                        // Disparar actualización en Select2
+                        $('.select2-filtro').trigger('change.select2');
+
+                        // Inicializar DataTables
+                        dtAccesosPlantas = $('#TablaAccesosPlantas').DataTable({
+                            language: {
+                                url: 'vendor/datatables/es-ES.json'
+                            },
+                            pageLength: 10,
+                            responsive: true,
+                            order: [[2, 'asc']] // Ordenar por vigencia ascendente
+                        });
+
+                    } else {
+                        tablaBody.html('<tr><td colspan="5" class="text-center text-muted">No hay accesos a plantas registrados.</td></tr>');
+                    }
                 }
             });
         }
