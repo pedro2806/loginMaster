@@ -1,0 +1,13 @@
+# fotos_album/ — imágenes del álbum de fotos (pestaña "Fotos" de inicio.php).
+#
+# acciones_album.php ya guarda SOLO JPEG re-codificados con nombre aleatorio,
+# así que aquí no debería existir otra cosa. Esto es la segunda barrera, por
+# si algún día se cuela un archivo: nada de esta carpeta se ejecuta ni se lista.
+#
+# Va fuera de uploads/ a propósito: /uploads está en .gitignore y este archivo
+# no llegaría al servidor.
+Options -Indexes
+
+<FilesMatch "(?i)\.(php\d?|phtml|phar|pl|py|cgi|sh|shtml)$">
+    Require all denied
+</FilesMatch>

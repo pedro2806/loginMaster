@@ -520,6 +520,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 </li>
                                 <?php endif; ?> -->
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabAlbum-tab" data-toggle="tab" data-target="#tabAlbum" type="button" role="tab" title="Fotos" aria-label="Fotos">
+                                        <i class="fas fa-camera"></i><span class="tab-label"> Fotos</span>
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab" title="Directorio" aria-label="Directorio">
                                         <i class="fas fa-address-book"></i><span class="tab-label"> Directorio</span>
                                         <span class="tab-badge"></span>
@@ -1142,6 +1148,47 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 </div>
                                 <?php endif; ?> -->
                                 
+                                <!-- ===== TAB: FOTOS (álbum del evento) =====
+                                     Mismo muro que el de oktoberMESS. Todo por AJAX contra
+                                     acciones_album.php; esta vista no abre la BD. -->
+                                <div class="tab-pane fade" id="tabAlbum" role="tabpanel">
+                                    <div class="album-caja">
+                                        <h4 class="mb-1" style="color: var(--accent);">Fotos del evento</h4>
+                                        <p class="text-muted small mb-3">Lo que subas lo ven todos los empleados.</p>
+                                        <div id="albumAviso" class="alert small" role="status" hidden></div>
+
+                                        <!-- Subir: toda la caja es el label, para que el dedo tenga dónde caer -->
+                                        <label class="album-subir" id="albumZona" hidden>
+                                            <input type="file" accept="image/*" id="albumArchivo">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <strong>Toma o elige una foto</strong>
+                                            <span class="small">Se publica al instante</span>
+                                        </label>
+
+                                        <!-- Vista previa antes de publicar -->
+                                        <div class="album-previa-caja" id="albumPrevia" hidden>
+                                            <div class="album-previa">
+                                                <img id="albumPreviaImg" alt="Vista previa de tu foto">
+                                                <button class="album-btn-icono" type="button" id="albumCancelar" aria-label="Descartar foto"><i class="fas fa-times"></i></button>
+                                            </div>
+                                            <button class="btn btn-primary btn-block" type="button" id="albumPublicar">
+                                                <i class="fas fa-paper-plane"></i> <span>Publicar foto</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="empty-state text-center py-4" id="albumCargando">
+                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                            <p class="mb-0">Cargando fotos...</p>
+                                        </div>
+                                        <div class="album-muro" id="albumMuro"></div>
+                                        <div class="empty-state text-center py-4" id="albumVacio" hidden>
+                                            <i class="far fa-images fa-2x mb-2"></i>
+                                            <p class="mb-0">Todavía no hay fotos. ¡Sube la primera!</p>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-block mt-3" type="button" id="albumMas" hidden>Ver fotos anteriores</button>
+                                    </div>
+                                </div>
+
                                 <!-- ===== TAB 7: DIRECTORIO ===== -->
                                 <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
                                     <div class="directorio-header">
@@ -1640,6 +1687,24 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     
 
     <!-- ============== SCRIPTS ============== -->
+    <!-- Visor de foto del álbum a pantalla completa. Se cierra con su propia X
+         (en el modo app web de Safari no hay botón "atrás"), tocando fuera de
+         la foto o con Esc. -->
+    <div class="album-visor" id="albumVisor" role="dialog" aria-modal="true" aria-label="Foto del evento" hidden>
+        <button class="album-btn-icono album-visor__cerrar" type="button" id="albumVisorCerrar" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+        <!-- Anterior / siguiente: también se desliza con el dedo o con las flechas -->
+        <button class="album-btn-icono album-visor__nav album-visor__nav--ant" type="button" id="albumVisorAnt" aria-label="Foto anterior"><i class="fas fa-chevron-left"></i></button>
+        <button class="album-btn-icono album-visor__nav album-visor__nav--sig" type="button" id="albumVisorSig" aria-label="Foto siguiente"><i class="fas fa-chevron-right"></i></button>
+        <img class="album-visor__img" id="albumVisorImg" alt="">
+        <div class="album-visor__pie">
+            <span class="album-visor__contador" id="albumVisorContador"></span>
+            <span id="albumVisorAutor"></span>
+            <button class="btn btn-danger btn-sm" type="button" id="albumVisorBorrar" hidden>
+                <i class="fas fa-trash"></i> Borrar mi foto
+            </button>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="vendor/datatables/jquery.dataTables.min.js"></script>
@@ -3001,8 +3066,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 { campo: 'estereos_aire',     label: 'Estéreos y aire' },
                 { campo: 'faros',             label: 'Faros' },
                 { campo: 'golpes_exterior',   label: 'Golpes exterior' },
+                // 'graficas' sustituye a 'limpieza': el checklist de Control Vehicular ya no
+                // captura limpieza y acciones_qr.php dejó de devolverla, así que salía gris
+                // siempre y el semáforo nunca llegaba a verde. Mismo orden que
+                // ControlVehicular/js/global/vehiculos.js.
+                { campo: 'graficas',          label: 'Gráficas' },
                 { campo: 'limpiaparabrisas',  label: 'Limpiaparabrisas' },
-                { campo: 'limpieza',          label: 'Limpieza' },
                 { campo: 'llantas',           label: 'Llantas' },
                 { campo: 'placas',            label: 'Placas' },
                 { campo: 'puertas_llave',     label: 'Puertas y llave' }
@@ -3130,10 +3199,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         function evaluarValidaciones(data) {
             var total = 0, ok = 0;
 
-            // Checklist (10 subáreas)
+            // Checklist (10 subáreas). Tiene que ser la misma lista que renderListaChecklist
+            // y que $subareas en ControlVehicular/acciones_qr.php (obtenerValidacionesVehiculo).
             var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
             ['asientos','espejos_ventanas','estereos_aire','faros','golpes_exterior',
-             'limpiaparabrisas','limpieza','llantas','placas','puertas_llave'].forEach(function(k){
+             'graficas','limpiaparabrisas','llantas','placas','puertas_llave'].forEach(function(k){
                 total++;
                 if (subareas[k] === 'ok') ok++;
             });
@@ -4673,6 +4743,334 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
         // Carga lazy: la primera vez que se abre el tab.
         $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
+    </script>
+    <script>
+    /* ═══════════════════════════ ÁLBUM DE FOTOS ═══════════════════════════
+       Mismo muro que el de oktoberMESS (cliente.php). Sin librerías: sólo
+       fetch/XHR contra acciones_album.php, que decide quién es quién. */
+    (function () {
+        'use strict';
+
+        var ENDPOINT = 'acciones_album.php';
+        var SIN_RED  = 'No se pudo contactar al servidor. Revisa tu conexión.';
+
+        function $id(id) { return document.getElementById(id); }
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function pedir(accion, datos) {
+            var fd = new FormData();
+            fd.append('accion', accion);
+            Object.keys(datos || {}).forEach(function (k) { fd.append(k, datos[k]); });
+            return fetch(ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(function (r) { return r.json(); });
+        }
+
+        /** tipo: 'peligro' | 'exito' | 'info' | '' (limpia). */
+        function aviso(tipo, texto) {
+            var el = $id('albumAviso');
+            el.className = 'alert small ' + ({ peligro: 'alert-danger', exito: 'alert-success', info: 'alert-info' }[tipo] || '');
+            el.textContent = texto || '';
+            el.hidden = !texto;
+        }
+
+        var fotos = { ids: {}, masNueva: 0, masVieja: 0, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, abierto: false };
+
+        function fotoHtml(f) {
+            // Las propias llevan marca: en un muro de cientos de fotos, "Tú"
+            // en letra chica al pie no basta para encontrarlas. Las de los
+            // invitados (oktoberMESS) también, y ésas aquí sólo se ven.
+            return '<button class="album-foto' + (f.mia ? ' es-mia' : '') + (f.invitado ? ' es-invitado' : '') + '" type="button" data-foto="' + esc(f.clave) + '">'
+                + '<img src="' + esc(f.url) + '" alt="Foto de ' + esc(f.autor) + '" loading="lazy">'
+                + (f.mia ? '<span class="album-foto__mia"><i class="fas fa-user"></i> Tuya</span>' : '')
+                + (f.invitado ? '<span class="album-foto__invitado"><i class="fas fa-glass-cheers"></i> Invitado</span>' : '')
+                + '<span class="album-foto__autor">' + (f.mia ? 'Tú' : esc(f.autor)) + ' · ' + esc(f.hora) + '</span>'
+                + '</button>';
+        }
+
+        /*
+         * Posición en el muro: la tupla [fecha, origen, id] que manda el
+         * servidor, en el mismo orden que su ORDER BY. Los ids solos no sirven:
+         * las fotos vienen de dos tablas (empleados 'MB', invitados 'OKT').
+         * La fecha llega como 'AAAA-MM-DD hh:mm:ss', que se compara bien como texto.
+         */
+        function compararCursor(a, b) {
+            for (var i = 0; i < 3; i++) {
+                if (a[i] < b[i]) return -1;
+                if (a[i] > b[i]) return 1;
+            }
+            return 0;
+        }
+        function cursorDatos(prefijo, c) {
+            var datos = {};
+            if (c) { datos[prefijo + '_fecha'] = c[0]; datos[prefijo + '_origen'] = c[1]; datos[prefijo + '_id'] = c[2]; }
+            return datos;
+        }
+        /** Mueve las orillas con lo que dijo el servidor, nunca con la foto que
+            acaba de subir uno mismo: si no, las que otros publicaron justo antes
+            quedarían atrás del cursor y ningún sondeo las traería. */
+        function moverOrillas(d) {
+            if (d.mas_nueva && (!fotos.masNueva || compararCursor(d.mas_nueva, fotos.masNueva) > 0)) fotos.masNueva = d.mas_nueva;
+            if (d.mas_vieja && (!fotos.masVieja || compararCursor(d.mas_vieja, fotos.masVieja) < 0)) fotos.masVieja = d.mas_vieja;
+        }
+
+        /** Agrega fotos al muro sin repetir. `arriba`: las nuevas van al principio. */
+        function agregarFotos(lista, arriba) {
+            var nuevas = lista.filter(function (f) { return !fotos.ids[f.clave]; });
+            nuevas.forEach(function (f) { fotos.ids[f.clave] = f; });
+            $id('albumMuro').insertAdjacentHTML(arriba ? 'afterbegin' : 'beforeend', nuevas.map(fotoHtml).join(''));
+            $id('albumVacio').hidden = Object.keys(fotos.ids).length > 0;
+        }
+
+        function cargarFotos() {
+            $id('albumCargando').hidden = false;
+            pedir('fotos').then(function (d) {
+                $id('albumCargando').hidden = true;
+                if (!d.success) { aviso(d.sin_album ? 'info' : 'peligro', d.message); return; }
+                fotos.cargadas = true;
+                $id('albumZona').hidden = false;
+                moverOrillas(d);
+                agregarFotos(d.fotos, false);
+                $id('albumMas').hidden = !d.hay_mas;
+                iniciarSondeo();
+            }).catch(function () { $id('albumCargando').hidden = true; aviso('peligro', SIN_RED); });
+        }
+
+        /** Trae la siguiente página de fotos viejas. La usan el botón del muro y
+            el "siguiente" del visor cuando llega a la última foto cargada. */
+        function cargarAnteriores() {
+            var boton = $id('albumMas');
+            boton.disabled = true;
+            return pedir('fotos', cursorDatos('antes', fotos.masVieja)).then(function (d) {
+                boton.disabled = false;
+                if (!d.success) { aviso('peligro', d.message); return; }
+                moverOrillas(d);
+                agregarFotos(d.fotos, false);
+                boton.hidden = !d.hay_mas;
+            }).catch(function () { boton.disabled = false; aviso('peligro', SIN_RED); });
+        }
+
+        $id('albumMas').addEventListener('click', cargarAnteriores);
+
+        // "Tiempo real": mientras la pestaña está abierta y la pantalla encendida,
+        // cada 20 s se piden SOLO las fotos más nuevas que la más nueva que ya se ve.
+        function iniciarSondeo() {
+            if (fotos.sondeo || !fotos.abierto || !fotos.cargadas) return;
+            fotos.sondeo = setInterval(function () {
+                if (document.hidden) return;
+                pedir('fotos', cursorDatos('despues', fotos.masNueva)).then(function (d) {
+                    if (!d.success) return;
+                    moverOrillas(d);
+                    if (d.fotos.length) agregarFotos(d.fotos, true);
+                }).catch(function () {});
+            }, 20000);
+        }
+        function detenerSondeo() { clearInterval(fotos.sondeo); fotos.sondeo = null; }
+
+        // Bootstrap 4 avisa de las pestañas con eventos de jQuery.
+        $('#tabAlbum-tab').on('shown.bs.tab', function () {
+            fotos.abierto = true;
+            if (!fotos.cargadas) cargarFotos(); else iniciarSondeo();
+        }).on('hidden.bs.tab', function () {
+            fotos.abierto = false;
+            detenerSondeo();
+        });
+
+        /**
+         * Reduce la foto EN EL NAVEGADOR antes de subirla: a 1600 px y JPEG. Una
+         * foto de celular pesa 3–8 MB y con mala señal así sube ~300 KB. De paso
+         * el canvas tira los metadatos (el GPS). createImageBitmap y <img> ya
+         * aplican la rotación EXIF. El servidor re-codifica de todos modos.
+         */
+        function reducirFoto(archivo) {
+            return new Promise(function (resolver, fallar) {
+                function dibujar(fuente, w, h) {
+                    var escala = Math.min(1, 1600 / Math.max(w, h));
+                    var c = document.createElement('canvas');
+                    c.width = Math.round(w * escala);
+                    c.height = Math.round(h * escala);
+                    c.getContext('2d').drawImage(fuente, 0, 0, c.width, c.height);
+                    c.toBlob(function (b) { b ? resolver(b) : fallar(); }, 'image/jpeg', 0.85);
+                }
+                function porImg() {
+                    var url = URL.createObjectURL(archivo);
+                    var img = new Image();
+                    img.onload  = function () { dibujar(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); };
+                    img.onerror = function () { URL.revokeObjectURL(url); fallar(); };
+                    img.src = url;
+                }
+                if (window.createImageBitmap) {
+                    createImageBitmap(archivo).then(function (bmp) { dibujar(bmp, bmp.width, bmp.height); }, porImg);
+                } else {
+                    porImg();
+                }
+            });
+        }
+
+        function limpiarPrevia() {
+            if (fotos.previaUrl) URL.revokeObjectURL(fotos.previaUrl);
+            fotos.previaUrl = null; fotos.blob = null;
+            $id('albumPrevia').hidden = true;
+            $id('albumZona').hidden = false;
+            $id('albumArchivo').value = '';
+        }
+
+        $id('albumArchivo').addEventListener('change', function () {
+            var archivo = this.files && this.files[0];
+            if (!archivo) return;
+            aviso('', '');
+            if (!/^image\//.test(archivo.type)) { aviso('peligro', 'Ese archivo no es una foto.'); this.value = ''; return; }
+
+            $id('albumZona').classList.add('es-activa');
+            reducirFoto(archivo).then(function (blob) {
+                $id('albumZona').classList.remove('es-activa');
+                fotos.blob = blob;
+                fotos.previaUrl = URL.createObjectURL(blob);
+                $id('albumPreviaImg').src = fotos.previaUrl;
+                $id('albumZona').hidden = true;
+                $id('albumPrevia').hidden = false;
+            }, function () {
+                $id('albumZona').classList.remove('es-activa');
+                limpiarPrevia();
+                aviso('peligro', 'No pudimos leer esa foto. Prueba con otra.');
+            });
+        });
+
+        $id('albumCancelar').addEventListener('click', limpiarPrevia);
+
+        // XMLHttpRequest y no fetch: fetch no informa el avance de la subida, y
+        // con mala señal hay que ver que sí está avanzando.
+        $id('albumPublicar').addEventListener('click', function () {
+            if (!fotos.blob) return;
+            var boton = this, rotulo = boton.querySelector('span');
+            var datos = new FormData();
+            datos.append('accion', 'foto_subir');
+            datos.append('foto', fotos.blob, 'foto.jpg');
+
+            boton.disabled = true;
+            rotulo.textContent = 'Subiendo… 0 %';
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', ENDPOINT);
+            xhr.upload.onprogress = function (e) {
+                if (e.lengthComputable) rotulo.textContent = 'Subiendo… ' + Math.round(e.loaded / e.total * 100) + ' %';
+            };
+            xhr.onload = function () {
+                boton.disabled = false;
+                rotulo.textContent = 'Publicar foto';
+                var d;
+                // Si no llegó JSON (error del servidor), el código HTTP va en el
+                // mensaje: es la única pista que tiene quien reporte el problema.
+                try { d = JSON.parse(xhr.responseText); } catch (err) { d = { success: false, message: 'No pudimos publicar tu foto (error ' + xhr.status + '). Inténtalo de nuevo.' }; }
+                if (!d.success) { aviso('peligro', d.message); return; }
+                limpiarPrevia();
+                agregarFotos([d.foto], true);
+                aviso('exito', d.message);
+            };
+            xhr.onerror = function () {
+                boton.disabled = false;
+                rotulo.textContent = 'Publicar foto';
+                aviso('peligro', SIN_RED);
+            };
+            xhr.send(datos);
+        });
+
+        // Visor: tocar una foto la abre grande; con anterior/siguiente se recorre
+        // el muro en su mismo orden (nuevas primero). Si es tuya, se puede borrar.
+
+        /** Ids de las fotos en el orden en que se ven en el muro. */
+        function ordenMuro() {
+            return Array.prototype.map.call($id('albumMuro').querySelectorAll('[data-foto]'), function (b) { return b.dataset.foto; });
+        }
+
+        function abrirVisor(idFoto) {
+            var f = fotos.ids[idFoto];
+            if (!f) return;
+            fotos.visor = f;
+            $id('albumVisorImg').src = f.url;
+            $id('albumVisorImg').alt = 'Foto de ' + (f.mia ? 'ti' : f.autor);
+            $id('albumVisorAutor').textContent = (f.mia ? 'Tu foto' : 'Foto de ' + f.autor + (f.invitado ? ' (invitado)' : '')) + ' · ' + f.hora;
+            $id('albumVisorBorrar').hidden = !f.mia;
+
+            // El contador se recalcula cada vez: el sondeo puede meter fotos
+            // nuevas arriba mientras el visor está abierto.
+            var orden = ordenMuro(), i = orden.indexOf(f.clave);
+            $id('albumVisorContador').textContent = (i + 1) + ' / ' + orden.length + ($id('albumMas').hidden ? '' : '+');
+            $id('albumVisorAnt').hidden = i <= 0;
+            $id('albumVisorSig').hidden = i >= orden.length - 1 && $id('albumMas').hidden;
+
+            $id('albumVisor').hidden = false;
+            document.body.classList.add('album-sin-scroll');
+        }
+
+        function moverVisor(paso) {
+            if (!fotos.visor) return;
+            var destino = ordenMuro().indexOf(fotos.visor.clave) + paso;
+            if (destino < 0) return;
+            if (destino < ordenMuro().length) { abrirVisor(ordenMuro()[destino]); return; }
+            // Pasó la última cargada: si hay más en el servidor, se traen y sigue.
+            if ($id('albumMas').hidden || $id('albumMas').disabled) return;
+            cargarAnteriores().then(function () {
+                var orden = ordenMuro();
+                if (fotos.visor && destino < orden.length) abrirVisor(orden[destino]);
+            });
+        }
+
+        $id('albumMuro').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-foto]');
+            if (b) abrirVisor(b.dataset.foto);
+        });
+        $id('albumVisorAnt').addEventListener('click', function () { moverVisor(-1); });
+        $id('albumVisorSig').addEventListener('click', function () { moverVisor(1); });
+
+        // Deslizar con el dedo: horizontal y de más de 50 px, para no confundirlo
+        // con un toque o con el scroll.
+        var toqueX = null, toqueY = null;
+        $id('albumVisor').addEventListener('touchstart', function (e) {
+            toqueX = e.changedTouches[0].clientX; toqueY = e.changedTouches[0].clientY;
+        }, { passive: true });
+        $id('albumVisor').addEventListener('touchend', function (e) {
+            if (toqueX === null) return;
+            var dx = e.changedTouches[0].clientX - toqueX, dy = e.changedTouches[0].clientY - toqueY;
+            toqueX = toqueY = null;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) moverVisor(dx < 0 ? 1 : -1);
+        }, { passive: true });
+
+        function cerrarVisor() {
+            $id('albumVisor').hidden = true;
+            $id('albumVisorImg').removeAttribute('src');
+            fotos.visor = null;
+            document.body.classList.remove('album-sin-scroll');
+        }
+        $id('albumVisorCerrar').addEventListener('click', cerrarVisor);
+        $id('albumVisor').addEventListener('click', function (e) { if (e.target === this) cerrarVisor(); });
+        document.addEventListener('keydown', function (e) {
+            if ($id('albumVisor').hidden) return;
+            if (e.key === 'Escape') cerrarVisor();
+            else if (e.key === 'ArrowLeft') moverVisor(-1);
+            else if (e.key === 'ArrowRight') moverVisor(1);
+        });
+
+        $id('albumVisorBorrar').addEventListener('click', function () {
+            var f = fotos.visor;
+            if (!f || !confirm('¿Borrar tu foto? Dejará de verse para todos.')) return;
+            var boton = this;
+            boton.disabled = true;
+            pedir('foto_borrar', { origen: f.origen, id: f.id }).then(function (d) {
+                boton.disabled = false;
+                if (!d.success) { cerrarVisor(); aviso('peligro', d.message); return; }
+                var el = $id('albumMuro').querySelector('[data-foto="' + f.clave + '"]');
+                if (el) el.remove();
+                delete fotos.ids[f.clave];
+                $id('albumVacio').hidden = Object.keys(fotos.ids).length > 0;
+                cerrarVisor();
+                aviso('exito', d.message);
+            }).catch(function () { boton.disabled = false; aviso('peligro', SIN_RED); });
+        });
+    })();
     </script>
 <script>
 // Toggle Sidebar - ARREGLADO
