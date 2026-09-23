@@ -2155,3 +2155,215 @@ button#btnNotificaciones i.fas {
 .profile-card .stat-box i[style*="--text"] {
     color: #ffffff !important;
 }
+
+/* =========================================================
+   ÁLBUM DE FOTOS (pestaña "Fotos" de inicio.php)
+   ---------------------------------------------------------
+   Mismo muro que el de oktoberMESS (css/cliente.css: .ok-subir,
+   .ok-muro, .ok-visor), con los colores del portal. Prefijo
+   album- y no mb-: mb-* son las utilidades de margen de Bootstrap.
+   ========================================================= */
+
+.album-caja { padding: 1.25rem; }
+
+/* Zona de carga. El <input type="file"> real va dentro y oculto;
+   toda la caja es el label, para que el dedo tenga dónde caer. */
+.album-subir {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    min-height: 9rem;
+    margin-bottom: 1rem;
+    padding: 1.25rem 1rem;
+    border: 2px dashed var(--text-muted);
+    border-radius: 16px;
+    background: var(--card-soft);
+    color: var(--text-muted);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
+}
+.album-subir[hidden] { display: none; }
+.album-subir:hover,
+.album-subir.es-activa { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.album-subir i { font-size: 1.75rem; color: var(--accent); }
+.album-subir input[type="file"] { display: none; }
+
+/* Vista previa antes de publicar */
+.album-previa-caja { margin-bottom: 1rem; }
+.album-previa {
+    position: relative;
+    margin-bottom: .75rem;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-soft);
+}
+.album-previa img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.album-previa .album-btn-icono { position: absolute; top: .5rem; right: .5rem; }
+
+/* Botón redondo de sólo ícono (cerrar, anterior, siguiente) */
+.album-btn-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+.album-btn-icono[hidden] { display: none; }
+.album-btn-icono:hover,
+.album-btn-icono:focus-visible { background: rgba(0, 0, 0, .8); }
+
+/* Muro. 2 columnas en celular, 3 desde 480px, 4 desde tablet.
+   aspect-ratio mantiene la cuadrícula pareja aunque las fotos
+   vengan verticales y horizontales mezcladas. */
+.album-muro {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: .5rem;
+}
+@media (min-width: 480px) { .album-muro { grid-template-columns: repeat(3, 1fr); gap: .75rem; } }
+@media (min-width: 768px) { .album-muro { grid-template-columns: repeat(4, 1fr); } }
+
+/* .album-foto es un <button> (se abre en el visor): sin el estilo de
+   botón del navegador, que le pone relleno y borde gris. */
+.album-foto {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    aspect-ratio: 1;
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-soft);
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+.album-foto img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .3s;
+}
+.album-foto:hover img { transform: scale(1.05); }
+
+/* Autor sobre la foto, en degradado para que se lea siempre */
+.album-foto__autor {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 1rem .5rem .4rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, .7));
+    font-size: .72rem;
+    color: #fff;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Foto propia: borde y etiqueta "Tuya", para encontrarlas en el muro */
+.album-foto.es-mia { border: 2px solid var(--accent); }
+.album-foto__mia {
+    position: absolute;
+    top: .5rem; left: .5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+
+/* Visor: pantalla completa sobre todo, barra de pestañas y modales
+   incluidos. Se cierra con la X, tocando fuera de la foto o con Esc. */
+.album-visor {
+    position: fixed;
+    inset: 0;
+    z-index: 1070;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    padding: calc(3rem + env(safe-area-inset-top)) .75rem calc(1rem + env(safe-area-inset-bottom));
+    background: rgba(0, 6, 22, .94);
+}
+.album-visor[hidden] { display: none; }
+
+.album-visor__img {
+    max-width: 100%;
+    max-height: calc(100dvh - 10rem);
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.album-visor__cerrar {
+    position: absolute;
+    top: calc(.75rem + env(safe-area-inset-top));
+    right: .75rem;
+}
+
+/* Anterior / siguiente: a media altura, sobre la orilla de la foto */
+.album-visor__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+.album-visor__nav--ant { left: .5rem; }
+.album-visor__nav--sig { right: .5rem; }
+
+.album-visor__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    font-size: .85rem;
+    color: #cbd5e1;
+}
+.album-visor__pie .btn[hidden] { display: none; }
+
+.album-visor__contador {
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Con el visor abierto, la página de atrás no se desplaza */
+body.album-sin-scroll { overflow: hidden; }
+
+/* Foto de un invitado (viene de oktoberMESS): aquí sólo se ve, no se borra.
+   Misma etiqueta que "Tuya" pero en otro color; nunca salen las dos juntas. */
+.album-foto.es-invitado { border: 2px solid var(--info); }
+.album-foto__invitado {
+    position: absolute;
+    top: .5rem; left: .5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: var(--info);
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}

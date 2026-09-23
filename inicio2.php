@@ -1936,8 +1936,12 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
                 { campo: 'estereos_aire',     label: 'Estéreos y aire' },
                 { campo: 'faros',             label: 'Faros' },
                 { campo: 'golpes_exterior',   label: 'Golpes exterior' },
+                // 'graficas' sustituye a 'limpieza': el checklist de Control Vehicular ya no
+                // captura limpieza y acciones_qr.php dejó de devolverla, así que salía gris
+                // siempre y el semáforo nunca llegaba a verde. Mismo orden que
+                // ControlVehicular/js/global/vehiculos.js.
+                { campo: 'graficas',          label: 'Gráficas' },
                 { campo: 'limpiaparabrisas',  label: 'Limpiaparabrisas' },
-                { campo: 'limpieza',          label: 'Limpieza' },
                 { campo: 'llantas',           label: 'Llantas' },
                 { campo: 'placas',            label: 'Placas' },
                 { campo: 'puertas_llave',     label: 'Puertas y llave' }
@@ -2065,10 +2069,11 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
         function evaluarValidaciones(data) {
             var total = 0, ok = 0;
 
-            // Checklist (10 subáreas)
+            // Checklist (10 subáreas). Tiene que ser la misma lista que renderListaChecklist
+            // y que $subareas en ControlVehicular/acciones_qr.php (obtenerValidacionesVehiculo).
             var subareas = (data.checklist && data.checklist.subareas) ? data.checklist.subareas : {};
             ['asientos','espejos_ventanas','estereos_aire','faros','golpes_exterior',
-             'limpiaparabrisas','limpieza','llantas','placas','puertas_llave'].forEach(function(k){
+             'graficas','limpiaparabrisas','llantas','placas','puertas_llave'].forEach(function(k){
                 total++;
                 if (subareas[k] === 'ok') ok++;
             });
