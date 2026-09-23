@@ -52,7 +52,7 @@ require_once __DIR__ . '/includes/imagen.php';
 // En el espejo local es 16. En producción NO asumirlo: correr el SQL allá y
 // poner aquí el id que devuelva. Con otro número las fotos se colgarían de un
 // evento ajeno (la llave foránea lo acepta).
-const MB_ALBUM_EVENTO     = 0;
+const MB_ALBUM_EVENTO     = 16;
 
 const MB_MAX_FOTOS        = 30;    // por empleado, en cada álbum
 const MB_FOTO_LADO        = 1600;  // px del lado largo al guardar
