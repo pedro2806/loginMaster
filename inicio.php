@@ -120,6 +120,25 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     $stmtAbi->close();
 }
 
+// Pestaña "Fotos" (álbum del evento): OCULTA por el momento, sólo la ve el
+// departamento de BI (usuarios.departamento = 27) mientras se prueba. Para
+// liberarla a todos, dejar $tieneAlbum = true y borrar la consulta.
+//
+// Sólo esconde la pestaña: acciones_album.php NO revisa esta regla, así que
+// quien llame al endpoint directo sigue pudiendo ver el muro y subir fotos
+// (decisión del 2026-09-24).
+$tieneAlbum = false;
+if (!empty($_COOKIE['noEmpleadoL'])) {
+    $noEmpAlb = intval($_COOKIE['noEmpleadoL']);
+    $stmtAlb = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
+                               WHERE noEmpleado = ? AND estatus = 1 AND departamento = 27
+                               LIMIT 1");
+    $stmtAlb->bind_param("i", $noEmpAlb);
+    $stmtAlb->execute();
+    $tieneAlbum = (bool) $stmtAlb->get_result()->fetch_assoc();
+    $stmtAlb->close();
+}
+
 $tieneVehiculo = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $connCV = new mysqli("localhost", "mess_incidencias", "Pipmytrade123", "mess_control_vehicular");
@@ -519,12 +538,14 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </button>
                                 </li>
                                 <?php endif; ?> -->
+                                <?php if ($tieneAlbum): ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabAlbum-tab" data-toggle="tab" data-target="#tabAlbum" type="button" role="tab" title="Fotos" aria-label="Fotos">
                                         <i class="fas fa-camera"></i><span class="tab-label"> Fotos</span>
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
+                                <?php endif; ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabDirectorio-tab" data-toggle="tab" data-target="#tabDirectorio" type="button" role="tab" title="Directorio" aria-label="Directorio">
                                         <i class="fas fa-address-book"></i><span class="tab-label"> Directorio</span>
@@ -1150,7 +1171,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 
                                 <!-- ===== TAB: FOTOS (álbum del evento) =====
                                      Mismo muro que el de oktoberMESS. Todo por AJAX contra
-                                     acciones_album.php; esta vista no abre la BD. -->
+                                     acciones_album.php; esta vista no abre la BD.
+                                     Oculta por ahora: sólo BI ($tieneAlbum). -->
+                                <?php if ($tieneAlbum): ?>
                                 <div class="tab-pane fade" id="tabAlbum" role="tabpanel">
                                     <div class="album-caja">
                                         <h4 class="mb-1" style="color: var(--accent);">Fotos del evento</h4>
@@ -1188,6 +1211,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         <button class="btn btn-outline-primary btn-block mt-3" type="button" id="albumMas" hidden>Ver fotos anteriores</button>
                                     </div>
                                 </div>
+                                <?php endif; ?>
 
                                 <!-- ===== TAB 7: DIRECTORIO ===== -->
                                 <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
@@ -1690,6 +1714,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <!-- Visor de foto del álbum a pantalla completa. Se cierra con su propia X
          (en el modo app web de Safari no hay botón "atrás"), tocando fuera de
          la foto o con Esc. -->
+    <?php if ($tieneAlbum): ?>
     <div class="album-visor" id="albumVisor" role="dialog" aria-modal="true" aria-label="Foto del evento" hidden>
         <button class="album-btn-icono album-visor__cerrar" type="button" id="albumVisorCerrar" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         <!-- Anterior / siguiente: también se desliza con el dedo o con las flechas -->
@@ -1704,6 +1729,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             </button>
         </div>
     </div>
+    <?php endif; ?>
 
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -4744,6 +4770,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         // Carga lazy: la primera vez que se abre el tab.
         $(document).on('shown.bs.tab', '#tabDirectorio-tab', cargarDirectorio);
     </script>
+    <?php if ($tieneAlbum): ?>
     <script>
     /* ═══════════════════════════ ÁLBUM DE FOTOS ═══════════════════════════
        Mismo muro que el de oktoberMESS (cliente.php). Sin librerías: sólo
@@ -5072,6 +5099,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         });
     })();
     </script>
+    <?php endif; ?>
 <script>
 // Toggle Sidebar - ARREGLADO
 document.addEventListener('DOMContentLoaded', function() {
