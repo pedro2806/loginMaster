@@ -45,14 +45,25 @@ ob_start();
 require_once __DIR__ . '/includes/imagen.php';
 
 /*
- * Qué álbum muestra la pestaña: el id_evento de enc_eventos que devolvió
- * sql/2026-09-23_album_fotos.sql. Mientras sea 0, la pestaña dice que el
- * álbum todavía no está abierto y no se puede subir nada.
+ * Los álbumes que muestra la pestaña, uno por evento. La llave es el
+ * id_evento de enc_eventos (sql/2026-09-23_album_fotos.sql da de alta el de
+ * OktoberMESS); de ahí salen la fecha y, si no se pone `titulo`, el nombre.
+ *
+ *   titulo    — lo que se lee en la portada. Opcional: si falta, el nombre de
+ *               enc_eventos (que para OktoberMESS trae "- Album de fotos").
+ *   invitados — valor de mess_oktobermess.foto_evento.evento cuyas fotos
+ *               entran a este álbum como sólo lectura. null: sólo empleados.
+ *
+ * Para abrir otro álbum: dar de alta su evento en enc_eventos (tipo
+ * 'asistencia', estatus 0, sin asignados: ver el SQL) y agregarlo aquí. Con la
+ * lista vacía, la pestaña dice que no hay álbumes abiertos.
+ *
+ * En el espejo local OktoberMESS es el 16. En producción NO asumirlo: con otro
+ * número las fotos se colgarían de un evento ajeno (la llave foránea lo acepta).
  */
-// En el espejo local es 16. En producción NO asumirlo: correr el SQL allá y
-// poner aquí el id que devuelva. Con otro número las fotos se colgarían de un
-// evento ajeno (la llave foránea lo acepta).
-const MB_ALBUM_EVENTO     = 16;
+const MB_ALBUMES = [
+    16 => ['titulo' => 'OktoberMESS 2026', 'invitados' => 'oktobermess2026'],
+];
 
 const MB_MAX_FOTOS        = 30;    // por empleado, en cada álbum
 const MB_FOTO_LADO        = 1600;  // px del lado largo al guardar
@@ -62,8 +73,8 @@ const MB_CARPETA          = 'fotos_album';
 // Fotos de los invitados. foto_evento.url guarda 'fotos/<24 hex>.jpg' relativo
 // a la raíz de oktoberMESS; desde messbook se llega con este prefijo (igual en
 // local, /loginMaster + /oktobermess, que en producción, raíz + /oktobermess).
-// Se sirven sin sesión, así que basta un <img src>.
-const MB_OKT_EVENTO       = 'oktobermess2026';
+// Se sirven sin sesión, así que basta un <img src>. Qué fotos entran a cada
+// álbum lo dice `invitados` en MB_ALBUMES.
 const MB_OKT_PREFIJO_URL  = '/oktobermess/';
 
 
@@ -152,18 +163,21 @@ function mbCursor(string $prefijo): ?array {
 }
 
 /*
- * Las dos tablas en un solo muro. Parámetros: id_evento del álbum (i) y
- * evento de oktoberMESS (s).
+ * Las dos tablas en un solo muro: empleados siempre, invitados sólo si el
+ * álbum tiene `invitados`. Ver mbMuro().
  *
  * CONVERT … COLLATE en cada columna de texto: usuarios mezcla latin1 y utf8mb3,
  * foto_evento e invitados usan utf8mb4_0900_ai_ci y messbook_fotos
  * utf8mb4_spanish_ci. Sin igualarlas, MySQL rechaza el UNION ("Illegal mix of
  * collations").
  *
+ * La forma de la url se filtra aquí además de en mbUrlPublica(): así el número
+ * de fotos de la portada cuenta exactamente las que se enseñan.
+ *
  * `usuarios` es MyISAM y noEmpleado no es único ahí: el JOIN va a una sola
  * fila activa.
  */
-const MB_SQL_MURO = "
+const MB_SQL_EMPLEADOS = "
     SELECT 'MB' AS origen, f.id, f.fecha,
            CONVERT(f.noEmpleado USING utf8mb4) COLLATE utf8mb4_spanish_ci AS id_usr,
            CONVERT(f.url        USING utf8mb4) COLLATE utf8mb4_spanish_ci AS url,
@@ -175,7 +189,9 @@ const MB_SQL_MURO = "
              ON u.id = (SELECT MIN(u2.id) FROM mess_rrhh.usuarios u2
                          WHERE u2.noEmpleado = f.noEmpleado AND u2.estatus = 1)
      WHERE f.id_evento = ?
-    UNION ALL
+       AND f.url REGEXP '^fotos_album/[a-f0-9]{24}[.]jpg$'";
+
+const MB_SQL_INVITADOS = "
     SELECT 'OKT', o.id, o.fecha,
            CONVERT(o.id_usr USING utf8mb4) COLLATE utf8mb4_spanish_ci,
            CONVERT(o.url    USING utf8mb4) COLLATE utf8mb4_spanish_ci,
@@ -183,7 +199,37 @@ const MB_SQL_MURO = "
            NULL, NULL
       FROM mess_oktobermess.foto_evento o
       LEFT JOIN mess_oktobermess.invitados i ON i.id = CAST(o.id_usr AS UNSIGNED)
-     WHERE o.evento = ?";
+     WHERE o.evento = ?
+       AND o.url REGEXP '^fotos/[a-f0-9]{24}[.]jpg$'";
+
+/**
+ * El muro de un álbum como tabla derivada `t`, con sus tipos y parámetros para
+ * bind_param. Quien la usa agrega su WHERE / ORDER BY sobre t.
+ */
+function mbMuro(int $album): array {
+    $sql = MB_SQL_EMPLEADOS; $tipos = 'i'; $params = [$album];
+    $invitados = MB_ALBUMES[$album]['invitados'] ?? null;
+    if (is_string($invitados) && $invitados !== '') {
+        $sql .= ' UNION ALL ' . MB_SQL_INVITADOS; $tipos .= 's'; $params[] = $invitados;
+    }
+    return ['(' . $sql . ') t', $tipos, $params];
+}
+
+/** Álbum que pide la vista. Tiene que estar en MB_ALBUMES: nunca se sube ni
+    se lee de un id_evento que mande el navegador sin más. */
+function mbAlbumPedido(): int {
+    $album = (int)($_POST['album'] ?? 0);
+    if (!isset(MB_ALBUMES[$album])) mbResponder(false, 'Ese álbum no existe o ya no está abierto.', ['sin_album' => true]);
+    return $album;
+}
+
+/** "2026-10-01 00:00:00" → "1 oct 2026". */
+function mbFechaCorta(string $fecha): string {
+    $ts = strtotime($fecha);
+    if ($ts === false) return '';
+    $meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return date('j', $ts) . ' ' . $meses[(int)date('n', $ts) - 1] . ' ' . date('Y', $ts);
+}
 
 
 // ── Credencial ───────────────────────────────────────────────────────────────
@@ -210,11 +256,65 @@ if (!$activo) {
     mbResponder(false, 'Tu sesión expiró. Vuelve a iniciar sesión.', ['expirada' => true]);
 }
 
-if (MB_ALBUM_EVENTO <= 0) {
-    mbResponder(false, 'El álbum todavía no está abierto.', ['sin_album' => true]);
+if (!MB_ALBUMES) {
+    mbResponder(false, 'Todavía no hay álbumes abiertos.', ['sin_album' => true]);
 }
 
 $accion = $_POST['accion'] ?? '';
+
+
+// ── albumes ──────────────────────────────────────────────────────────────────
+// Las portadas: una por álbum, con la foto más reciente (de empleados o de
+// invitados), cuántas fotos tiene y la fecha del evento. Las más nuevas primero.
+if ($accion === 'albumes') {
+    try {
+        $ids    = array_keys(MB_ALBUMES);
+        $marcas = implode(',', array_fill(0, count($ids), '?'));
+        $stmt   = $conn->prepare("SELECT id_evento, nombre, fecha_inicio FROM enc_eventos WHERE id_evento IN ($marcas)");
+        $stmt->bind_param(str_repeat('i', count($ids)), ...$ids);
+        $stmt->execute();
+        $eventos = [];
+        foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $e) $eventos[(int)$e['id_evento']] = $e;
+        $stmt->close();
+
+        $albumes = [];
+        foreach (MB_ALBUMES as $id => $cfg) {
+            // Un id que no está en enc_eventos es un error de configuración:
+            // se avisa en el log y el álbum no sale, en vez de romper la lista.
+            if (!isset($eventos[$id])) {
+                error_log("messbook acciones_album: el álbum $id de MB_ALBUMES no existe en enc_eventos.");
+                continue;
+            }
+            [$muro, $tipos, $params] = mbMuro($id);
+
+            $stmt = $conn->prepare("SELECT COUNT(*) FROM $muro");
+            $stmt->bind_param($tipos, ...$params);
+            $stmt->execute();
+            $total = (int)$stmt->get_result()->fetch_row()[0];
+            $stmt->close();
+
+            $stmt = $conn->prepare("SELECT t.origen, t.url FROM $muro ORDER BY t.fecha DESC, t.origen DESC, t.id DESC LIMIT 1");
+            $stmt->bind_param($tipos, ...$params);
+            $stmt->execute();
+            $ultima = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            $albumes[] = [
+                'id'      => $id,
+                'titulo'  => (string)($cfg['titulo'] ?? $eventos[$id]['nombre']),
+                'fecha'   => mbFechaCorta((string)$eventos[$id]['fecha_inicio']),
+                'orden'   => (string)$eventos[$id]['fecha_inicio'],
+                'total'   => $total,
+                'portada' => $ultima ? mbUrlPublica($ultima) : null,
+            ];
+        }
+        usort($albumes, function ($a, $b) { return strcmp($b['orden'], $a['orden']); });
+
+        mbResponder(true, '', ['albumes' => $albumes]);
+    } catch (Throwable $e) {
+        mbFallo('No pudimos cargar los álbumes.', $e);
+    }
+}
 
 
 // ── fotos ────────────────────────────────────────────────────────────────────
@@ -226,12 +326,13 @@ if ($accion === 'fotos') {
     // desde la más nueva que ya tiene la pantalla — es lo que consulta cada 20 s.
     // Los dos son la tupla (fecha, origen, id); MySQL compara filas completas,
     // en el mismo orden que el ORDER BY.
+    $album   = mbAlbumPedido();
     $antes   = mbCursor('antes');
     $despues = mbCursor('despues');
 
     try {
-        $sql   = 'SELECT t.* FROM (' . MB_SQL_MURO . ') t';
-        $tipos = 'is'; $params = [MB_ALBUM_EVENTO, MB_OKT_EVENTO];
+        [$muro, $tipos, $params] = mbMuro($album);
+        $sql = "SELECT t.* FROM $muro";
         if ($despues !== null) {
             // Las nuevas se piden de la más vieja a la más nueva: si en 20 s
             // llegaron más de una página, las que no caben salen en el
@@ -278,6 +379,7 @@ if ($accion === 'fotos') {
 }
 
 if ($accion === 'foto_subir') {
+    $album   = mbAlbumPedido();
     $archivo = $_FILES['foto'] ?? null;
     $error   = is_array($archivo) ? (int)$archivo['error'] : UPLOAD_ERR_NO_FILE;
 
@@ -295,14 +397,14 @@ if ($accion === 'foto_subir') {
         $motivo = mbRevisarImagen($tmp);
         if ($motivo !== '') mbResponder(false, $motivo);
 
-        $evento = MB_ALBUM_EVENTO;
+        $evento = $album;
         $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ? AND noEmpleado = ?');
         $stmt->bind_param('is', $evento, $noEmpleado);
         $stmt->execute();
         $ya = (int)$stmt->get_result()->fetch_row()[0];
         $stmt->close();
         if ($ya >= MB_MAX_FOTOS) {
-            mbResponder(false, 'Llegaste al máximo de ' . MB_MAX_FOTOS . ' fotos. Borra alguna para subir otra.');
+            mbResponder(false, 'Llegaste al máximo de ' . MB_MAX_FOTOS . ' fotos en este álbum. Borra alguna para subir otra.');
         }
 
         $dir = __DIR__ . '/' . MB_CARPETA;
@@ -333,9 +435,10 @@ if ($accion === 'foto_subir') {
         // Se relee de la BD en vez de armarla aquí: la hora tiene que ser la
         // que guardó NOW(), no la de PHP, que puede estar en otra zona.
         // Por la misma consulta del muro, para que salga idéntica (y con su cursor).
-        $stmt   = $conn->prepare('SELECT t.* FROM (' . MB_SQL_MURO . ") t WHERE t.origen = 'MB' AND t.id = ?");
-        $oktEvt = MB_OKT_EVENTO;
-        $stmt->bind_param('isi', $evento, $oktEvt, $idFoto);
+        [$muro, $tipos, $params] = mbMuro($album);
+        $params[] = $idFoto;
+        $stmt = $conn->prepare("SELECT t.* FROM $muro WHERE t.origen = 'MB' AND t.id = ?");
+        $stmt->bind_param($tipos . 'i', ...$params);
         $stmt->execute();
         $nueva = $stmt->get_result()->fetch_assoc();
         $stmt->close();
