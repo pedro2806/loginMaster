@@ -1176,39 +1176,58 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <?php if ($tieneAlbum): ?>
                                 <div class="tab-pane fade" id="tabAlbum" role="tabpanel">
                                     <div class="album-caja">
-                                        <h4 class="mb-1" style="color: var(--accent);">Fotos del evento</h4>
-                                        <p class="text-muted small mb-3">Lo que subas lo ven todos los empleados.</p>
                                         <div id="albumAviso" class="alert small" role="status" hidden></div>
 
-                                        <!-- Subir: toda la caja es el label, para que el dedo tenga dónde caer -->
-                                        <label class="album-subir" id="albumZona" hidden>
-                                            <input type="file" accept="image/*" id="albumArchivo">
-                                            <i class="fas fa-cloud-upload-alt"></i>
-                                            <strong>Toma o elige una foto</strong>
-                                            <span class="small">Se publica al instante</span>
-                                        </label>
-
-                                        <!-- Vista previa antes de publicar -->
-                                        <div class="album-previa-caja" id="albumPrevia" hidden>
-                                            <div class="album-previa">
-                                                <img id="albumPreviaImg" alt="Vista previa de tu foto">
-                                                <button class="album-btn-icono" type="button" id="albumCancelar" aria-label="Descartar foto"><i class="fas fa-times"></i></button>
+                                        <!-- Pantalla 1: las portadas, una por evento. Tocar una abre su muro. -->
+                                        <div id="albumLista">
+                                            <h4 class="mb-1" style="color: var(--accent);">Fotos de los eventos</h4>
+                                            <p class="text-muted small mb-3">Elige un álbum para ver sus fotos.</p>
+                                            <div class="empty-state text-center py-4" id="albumListaCargando">
+                                                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                                <p class="mb-0">Cargando álbumes...</p>
                                             </div>
-                                            <button class="btn btn-primary btn-block" type="button" id="albumPublicar">
-                                                <i class="fas fa-paper-plane"></i> <span>Publicar foto</span>
-                                            </button>
+                                            <div class="album-portadas" id="albumPortadas"></div>
                                         </div>
 
-                                        <div class="empty-state text-center py-4" id="albumCargando">
-                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
-                                            <p class="mb-0">Cargando fotos...</p>
+                                        <!-- Pantalla 2: el muro de un álbum. "Álbumes" regresa a la lista
+                                             con su propio botón (en el modo app web de Safari no hay "atrás"). -->
+                                        <div id="albumDetalle" hidden>
+                                            <button class="btn btn-link album-volver" type="button" id="albumVolver">
+                                                <i class="fas fa-chevron-left"></i> Álbumes
+                                            </button>
+                                            <h4 class="mb-1" style="color: var(--accent);" id="albumTitulo"></h4>
+                                            <p class="text-muted small mb-3" id="albumSubtitulo"></p>
+
+                                            <!-- Subir: toda la caja es el label, para que el dedo tenga dónde caer -->
+                                            <label class="album-subir" id="albumZona" hidden>
+                                                <input type="file" accept="image/*" id="albumArchivo">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                                <strong>Toma o elige una foto</strong>
+                                                <span class="small">Se publica al instante y la ven todos los empleados</span>
+                                            </label>
+
+                                            <!-- Vista previa antes de publicar -->
+                                            <div class="album-previa-caja" id="albumPrevia" hidden>
+                                                <div class="album-previa">
+                                                    <img id="albumPreviaImg" alt="Vista previa de tu foto">
+                                                    <button class="album-btn-icono" type="button" id="albumCancelar" aria-label="Descartar foto"><i class="fas fa-times"></i></button>
+                                                </div>
+                                                <button class="btn btn-primary btn-block" type="button" id="albumPublicar">
+                                                    <i class="fas fa-paper-plane"></i> <span>Publicar foto</span>
+                                                </button>
+                                            </div>
+
+                                            <div class="empty-state text-center py-4" id="albumCargando" hidden>
+                                                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                                <p class="mb-0">Cargando fotos...</p>
+                                            </div>
+                                            <div class="album-muro" id="albumMuro"></div>
+                                            <div class="empty-state text-center py-4" id="albumVacio" hidden>
+                                                <i class="far fa-images fa-2x mb-2"></i>
+                                                <p class="mb-0">Todavía no hay fotos. ¡Sube la primera!</p>
+                                            </div>
+                                            <button class="btn btn-outline-primary btn-block mt-3" type="button" id="albumMas" hidden>Ver fotos anteriores</button>
                                         </div>
-                                        <div class="album-muro" id="albumMuro"></div>
-                                        <div class="empty-state text-center py-4" id="albumVacio" hidden>
-                                            <i class="far fa-images fa-2x mb-2"></i>
-                                            <p class="mb-0">Todavía no hay fotos. ¡Sube la primera!</p>
-                                        </div>
-                                        <button class="btn btn-outline-primary btn-block mt-3" type="button" id="albumMas" hidden>Ver fotos anteriores</button>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -4804,7 +4823,79 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             el.hidden = !texto;
         }
 
-        var fotos = { ids: {}, masNueva: 0, masVieja: 0, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, abierto: false };
+        // `album`: el id_evento abierto, o null mientras se ven las portadas.
+        // `albumes`: lo último que mandó el servidor para las portadas, por id.
+        var fotos = { album: null, albumes: {}, ids: {}, masNueva: null, masVieja: null, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, abierto: false };
+
+        function subtituloAlbum(a) {
+            return [a.fecha, a.total + (a.total === 1 ? ' foto' : ' fotos')].filter(Boolean).join(' · ');
+        }
+
+        /** Portada: la foto más reciente del álbum, o un ícono si todavía no hay. */
+        function portadaHtml(a) {
+            return '<button class="album-portada" type="button" data-album="' + a.id + '">'
+                + '<span class="album-portada__img">'
+                + (a.portada ? '<img src="' + esc(a.portada) + '" alt="" loading="lazy">' : '<i class="far fa-images"></i>')
+                + '</span>'
+                + '<span class="album-portada__info"><strong>' + esc(a.titulo) + '</strong>'
+                + '<span>' + esc(subtituloAlbum(a)) + '</span></span>'
+                + '</button>';
+        }
+
+        /** Pantalla 1. Se vuelve a pedir cada vez que se muestra: así el número
+            de fotos y la portada están al día al regresar de un álbum. */
+        function cargarAlbumes() {
+            $id('albumListaCargando').hidden = false;
+            pedir('albumes').then(function (d) {
+                $id('albumListaCargando').hidden = true;
+                if (fotos.album !== null) return;          // ya se abrió uno mientras cargaba
+                if (!d.success) { aviso(d.sin_album ? 'info' : 'peligro', d.message); return; }
+                fotos.albumes = {};
+                d.albumes.forEach(function (a) { fotos.albumes[a.id] = a; });
+                $id('albumPortadas').innerHTML = d.albumes.map(portadaHtml).join('');
+                if (!d.albumes.length) aviso('info', 'Todavía no hay álbumes abiertos.');
+            }).catch(function () { $id('albumListaCargando').hidden = true; aviso('peligro', SIN_RED); });
+        }
+
+        /** Deja el muro en blanco: al cambiar de álbum no puede quedar nada del anterior. */
+        function reiniciarMuro() {
+            detenerSondeo();
+            limpiarPrevia();
+            fotos.ids = {}; fotos.masNueva = null; fotos.masVieja = null; fotos.cargadas = false;
+            $id('albumMuro').innerHTML = '';
+            $id('albumMas').hidden = true;
+            $id('albumVacio').hidden = true;
+            $id('albumZona').hidden = true;
+            $id('albumCargando').hidden = true;
+        }
+
+        function abrirAlbum(id) {
+            var a = fotos.albumes[id];
+            if (!a) return;
+            aviso('', '');
+            reiniciarMuro();
+            fotos.album = a.id;
+            $id('albumTitulo').textContent = a.titulo;
+            $id('albumSubtitulo').textContent = subtituloAlbum(a);
+            $id('albumLista').hidden = true;
+            $id('albumDetalle').hidden = false;
+            cargarFotos();
+        }
+
+        function volverALista() {
+            reiniciarMuro();
+            fotos.album = null;
+            aviso('', '');
+            $id('albumDetalle').hidden = true;
+            $id('albumLista').hidden = false;
+            cargarAlbumes();
+        }
+
+        $id('albumPortadas').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-album]');
+            if (b) abrirAlbum(b.dataset.album);
+        });
+        $id('albumVolver').addEventListener('click', volverALista);
 
         function fotoHtml(f) {
             // Las propias llevan marca: en un muro de cientos de fotos, "Tú"
@@ -4852,9 +4943,20 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             $id('albumVacio').hidden = Object.keys(fotos.ids).length > 0;
         }
 
+        /** Datos de una petición del muro: siempre llevan el álbum abierto. */
+        function datosMuro(extra) {
+            var datos = extra || {};
+            datos.album = fotos.album;
+            return datos;
+        }
+
+        // Cada respuesta se compara contra el álbum con que se pidió: si en el
+        // camino se cambió de álbum, se descarta en vez de mezclar fotos.
         function cargarFotos() {
+            var album = fotos.album;
             $id('albumCargando').hidden = false;
-            pedir('fotos').then(function (d) {
+            pedir('fotos', datosMuro()).then(function (d) {
+                if (album !== fotos.album) return;
                 $id('albumCargando').hidden = true;
                 if (!d.success) { aviso(d.sin_album ? 'info' : 'peligro', d.message); return; }
                 fotos.cargadas = true;
@@ -4869,10 +4971,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         /** Trae la siguiente página de fotos viejas. La usan el botón del muro y
             el "siguiente" del visor cuando llega a la última foto cargada. */
         function cargarAnteriores() {
-            var boton = $id('albumMas');
+            var boton = $id('albumMas'), album = fotos.album;
             boton.disabled = true;
-            return pedir('fotos', cursorDatos('antes', fotos.masVieja)).then(function (d) {
+            return pedir('fotos', datosMuro(cursorDatos('antes', fotos.masVieja))).then(function (d) {
                 boton.disabled = false;
+                if (album !== fotos.album) return;
                 if (!d.success) { aviso('peligro', d.message); return; }
                 moverOrillas(d);
                 agregarFotos(d.fotos, false);
@@ -4885,11 +4988,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         // "Tiempo real": mientras la pestaña está abierta y la pantalla encendida,
         // cada 20 s se piden SOLO las fotos más nuevas que la más nueva que ya se ve.
         function iniciarSondeo() {
-            if (fotos.sondeo || !fotos.abierto || !fotos.cargadas) return;
+            if (fotos.sondeo || !fotos.abierto || !fotos.cargadas || fotos.album === null) return;
             fotos.sondeo = setInterval(function () {
                 if (document.hidden) return;
-                pedir('fotos', cursorDatos('despues', fotos.masNueva)).then(function (d) {
-                    if (!d.success) return;
+                var album = fotos.album;
+                pedir('fotos', datosMuro(cursorDatos('despues', fotos.masNueva))).then(function (d) {
+                    if (album !== fotos.album || !d.success) return;
                     moverOrillas(d);
                     if (d.fotos.length) agregarFotos(d.fotos, true);
                 }).catch(function () {});
@@ -4898,9 +5002,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         function detenerSondeo() { clearInterval(fotos.sondeo); fotos.sondeo = null; }
 
         // Bootstrap 4 avisa de las pestañas con eventos de jQuery.
+        // Al volver a la pestaña se queda en la pantalla en que estaba.
         $('#tabAlbum-tab').on('shown.bs.tab', function () {
             fotos.abierto = true;
-            if (!fotos.cargadas) cargarFotos(); else iniciarSondeo();
+            if (fotos.album === null) cargarAlbumes();
+            else if (!fotos.cargadas) cargarFotos();
+            else iniciarSondeo();
         }).on('hidden.bs.tab', function () {
             fotos.abierto = false;
             detenerSondeo();
@@ -4975,7 +5082,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             var boton = this, rotulo = boton.querySelector('span');
             var datos = new FormData();
             datos.append('accion', 'foto_subir');
+            datos.append('album', fotos.album);
             datos.append('foto', fotos.blob, 'foto.jpg');
+            var album = fotos.album;
 
             boton.disabled = true;
             rotulo.textContent = 'Subiendo… 0 %';
@@ -4992,6 +5101,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 // Si no llegó JSON (error del servidor), el código HTTP va en el
                 // mensaje: es la única pista que tiene quien reporte el problema.
                 try { d = JSON.parse(xhr.responseText); } catch (err) { d = { success: false, message: 'No pudimos publicar tu foto (error ' + xhr.status + '). Inténtalo de nuevo.' }; }
+                // Si se salió del álbum mientras subía, la foto ya quedó en él;
+                // sólo no se pinta aquí, que ahora es otra pantalla.
+                if (album !== fotos.album) return;
                 if (!d.success) { aviso('peligro', d.message); return; }
                 limpiarPrevia();
                 agregarFotos([d.foto], true);
