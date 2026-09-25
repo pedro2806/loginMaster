@@ -1798,6 +1798,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         <button class="album-btn-icono album-visor__nav album-visor__nav--ant" type="button" id="albumVisorAnt" aria-label="Foto anterior"><i class="fas fa-chevron-left"></i></button>
         <button class="album-btn-icono album-visor__nav album-visor__nav--sig" type="button" id="albumVisorSig" aria-label="Foto siguiente"><i class="fas fa-chevron-right"></i></button>
         <img class="album-visor__img" id="albumVisorImg" alt="">
+        <div class="album-visor__rota" id="albumVisorRota" hidden>
+            <i class="far fa-image" aria-hidden="true"></i>
+            <p class="mb-0">Esta foto ya no está disponible.</p>
+        </div>
         <p class="album-visor__texto" id="albumVisorTexto" hidden></p>
         <div class="album-visor__pie">
             <span class="album-visor__contador" id="albumVisorContador"></span>
@@ -5045,6 +5049,21 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             cargarAlbumes();
         }
 
+        // Foto que no carga (se borró el archivo del disco, se cayó la red…):
+        // en vez del ícono roto del navegador, sólo un ícono: en la portada el
+        // mismo que un álbum sin fotos. El evento `error` no burbujea: se
+        // escucha en la fase de captura.
+        function fotoRota(e) {
+            var img = e.target;
+            if (img.tagName !== 'IMG') return;
+            var sin = document.createElement('span');
+            sin.className = 'album-sin-foto';
+            sin.innerHTML = '<i class="far ' + (this.id === 'albumPortadas' ? 'fa-images' : 'fa-image') + '" aria-hidden="true"></i>';
+            img.replaceWith(sin);
+        }
+        $id('albumPortadas').addEventListener('error', fotoRota, true);
+        $id('albumMuro').addEventListener('error', fotoRota, true);
+
         $id('albumPortadas').addEventListener('click', function (e) {
             var b = e.target.closest('[data-album]');
             if (b) abrirAlbum(fotos.albumes[b.dataset.album]);
@@ -5333,6 +5352,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             var f = fotos.ids[idFoto];
             if (!f) return;
             fotos.visor = f;
+            $id('albumVisorImg').hidden = false;
+            $id('albumVisorRota').hidden = true;
             $id('albumVisorImg').src = f.url;
             $id('albumVisorImg').alt = 'Foto de ' + (f.mia ? 'ti' : f.autor);
             $id('albumVisorAutor').textContent = (f.mia ? 'Tu foto' : 'Foto de ' + f.autor + (f.invitado ? ' (invitado)' : '')) + ' · ' + f.hora;
@@ -5383,6 +5404,14 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             toqueX = toqueY = null;
             if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) moverVisor(dx < 0 ? 1 : -1);
         }, { passive: true });
+
+        // En el visor, lo mismo que en el muro: si la foto no carga, un aviso.
+        // (Al cerrar se le quita el src: eso no cuenta, no hay foto abierta.)
+        $id('albumVisorImg').addEventListener('error', function () {
+            if (!fotos.visor || !this.getAttribute('src')) return;
+            this.hidden = true;
+            $id('albumVisorRota').hidden = false;
+        });
 
         function cerrarVisor() {
             $id('albumVisor').hidden = true;

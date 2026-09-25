@@ -2283,6 +2283,20 @@ button#btnNotificaciones i.fas {
 }
 .album-foto:hover img { transform: scale(1.05); }
 
+/* Foto que no cargó (fotoRota en inicio.php): sólo un ícono en lugar del
+   ícono roto del navegador. Sirve igual en el muro y en las portadas. */
+.album-sin-foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: var(--card-soft);
+    color: var(--text-muted);
+}
+.album-sin-foto i { font-size: 2rem; }
+.album-portada__img .album-sin-foto i { font-size: 2.5rem; }
+
 /* Autor sobre la foto, en degradado para que se lea siempre */
 .album-foto__autor {
     position: absolute;
@@ -2368,6 +2382,19 @@ button#btnNotificaciones i.fas {
     object-fit: contain;
     border-radius: 10px;
 }
+
+.album-visor__img[hidden] { display: none; }
+.album-visor__rota {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+    padding: 3rem 1rem;
+    color: #cbd5e1;
+    text-align: center;
+}
+.album-visor__rota[hidden] { display: none; }
+.album-visor__rota i { font-size: 3.5rem; }
 
 .album-visor__cerrar {
     position: absolute;
