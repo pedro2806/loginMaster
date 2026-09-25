@@ -139,6 +139,33 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     $stmtAlb->close();
 }
 
+// Botón "Subir fotos" bajo la tarjeta de usuario: se ve en los MISMOS horarios
+// en que se puede subir, y sube al álbum que esté recibiendo fotos en ese
+// momento (includes/album.php: el del evento en su día, si no el general).
+// Aquí van todos los álbumes que todavía no cierran, con sus ventanas; la
+// vista elige el activo y prende o apaga el botón (pintarSubida), así cambia
+// solo a las 12:00 o a medianoche aunque la página se haya abierto antes.
+$albumesSubida = [];
+$adminAlbum    = false;   // engrane "Administrar álbumes" (modalAlbumes.php): de momento, BI
+if ($tieneAlbum) {
+    require_once __DIR__ . '/includes/album.php';
+    try {
+        $adminAlbum = mbPuedeAdministrar($conn, (string)$_COOKIE['noEmpleadoL']);
+        foreach (mbEventosAlbum($conn) as $idAlb => $evAlb) {
+            if (!mbAlbumVigente($evAlb['ventanas'], time())) continue;
+            $albumesSubida[] = [
+                'id'       => $idAlb,
+                'titulo'   => mbTituloAlbum($evAlb),
+                'fecha'    => mbFechaCorta((string)$evAlb['fecha_inicio']),
+                'ventanas' => $evAlb['ventanas'],
+            ];
+        }
+    } catch (Throwable $e) {
+        // Sin el botón la pestaña sigue sirviendo: no se tumba el inicio por esto.
+        error_log('inicio.php albumesSubida: ' . $e->getMessage());
+    }
+}
+
 $tieneVehiculo = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $connCV = new mysqli("localhost", "mess_incidencias", "Pipmytrade123", "mess_control_vehicular");
@@ -349,6 +376,15 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Subir fotos al álbum que esté recibiendo ($albumesSubida):
+                                     abre la cámara/galería directo. Sale oculto; el JS del
+                                     álbum (pintarSubida) lo enseña sólo en horario de subida. -->
+                                <?php if ($albumesSubida): ?>
+                                <button type="button" id="btnSubirFotos" class="btn btn-light btn-block album-btn-tarjeta" hidden>
+                                    <i class="fas fa-camera"></i> Subir fotos
+                                </button>
+                                <?php endif; ?>
 
                                 <!-- Fila 1: Fecha Ingreso (full width) -->
                                 <div class="row no-gutters">
@@ -1180,7 +1216,16 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
                                         <!-- Pantalla 1: las portadas, una por evento. Tocar una abre su muro. -->
                                         <div id="albumLista">
-                                            <h4 class="mb-1" style="color: var(--accent);">Fotos de los eventos</h4>
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <h4 class="mb-1" style="color: var(--accent);">Fotos de los eventos</h4>
+                                                <?php if ($adminAlbum): ?>
+                                                <!-- Crear / editar / ocultar álbumes: modalAlbumes.php (de momento, BI) -->
+                                                <button type="button" class="btn btn-link album-admin" data-toggle="modal" data-target="#modalAlbumes"
+                                                        title="Administrar álbumes" aria-label="Administrar álbumes">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <?php endif; ?>
+                                            </div>
                                             <p class="text-muted small mb-3">Elige un álbum para ver sus fotos.</p>
                                             <div class="empty-state text-center py-4" id="albumListaCargando">
                                                 <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
@@ -1198,6 +1243,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <h4 class="mb-1" style="color: var(--accent);" id="albumTitulo"></h4>
                                             <p class="text-muted small mb-3" id="albumSubtitulo"></p>
 
+                                            <!-- Horario de subida: cuándo abre, hasta cuándo sigue abierta o
+                                                 cuándo se reabre. Lo llena pintarSubida(). -->
+                                            <div class="album-horario" id="albumHorario" role="status" hidden></div>
+
                                             <!-- Subir: toda la caja es el label, para que el dedo tenga dónde caer -->
                                             <label class="album-subir" id="albumZona" hidden>
                                                 <input type="file" accept="image/*" id="albumArchivo">
@@ -1211,6 +1260,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                 <div class="album-previa">
                                                     <img id="albumPreviaImg" alt="Vista previa de tu foto">
                                                     <button class="album-btn-icono" type="button" id="albumCancelar" aria-label="Descartar foto"><i class="fas fa-times"></i></button>
+                                                </div>
+                                                <!-- Texto del post, opcional. El tope real lo pone el servidor (MB_TEXTO_MAX). -->
+                                                <div class="album-texto">
+                                                    <input type="text" class="form-control" id="albumTexto" maxlength="140"
+                                                           placeholder="Escribe algo sobre tu foto (opcional)" aria-label="Texto de tu foto" autocomplete="off">
+                                                    <small class="album-texto__cuenta" id="albumTextoCuenta">0/140</small>
                                                 </div>
                                                 <button class="btn btn-primary btn-block" type="button" id="albumPublicar">
                                                     <i class="fas fa-paper-plane"></i> <span>Publicar foto</span>
@@ -1545,6 +1600,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <!-- Modal Administrar Dashboards (alta/baja de mess_rrhh.enlaces_kpis) -->
     <?php include 'modalDashboards.php'; ?>
 
+    <!-- Modal Administrar álbumes de fotos (engrane de la pestaña Fotos; sólo $adminAlbum) -->
+    <?php include 'modalAlbumes.php'; ?>
+
     <!-- Modal MessbookID (oculto hasta liberar: ver $mostrarMessbookID) -->
     <?php if ($mostrarMessbookID): ?>
     <div class="modal fade" id="modalMessbookID" tabindex="-1" role="dialog" aria-labelledby="modalMessbookIDLabel" aria-hidden="true">
@@ -1740,6 +1798,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         <button class="album-btn-icono album-visor__nav album-visor__nav--ant" type="button" id="albumVisorAnt" aria-label="Foto anterior"><i class="fas fa-chevron-left"></i></button>
         <button class="album-btn-icono album-visor__nav album-visor__nav--sig" type="button" id="albumVisorSig" aria-label="Foto siguiente"><i class="fas fa-chevron-right"></i></button>
         <img class="album-visor__img" id="albumVisorImg" alt="">
+        <p class="album-visor__texto" id="albumVisorTexto" hidden></p>
         <div class="album-visor__pie">
             <span class="album-visor__contador" id="albumVisorContador"></span>
             <span id="albumVisorAutor"></span>
@@ -4825,10 +4884,98 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
         // `album`: el id_evento abierto, o null mientras se ven las portadas.
         // `albumes`: lo último que mandó el servidor para las portadas, por id.
-        var fotos = { album: null, albumes: {}, ids: {}, masNueva: null, masVieja: null, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, abierto: false };
+        // `actual`: el álbum abierto como lo mandó el servidor (con sus `ventanas`).
+        // `pidiendo`: hay una carga del muro en camino; evita pedirlo dos veces
+        // cuando el botón de la tarjeta abre el álbum y luego la pestaña.
+        var fotos = { album: null, actual: null, albumes: {}, ids: {}, masNueva: null, masVieja: null, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, pidiendo: false, abierto: false };
+
+        // Los álbumes que todavía reciben fotos, con sus ventanas. En cada
+        // momento a lo más uno está abierto (albumActivo): a ése sube el botón
+        // de la tarjeta. Lo arma inicio.php con includes/album.php.
+        var ALBUMES_SUBIDA = <?php echo json_encode($albumesSubida, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); ?>;
+
+        /* ── Horario de subida ──────────────────────────────────────────────
+           Las ventanas llegan del servidor como pares [inicio, fin) en segundos
+           Unix (includes/album.php). Aquí sólo se decide qué enseñar; quien
+           hace cumplir el horario es foto_subir. El reloj se corrige con la
+           hora del servidor al cargar la página: un celular con la hora mal
+           no debe ver la caja abierta cuando el servidor la va a rechazar. */
+        var ZONA    = 'America/Mexico_City';
+        var DESFASE = <?php echo time(); ?> * 1000 - Date.now();
+
+        function ahoraSeg() { return Math.floor((Date.now() + DESFASE) / 1000); }
+        function diaMx(ts)  { return new Date(ts * 1000).toLocaleDateString('en-CA', { timeZone: ZONA }); }   // AAAA-MM-DD
+        function horaMx(ts) { return new Date(ts * 1000).toLocaleTimeString('es-MX', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hour12: false }); }
+
+        /** "hoy a las 18:00", "mañana a las 12:00", "el viernes 9 de octubre a las 12:00". */
+        function cuando(ts, ahora) {
+            var hora = 'a las ' + horaMx(ts);
+            if (diaMx(ts) === diaMx(ahora))         return 'hoy ' + hora;
+            if (diaMx(ts) === diaMx(ahora + 86400)) return 'mañana ' + hora;
+            return 'el ' + new Date(ts * 1000).toLocaleDateString('es-MX', { timeZone: ZONA, weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '') + ' ' + hora;
+        }
+
+        /** { abierta, texto } del álbum `a` en este momento. */
+        function estadoSubida(a) {
+            var v = (a && a.ventanas) || [], t = ahoraSeg(), i;
+            if (!v.length) return { abierta: false, texto: 'Este álbum no recibe fotos.' };
+            for (i = 0; i < v.length; i++) {
+                if (t >= v[i][0] && t < v[i][1]) {
+                    // El día del evento la ventana dura más de un día: "hasta
+                    // mañana a las 15:00" o "hasta el sábado 10 de octubre…".
+                    return { abierta: true, texto: 'Puedes subir fotos hasta ' + (diaMx(v[i][1]) === diaMx(t) ? 'las ' + horaMx(v[i][1]) : cuando(v[i][1], t)) + '.' };
+                }
+            }
+            for (i = 0; i < v.length; i++) {
+                if (v[i][0] > t) {
+                    return { abierta: false, texto: t < v[0][0]
+                        ? '¡Prepara tu cámara! Podrás subir fotos a este álbum ' + cuando(v[i][0], t) + '.'
+                        : 'La subida de fotos está en pausa. Se vuelve a abrir ' + cuando(v[i][0], t) + '.' };
+                }
+            }
+            return { abierta: false, texto: 'Este álbum ya no recibe fotos. Las fotos se siguen viendo.' };
+        }
+
+        /** El álbum que recibe fotos en este momento, o null. */
+        function albumActivo() {
+            for (var i = 0; i < ALBUMES_SUBIDA.length; i++) {
+                if (estadoSubida(ALBUMES_SUBIDA[i]).abierta) return ALBUMES_SUBIDA[i];
+            }
+            return null;
+        }
+
+        /** Caja de subir, aviso de horario, marca en las portadas y botón de la
+            tarjeta, según la hora. Se llama al cargar el muro, al cambiar la
+            vista previa y cada 15 s, así todo cambia solo al abrir o cerrar una
+            ventana (o al pasar de "Pruebas" al álbum del evento). */
+        function pintarSubida() {
+            var activo = albumActivo();
+            var e = fotos.actual ? estadoSubida(fotos.actual) : null;
+            var listo = !!e && fotos.cargadas;
+            // Si éste no recibe pero otro sí, se manda para allá (y se dice
+            // cuándo abre éste, p. ej. el álbum del evento antes de su día).
+            var texto = e && !e.abierta && activo && activo.id !== fotos.album
+                ? 'Ahora las fotos se suben al álbum «' + activo.titulo + '». ' + e.texto
+                : (e ? e.texto : '');
+            $id('albumZona').hidden = !(listo && e.abierta && !fotos.blob);
+            $id('albumHorario').hidden = !listo;
+            $id('albumHorario').textContent = listo ? texto : '';
+            $id('albumHorario').classList.toggle('es-abierta', listo && e.abierta);
+
+            Array.prototype.forEach.call($id('albumPortadas').querySelectorAll('[data-album]'), function (b) {
+                b.classList.toggle('es-activa', !!activo && String(activo.id) === b.dataset.album);
+            });
+
+            // El de la tarjeta, sólo mientras algún álbum recibe fotos.
+            if ($id('btnSubirFotos')) $id('btnSubirFotos').hidden = !activo;
+        }
+        setInterval(function () { if (!document.hidden) pintarSubida(); }, 15000);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) pintarSubida(); });
+        pintarSubida();   // el botón de la tarjeta, desde que carga la página
 
         function subtituloAlbum(a) {
-            return [a.fecha, a.total + (a.total === 1 ? ' foto' : ' fotos')].filter(Boolean).join(' · ');
+            var total = a.total == null ? '' : a.total + (a.total === 1 ? ' foto' : ' fotos');
+            return [a.fecha, total].filter(Boolean).join(' · ');
         }
 
         /** Portada: la foto más reciente del álbum, o un ícono si todavía no hay. */
@@ -4852,7 +4999,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 if (!d.success) { aviso(d.sin_album ? 'info' : 'peligro', d.message); return; }
                 fotos.albumes = {};
                 d.albumes.forEach(function (a) { fotos.albumes[a.id] = a; });
+                // Lo más fresco para el álbum activo y el botón de la tarjeta
+                // (p. ej. tras cambiar un álbum en el modal de administración).
+                ALBUMES_SUBIDA = d.albumes;
                 $id('albumPortadas').innerHTML = d.albumes.map(portadaHtml).join('');
+                pintarSubida();
                 if (!d.albumes.length) aviso('info', 'Todavía no hay álbumes abiertos.');
             }).catch(function () { $id('albumListaCargando').hidden = true; aviso('peligro', SIN_RED); });
         }
@@ -4861,20 +5012,21 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         function reiniciarMuro() {
             detenerSondeo();
             limpiarPrevia();
-            fotos.ids = {}; fotos.masNueva = null; fotos.masVieja = null; fotos.cargadas = false;
+            fotos.ids = {}; fotos.masNueva = null; fotos.masVieja = null; fotos.cargadas = false; fotos.pidiendo = false;
             $id('albumMuro').innerHTML = '';
             $id('albumMas').hidden = true;
             $id('albumVacio').hidden = true;
-            $id('albumZona').hidden = true;
             $id('albumCargando').hidden = true;
+            pintarSubida();
         }
 
-        function abrirAlbum(id) {
-            var a = fotos.albumes[id];
+        /** `a`: el álbum como viene en las portadas (o de ALBUMES_SUBIDA desde la tarjeta). */
+        function abrirAlbum(a) {
             if (!a) return;
             aviso('', '');
             reiniciarMuro();
             fotos.album = a.id;
+            fotos.actual = a;
             $id('albumTitulo').textContent = a.titulo;
             $id('albumSubtitulo').textContent = subtituloAlbum(a);
             $id('albumLista').hidden = true;
@@ -4885,6 +5037,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         function volverALista() {
             reiniciarMuro();
             fotos.album = null;
+            fotos.actual = null;
+            pintarSubida();
             aviso('', '');
             $id('albumDetalle').hidden = true;
             $id('albumLista').hidden = false;
@@ -4893,9 +5047,28 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
         $id('albumPortadas').addEventListener('click', function (e) {
             var b = e.target.closest('[data-album]');
-            if (b) abrirAlbum(b.dataset.album);
+            if (b) abrirAlbum(fotos.albumes[b.dataset.album]);
         });
         $id('albumVolver').addEventListener('click', volverALista);
+
+        // Botón de la tarjeta de usuario (sólo se ve si algún álbum recibe
+        // fotos): abre el álbum activo y el selector de foto en el MISMO toque.
+        // iOS no deja abrirlo después de una espera, así que nada de pedir al
+        // servidor antes. Si justo cerró la ventana, no hace nada: el próximo
+        // pintarSubida lo esconde.
+        if ($id('btnSubirFotos')) {
+            $id('btnSubirFotos').addEventListener('click', function () {
+                var a = albumActivo();
+                if (!a) { pintarSubida(); return; }
+                // Si ese álbum ya está abierto no se reinicia: se perdería la
+                // vista previa o la página de fotos ya cargadas.
+                if (fotos.album !== a.id) abrirAlbum(fotos.albumes[a.id] || a);
+                $('#tabAlbum-tab').tab('show');
+                // En móvil el perfil va encima de las pestañas: bajar a ellas.
+                $id('mainTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (!fotos.blob) $id('albumArchivo').click();
+            });
+        }
 
         function fotoHtml(f) {
             // Las propias llevan marca: en un muro de cientos de fotos, "Tú"
@@ -4905,7 +5078,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 + '<img src="' + esc(f.url) + '" alt="Foto de ' + esc(f.autor) + '" loading="lazy">'
                 + (f.mia ? '<span class="album-foto__mia"><i class="fas fa-user"></i> Tuya</span>' : '')
                 + (f.invitado ? '<span class="album-foto__invitado"><i class="fas fa-glass-cheers"></i> Invitado</span>' : '')
-                + '<span class="album-foto__autor">' + (f.mia ? 'Tú' : esc(f.autor)) + ' · ' + esc(f.hora) + '</span>'
+                // El texto del post, en una línea; completo se lee en el visor.
+                + '<span class="album-foto__autor">'
+                + (f.texto ? '<span class="album-foto__texto">' + esc(f.texto) + '</span>' : '')
+                + (f.mia ? 'Tú' : esc(f.autor)) + ' · ' + esc(f.hora) + '</span>'
                 + '</button>';
         }
 
@@ -4954,18 +5130,25 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         // camino se cambió de álbum, se descarta en vez de mezclar fotos.
         function cargarFotos() {
             var album = fotos.album;
+            fotos.pidiendo = true;
             $id('albumCargando').hidden = false;
             pedir('fotos', datosMuro()).then(function (d) {
                 if (album !== fotos.album) return;
+                fotos.pidiendo = false;
                 $id('albumCargando').hidden = true;
                 if (!d.success) { aviso(d.sin_album ? 'info' : 'peligro', d.message); return; }
                 fotos.cargadas = true;
-                $id('albumZona').hidden = false;
+                pintarSubida();
                 moverOrillas(d);
                 agregarFotos(d.fotos, false);
                 $id('albumMas').hidden = !d.hay_mas;
                 iniciarSondeo();
-            }).catch(function () { $id('albumCargando').hidden = true; aviso('peligro', SIN_RED); });
+            }).catch(function () {
+                if (album !== fotos.album) return;
+                fotos.pidiendo = false;
+                $id('albumCargando').hidden = true;
+                aviso('peligro', SIN_RED);
+            });
         }
 
         /** Trae la siguiente página de fotos viejas. La usan el botón del muro y
@@ -5001,12 +5184,20 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         }
         function detenerSondeo() { clearInterval(fotos.sondeo); fotos.sondeo = null; }
 
+        // El modal de administración (modalAlbumes.php) cambió algún álbum: de
+        // vuelta a las portadas, que se piden de nuevo con fechas y horarios al
+        // día. Si había uno abierto, su configuración ya pudo cambiar.
+        document.addEventListener('mb:albumes', function () {
+            if (fotos.album !== null) volverALista();
+            else if (fotos.abierto) cargarAlbumes();
+        });
+
         // Bootstrap 4 avisa de las pestañas con eventos de jQuery.
         // Al volver a la pestaña se queda en la pantalla en que estaba.
         $('#tabAlbum-tab').on('shown.bs.tab', function () {
             fotos.abierto = true;
             if (fotos.album === null) cargarAlbumes();
-            else if (!fotos.cargadas) cargarFotos();
+            else if (!fotos.cargadas && !fotos.pidiendo) cargarFotos();
             else iniciarSondeo();
         }).on('hidden.bs.tab', function () {
             fotos.abierto = false;
@@ -5048,9 +5239,19 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             if (fotos.previaUrl) URL.revokeObjectURL(fotos.previaUrl);
             fotos.previaUrl = null; fotos.blob = null;
             $id('albumPrevia').hidden = true;
-            $id('albumZona').hidden = false;
             $id('albumArchivo').value = '';
+            $id('albumTexto').value = '';
+            $id('albumTextoCuenta').textContent = '0/140';
+            pintarSubida();
         }
+
+        $id('albumTexto').addEventListener('input', function () {
+            $id('albumTextoCuenta').textContent = this.value.length + '/140';
+        });
+        // Enter en el texto publica, como en cualquier red social.
+        $id('albumTexto').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); $id('albumPublicar').click(); }
+        });
 
         $id('albumArchivo').addEventListener('change', function () {
             var archivo = this.files && this.files[0];
@@ -5084,6 +5285,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             datos.append('accion', 'foto_subir');
             datos.append('album', fotos.album);
             datos.append('foto', fotos.blob, 'foto.jpg');
+            datos.append('texto', $id('albumTexto').value.trim());
             var album = fotos.album;
 
             boton.disabled = true;
@@ -5104,7 +5306,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 // Si se salió del álbum mientras subía, la foto ya quedó en él;
                 // sólo no se pinta aquí, que ahora es otra pantalla.
                 if (album !== fotos.album) return;
-                if (!d.success) { aviso('peligro', d.message); return; }
+                // Fuera de horario (la ventana cerró con la vista previa lista):
+                // se descarta la foto y la caja da paso al aviso de cuándo reabre.
+                if (!d.success) { if (d.fuera_de_horario) limpiarPrevia(); aviso('peligro', d.message); return; }
                 limpiarPrevia();
                 agregarFotos([d.foto], true);
                 aviso('exito', d.message);
@@ -5132,6 +5336,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             $id('albumVisorImg').src = f.url;
             $id('albumVisorImg').alt = 'Foto de ' + (f.mia ? 'ti' : f.autor);
             $id('albumVisorAutor').textContent = (f.mia ? 'Tu foto' : 'Foto de ' + f.autor + (f.invitado ? ' (invitado)' : '')) + ' · ' + f.hora;
+            $id('albumVisorTexto').textContent = f.texto || '';
+            $id('albumVisorTexto').hidden = !f.texto;
             $id('albumVisorBorrar').hidden = !f.mia;
 
             // El contador se recalcula cada vez: el sondeo puede meter fotos

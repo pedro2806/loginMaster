@@ -2191,6 +2191,33 @@ button#btnNotificaciones i.fas {
 .album-subir i { font-size: 1.75rem; color: var(--accent); }
 .album-subir input[type="file"] { display: none; }
 
+/* Horario de subida sobre la caja (pintarSubida en inicio.php). Cerrada
+   (antes del evento o en pausa) es el aviso principal del muro; abierta
+   sólo dice hasta qué hora, en chico. */
+.album-horario {
+    margin-bottom: 1rem;
+    padding: .75rem 1rem;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--text);
+    font-size: .9rem;
+}
+.album-horario[hidden] { display: none; }
+.album-horario.es-abierta {
+    margin-bottom: .5rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: .8rem;
+}
+
+/* Botón "Subir fotos" bajo la tarjeta de usuario, en horario de subida.
+   [hidden] explícito: .btn-block le pone display: block. */
+.album-btn-tarjeta { margin: .5rem 0; font-weight: 600; }
+.album-btn-tarjeta[hidden] { display: none; }
+
 /* Vista previa antes de publicar */
 .album-previa-caja { margin-bottom: 1rem; }
 .album-previa {
@@ -2269,6 +2296,37 @@ button#btnNotificaciones i.fas {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Texto del post: una línea sobre el autor (completo, en el visor) */
+.album-foto__texto {
+    display: block;
+    font-size: .78rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Campo del texto en la vista previa, con su contador */
+.album-texto { position: relative; margin-bottom: .75rem; }
+.album-texto .form-control { padding-right: 3.5rem; }
+.album-texto__cuenta {
+    position: absolute;
+    top: 50%; right: .75rem;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.album-visor__texto {
+    max-width: 40rem;
+    margin: 0;
+    color: #fff;
+    font-size: .95rem;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+.album-visor__texto[hidden] { display: none; }
 
 /* Foto propia: borde y etiqueta "Tuya", para encontrarlas en el muro */
 .album-foto.es-mia { border: 2px solid var(--accent); }
@@ -2418,6 +2476,14 @@ body.album-sin-scroll { overflow: hidden; }
 }
 .album-portada__info strong { font-size: 1rem; }
 .album-portada__info span { font-size: .8rem; color: var(--text-muted); }
+
+/* Engrane "Administrar álbumes" junto al título (modalAlbumes.php, sólo BI) */
+.album-admin { padding: .25rem .5rem; color: var(--text-muted); font-size: 1.15rem; }
+.album-admin:hover, .album-admin:focus-visible { color: var(--accent); }
+
+/* El álbum que está recibiendo fotos ahora: sólo el borde. Uno a la vez
+   (pintarSubida en inicio.php pone .es-activa). */
+.album-portada.es-activa { border: 2px solid var(--accent); }
 
 /* "‹ Álbumes": regresa a las portadas sin depender del botón atrás */
 .album-volver {
