@@ -114,7 +114,10 @@ switch ($accion) {
         exit;
 
     case 'listar_eventos_general':
-        $sql = "SELECT id_evento, nombre, tipo, fecha_inicio, fecha_fin, estatus FROM enc_eventos ORDER BY id_evento DESC";
+        // Los álbumes de fotos (tipo 'album') se administran desde la pestaña
+        // Fotos (modalAlbumes.php): si se editaran aquí, este formulario les
+        // cambiaría el tipo y las fechas.
+        $sql = "SELECT id_evento, nombre, tipo, fecha_inicio, fecha_fin, estatus FROM enc_eventos WHERE tipo <> 'album' ORDER BY id_evento DESC";
         $res = $conn->query($sql);
         $eventos = [];
         while($row = $res->fetch_assoc()){
@@ -307,7 +310,8 @@ case 'listar_eventos_pendientes_empleado':
         $sql = "SELECT e.id_evento, e.nombre, e.tipo, e.fecha_fin 
                 FROM enc_eventos e
                 LEFT JOIN enc_eventos_asignados a ON e.id_evento = a.id_evento AND a.id_empleado = ?
-                WHERE e.estatus = 1 
+                WHERE e.estatus = 1
+                AND e.tipo <> 'album' -- los álbumes de fotos no son actividades por contestar
                 AND (
                     (e.tipo = 'asistencia' AND a.id_empleado IS NOT NULL AND a.confirmado = 0)
                     OR 
@@ -344,7 +348,8 @@ case 'listar_mis_actividades_completas':
                     (SELECT DATE_FORMAT(fecha_opcion, '%d/%m/%Y') FROM enc_eventos_opciones o WHERE o.id_evento = e.id_evento ORDER BY id_opcion LIMIT 1) as fecha_opcion
                 FROM enc_eventos e
                 LEFT JOIN enc_eventos_asignados asig ON e.id_evento = asig.id_evento AND asig.id_empleado = ?
-                WHERE e.estatus = 1 
+                WHERE e.estatus = 1
+                AND e.tipo <> 'album' -- los álbumes de fotos no son actividades por contestar
                 AND (
                     (e.tipo = 'asistencia' AND asig.id_empleado IS NOT NULL) -- Solo donde está invitado
                     OR 

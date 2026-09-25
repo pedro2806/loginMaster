@@ -4,3 +4,5 @@ settings.json
 /.claude
 /img/ProfilePictures/*
 /img/VehiclePictures/*
+/fotos_album/*.jpg
+/sql/*
