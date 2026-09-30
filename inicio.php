@@ -5188,7 +5188,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         $id('albumMas').addEventListener('click', cargarAnteriores);
 
         // "Tiempo real": mientras la pestaña está abierta y la pantalla encendida,
-        // cada 20 s se piden SOLO las fotos más nuevas que la más nueva que ya se ve.
+        // cada 5 min se piden SOLO las fotos más nuevas que la más nueva que ya se ve.
         function iniciarSondeo() {
             if (fotos.sondeo || !fotos.abierto || !fotos.cargadas || fotos.album === null) return;
             fotos.sondeo = setInterval(function () {
@@ -5199,7 +5199,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     moverOrillas(d);
                     if (d.fotos.length) agregarFotos(d.fotos, true);
                 }).catch(function () {});
-            }, 20000);
+            }, 5 * 60 * 1000);
         }
         function detenerSondeo() { clearInterval(fotos.sondeo); fotos.sondeo = null; }
 

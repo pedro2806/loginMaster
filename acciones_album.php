@@ -316,7 +316,7 @@ if ($accion === 'albumes') {
 // entran al mismo muro, sólo para verse.
 if ($accion === 'fotos') {
     // `antes`: página siguiente (fotos más viejas). `despues`: sólo las nuevas
-    // desde la más nueva que ya tiene la pantalla — es lo que consulta cada 20 s.
+    // desde la más nueva que ya tiene la pantalla — es lo que consulta cada 5 min.
     // Los dos son la tupla (fecha, origen, id); MySQL compara filas completas,
     // en el mismo orden que el ORDER BY.
     $album   = mbAlbumPedido($eventos);
@@ -327,7 +327,7 @@ if ($accion === 'fotos') {
         [$muro, $tipos, $params] = mbMuro($eventos[$album]);
         $sql = "SELECT t.* FROM $muro";
         if ($despues !== null) {
-            // Las nuevas se piden de la más vieja a la más nueva: si en 20 s
+            // Las nuevas se piden de la más vieja a la más nueva: si en 5 min
             // llegaron más de una página, las que no caben salen en el
             // siguiente sondeo en vez de quedarse en un hueco del muro.
             $sql .= ' WHERE (t.fecha, t.origen, t.id) > (?, ?, ?)
