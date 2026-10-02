@@ -156,6 +156,7 @@ if ($tieneAlbum) {
             $albumesSubida[] = [
                 'id'       => $idAlb,
                 'titulo'   => mbTituloAlbum($evAlb),
+                'logo'     => mbLogoAlbum($evAlb),
                 'fecha'    => mbFechaCorta((string)$evAlb['fecha_inicio']),
                 'ventanas' => $evAlb['ventanas'],
             ];
@@ -1240,8 +1241,14 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <button class="btn btn-link album-volver" type="button" id="albumVolver">
                                                 <i class="fas fa-chevron-left"></i> Álbumes
                                             </button>
-                                            <h4 class="mb-1" style="color: var(--accent);" id="albumTitulo"></h4>
-                                            <p class="text-muted small mb-3" id="albumSubtitulo"></p>
+                                            <div class="album-cabecera mb-3">
+                                                <div>
+                                                    <h4 class="mb-1" style="color: var(--accent);" id="albumTitulo"></h4>
+                                                    <p class="text-muted small mb-0" id="albumSubtitulo"></p>
+                                                </div>
+                                                <!-- Logo de la sede (logoAlbumHtml) -->
+                                                <span id="albumLogo"></span>
+                                            </div>
 
                                             <!-- Horario de subida: cuándo abre, hasta cuándo sigue abierta o
                                                  cuándo se reabre. Lo llena pintarSubida(). -->
@@ -4988,9 +4995,18 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 + '<span class="album-portada__img">'
                 + (a.portada ? '<img src="' + esc(a.portada) + '" alt="" loading="lazy">' : '<i class="far fa-images"></i>')
                 + '</span>'
+                + '<span class="album-portada__pie">'
                 + '<span class="album-portada__info"><strong>' + esc(a.titulo) + '</strong>'
                 + '<span>' + esc(subtituloAlbum(a)) + '</span></span>'
+                + logoAlbumHtml(a)
+                + '</span>'
                 + '</button>';
+        }
+
+        /** Logo de oktoberMESS de la sede del álbum (includes/album.php,
+            mbLogoAlbum). '' si el álbum no es de una sede. */
+        function logoAlbumHtml(a) {
+            return a.logo ? '<img class="album-logo" src="' + esc(a.logo) + '" alt="oktoberMESS 2026">' : '';
         }
 
         /** Pantalla 1. Se vuelve a pedir cada vez que se muestra: así el número
@@ -5033,6 +5049,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             fotos.actual = a;
             $id('albumTitulo').textContent = a.titulo;
             $id('albumSubtitulo').textContent = subtituloAlbum(a);
+            $id('albumLogo').innerHTML = logoAlbumHtml(a);
             $id('albumLista').hidden = true;
             $id('albumDetalle').hidden = false;
             cargarFotos();

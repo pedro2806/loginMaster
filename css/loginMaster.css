@@ -2495,14 +2495,59 @@ body.album-sin-scroll { overflow: hidden; }
 }
 .album-portada__img img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Pie de la portada: nombre y fecha a la izquierda, logo de la sede a la derecha */
+.album-portada__pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .75rem 1rem;
+}
 .album-portada__info {
     display: flex;
     flex-direction: column;
     gap: .15rem;
-    padding: .75rem 1rem;
+    min-width: 0;
 }
 .album-portada__info strong { font-size: 1rem; }
 .album-portada__info span { font-size: .8rem; color: var(--text-muted); }
+
+/* Logo de oktoberMESS de la sede (includes/album.php, mbLogoAlbum). Siempre
+   sobre blanco: el de Bajío lleva letras grises y el de SLP trae fondo
+   blanco, y en modo oscuro no se leerían. */
+.album-logo {
+    flex: none;
+    height: 2.5rem;
+    width: auto;
+    padding: .2rem .35rem;
+    border-radius: 8px;
+    background: #fff;
+}
+.album-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.album-cabecera .album-logo { height: 3.25rem; }
+
+/* Modal de álbumes: vista previa de la portada (misma proporción 4:3 que en
+   la pestaña) y miniatura en la tabla */
+.alb-portada {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 8rem;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-soft);
+    color: var(--text-muted);
+    font-size: 1.75rem;
+}
+.alb-portada img { width: 100%; height: 100%; object-fit: cover; }
+.alb-mini { width: 2rem; height: 1.5rem; object-fit: cover; border-radius: 4px; vertical-align: middle; }
 
 /* Engrane "Administrar álbumes" junto al título (modalAlbumes.php, sólo BI) */
 .album-admin { padding: .25rem .5rem; color: var(--text-muted); font-size: 1.15rem; }
