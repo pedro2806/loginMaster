@@ -92,6 +92,20 @@ if (empty($adminAlbum)) return;
                             </div>
                         </div>
 
+                        <!-- Portada: sin una propia, la pestaña enseña la foto más reciente del álbum -->
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="alb-portada mr-3" id="alb_portadaVista"></div>
+                            <div>
+                                <span class="small mb-1 d-block">Portada</span>
+                                <label class="btn btn-sm btn-outline-primary mb-0" for="alb_portada">
+                                    <i class="fas fa-image mr-1"></i>Elegir imagen
+                                </label>
+                                <input type="file" id="alb_portada" accept="image/jpeg,image/png,image/webp" hidden>
+                                <button type="button" class="btn btn-sm btn-link text-danger" id="alb_quitarPortada" hidden>Quitar</button>
+                                <small class="text-muted d-block" id="alb_ayudaPortada"></small>
+                            </div>
+                        </div>
+
                         <div class="text-right">
                             <button type="button" class="btn btn-sm btn-secondary" id="alb_btnCancelar" hidden>Cancelar edición</button>
                             <button type="button" class="btn btn-sm btn-primary" id="alb_btnGuardar">
@@ -139,6 +153,9 @@ if (empty($adminAlbum)) return;
     var SIN_SEDE = 'SIN_SEDE';
     var lista    = [];     // lo último de adm_listar
     var sedes    = [];
+    // Portada del formulario: la que ya tiene el álbum (url), la nueva que se
+    // eligió (ya reducida) y si se pidió quitarla. Ver pintarPortada().
+    var portada  = { actual: '', blob: null, vistaUrl: null, quitar: false };
 
     function $a(id) { return document.getElementById(id); }
     function esc(v) { return $('<div>').text(v == null ? '' : v).html(); }
@@ -194,6 +211,76 @@ if (empty($adminAlbum)) return;
         }).join('');
     }
 
+    // ── Portada ──────────────────────────────────────────────────────────
+    /**
+     * La imagen se reduce aquí, antes de subirla: a 1200 px y JPEG, sobre
+     * blanco (un PNG con fondo transparente, como un logo, quedaría negro en
+     * JPEG). El servidor la vuelve a codificar de todos modos.
+     */
+    function reducirPortada(archivo) {
+        return new Promise(function (resolver, fallar) {
+            var url = URL.createObjectURL(archivo);
+            var img = new Image();
+            img.onload = function () {
+                var escala = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+                var c = document.createElement('canvas');
+                c.width  = Math.round(img.naturalWidth * escala);
+                c.height = Math.round(img.naturalHeight * escala);
+                var g = c.getContext('2d');
+                g.fillStyle = '#fff';
+                g.fillRect(0, 0, c.width, c.height);
+                g.drawImage(img, 0, 0, c.width, c.height);
+                URL.revokeObjectURL(url);
+                c.toBlob(function (b) { b ? resolver(b) : fallar(); }, 'image/jpeg', 0.88);
+            };
+            img.onerror = function () { URL.revokeObjectURL(url); fallar(); };
+            img.src = url;
+        });
+    }
+
+    function soltarVista() {
+        if (portada.vistaUrl) URL.revokeObjectURL(portada.vistaUrl);
+        portada.vistaUrl = null;
+    }
+
+    function pintarPortada() {
+        var src = portada.blob ? portada.vistaUrl : (!portada.quitar && portada.actual ? portada.actual : '');
+        $a('alb_portadaVista').innerHTML = src ? '<img src="' + esc(src) + '" alt="">' : '<i class="far fa-images"></i>';
+        $a('alb_quitarPortada').hidden = !src;
+        $a('alb_ayudaPortada').textContent = portada.blob
+            ? 'Se guarda al darle Guardar.'
+            : (src ? '' : 'Sin portada propia: se ve la foto más reciente del álbum.');
+    }
+
+    function reiniciarPortada(actual) {
+        soltarVista();
+        portada = { actual: actual || '', blob: null, vistaUrl: null, quitar: false };
+        $a('alb_portada').value = '';
+        pintarPortada();
+    }
+
+    $a('alb_portada').addEventListener('change', function () {
+        var archivo = this.files && this.files[0];
+        this.value = '';
+        if (!archivo) return;
+        if (!/^image\//.test(archivo.type)) { error('Ese archivo no es una imagen. Sube un JPG, PNG o WebP.'); return; }
+        reducirPortada(archivo).then(function (blob) {
+            soltarVista();
+            portada.blob = blob;
+            portada.vistaUrl = URL.createObjectURL(blob);
+            portada.quitar = false;
+            pintarPortada();
+        }).catch(function () { error('No pudimos abrir esa imagen. Prueba con otra.'); });
+    });
+
+    // Quitar una recién elegida regresa a la que ya tenía el álbum; si no
+    // había una nueva, quita la del álbum (se borra al guardar).
+    $a('alb_quitarPortada').addEventListener('click', function () {
+        if (portada.blob) { soltarVista(); portada.blob = null; }
+        else portada.quitar = true;
+        pintarPortada();
+    });
+
     function limpiarForm() {
         $a('alb_id').value = '';
         $a('alb_tituloForm').textContent = 'Nuevo álbum';
@@ -205,6 +292,7 @@ if (empty($adminAlbum)) return;
         $a('alb_cajaInvitados').hidden = true;
         $a('alb_invitados').value = '';
         pintarSedes([]);
+        reiniciarPortada('');
         $a('alb_btnCancelar').hidden = true;
         pintarTipo();
     }
@@ -225,6 +313,7 @@ if (empty($adminAlbum)) return;
         $a('alb_cajaInvitados').hidden = !a.invitados;
         $a('alb_invitados').value = a.invitados;
         pintarSedes(a.sedes);
+        reiniciarPortada(a.portada);
         $a('alb_btnCancelar').hidden = false;
         pintarTipo();
         $a('alb_titulo').focus();
@@ -245,6 +334,8 @@ if (empty($adminAlbum)) return;
             sedes:   conInv ? Array.prototype.map.call(document.querySelectorAll('.alb-sede:checked'), function (c) { return c.value; }) : []
         };
         if (conInv && !datos.invitados) { error('Escribe el evento de oktoberMESS o desmarca las fotos de invitados.'); return; }
+        if (portada.blob) datos.portada = new File([portada.blob], 'portada.jpg', { type: 'image/jpeg' });
+        else if (portada.quitar) datos.quitar_portada = 1;
         boton.disabled = true;
         pedir('adm_guardar', datos).then(function (d) {
             boton.disabled = false;
@@ -267,6 +358,7 @@ if (empty($adminAlbum)) return;
             : '<button type="button" class="btn btn-sm btn-outline-danger" data-borrar="' + a.id + '" title="Borrar"><i class="fas fa-trash"></i></button>';
         return '<tr' + (a.visible ? '' : ' class="text-muted"') + '>'
             + '<td>' + (a.activo ? '<i class="fas fa-circle text-success mr-1" style="font-size:.6rem;" title="Recibiendo fotos ahora"></i>' : '')
+            + (a.portada ? '<img class="alb-mini mr-2" src="' + esc(a.portada) + '" alt="" title="Con portada propia">' : '')
             + '<strong>' + esc(a.titulo) + '</strong></td>'
             + '<td class="small">' + (a.tipo === 'evento' ? 'Evento' : 'General') + '</td>'
             + '<td class="small text-nowrap">' + esc(fechas) + '</td>'

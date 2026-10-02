@@ -68,7 +68,7 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
         $GLOBALS['mb_albumes_sucio'] = false;
         $cache = [];
         $res = $conn->query("SELECT e.id_evento, e.nombre, e.fecha_inicio, e.fecha_fin,
-                                    a.titulo, a.tipo, a.invitados_evento, a.invitados_sedes, a.visible
+                                    a.titulo, a.tipo, a.invitados_evento, a.invitados_sedes, a.portada, a.visible
                                FROM messbook_albumes a
                                JOIN enc_eventos e ON e.id_evento = a.id_evento
                               ORDER BY e.fecha_inicio, e.id_evento");
@@ -136,6 +136,26 @@ function mbPuedeAdministrar(mysqli $conn, string $noEmpleado): bool {
 /** Lo que se lee en la portada: el `titulo` o el nombre del evento. */
 function mbTituloAlbum(array $evento): string {
     return (string)($evento['cfg']['titulo'] ?? $evento['nombre']);
+}
+
+/*
+ * LOGO de oktoberMESS de cada sede, por código de invitados.sede. Salen de
+ * las landings: Bajío, el del inicio de oktobermess2026 (img/landing/image2.png);
+ * SLP, recortado del pin del mapa de oktobermess2026SLP (img/pin-slp.png), sin
+ * el marco ni la flecha. Los dos a 200 px de alto.
+ */
+const MB_LOGOS_SEDE = [
+    'Bajio' => 'img/album/oktobermess-bajio.png',
+    'SLP'   => 'img/album/oktobermess-slp.png',
+];
+
+/** Logo del álbum: el de la primera de sus sedes que tenga uno. null si el
+    álbum no separa por sede (sin invitados o con todas las sedes). */
+function mbLogoAlbum(array $evento): ?string {
+    foreach ($evento['cfg']['invitados']['sedes'] ?? [] as $sede) {
+        if (is_string($sede) && isset(MB_LOGOS_SEDE[$sede])) return MB_LOGOS_SEDE[$sede];
+    }
+    return null;
 }
 
 /**

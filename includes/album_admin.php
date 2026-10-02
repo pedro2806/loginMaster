@@ -7,7 +7,7 @@
  * endpoint. Cada acción termina la petición.
  *
  *   adm_listar  — todos los álbumes (también los ocultos) + opciones del form
- *   adm_guardar — crear o editar
+ *   adm_guardar — crear o editar, con su portada (opcional)
  *   adm_visible — ocultar / mostrar
  *   adm_borrar  — borrar, sólo si no tiene fotos de empleados
  *
@@ -96,6 +96,7 @@ if ($accion === 'adm_listar') {
                 'hasta'     => substr((string)$e['fecha_fin'], 0, 10),
                 'invitados' => (string)($e['invitados_evento'] ?? ''),
                 'sedes'     => array_values(array_filter(explode(',', (string)($e['invitados_sedes'] ?? '')), 'strlen')),
+                'portada'   => mbPortadaPropia($e) ?? '',
                 'visible'   => (bool)$e['visible'],
                 'fotos'     => $fotos[$id] ?? 0,
                 'activo'    => $id === $activo,
@@ -160,11 +161,47 @@ if ($accion === 'adm_guardar') {
         $invEvento = null;
     }
 
+    // Portada, opcional. Una imagen nueva reemplaza a la que hubiera;
+    // `quitar_portada` la quita y la pestaña vuelve a la foto más reciente. Sin
+    // ninguna de las dos, se queda la que tenía. El modal ya la manda reducida.
+    $archivo = $_FILES['portada'] ?? null;
+    $errPortada = is_array($archivo) ? (int)$archivo['error'] : UPLOAD_ERR_NO_FILE;
+    if ($errPortada === UPLOAD_ERR_INI_SIZE || $errPortada === UPLOAD_ERR_FORM_SIZE) {
+        mbResponder(false, 'La portada es demasiado pesada. Prueba con otra imagen.');
+    }
+    if ($errPortada !== UPLOAD_ERR_OK && $errPortada !== UPLOAD_ERR_NO_FILE) {
+        mbResponder(false, 'No recibimos la portada. Inténtalo de nuevo.');
+    }
+    $conPortada    = $errPortada === UPLOAD_ERR_OK && is_uploaded_file((string)$archivo['tmp_name']);
+    $quitarPortada = !empty($_POST['quitar_portada']);
+
     try {
-        if ($id > 0 && !mbAdmAlbum($conn, $id)) mbResponder(false, 'Ese álbum ya no existe. Recarga la lista.');
+        $album = $id > 0 ? mbAdmAlbum($conn, $id) : null;
+        if ($id > 0 && !$album) mbResponder(false, 'Ese álbum ya no existe. Recarga la lista.');
         if ($visible) {
             $choque = mbAdmConflicto($conn, $id, $tipo, $desde, $hasta);
             if ($choque !== '') mbResponder(false, $choque);
+        }
+
+        // Lo último antes de escribir en la BD: si algo falla de aquí en
+        // adelante, el archivo nuevo se borra.
+        $anterior = $album ? mbPortadaPropia($album) : null;
+        $portada  = $quitarPortada ? null : $anterior;
+        $nueva    = null;
+        if ($conPortada) {
+            $tmp    = (string)$archivo['tmp_name'];
+            $motivo = mbRevisarImagen($tmp);
+            if ($motivo !== '') mbResponder(false, $motivo);
+            $dir = dirname(__DIR__) . '/' . MB_CARPETA;
+            if (!is_dir($dir) || !is_writable($dir)) {
+                error_log('messbook adm_guardar: la carpeta ' . MB_CARPETA . '/ no existe o no tiene permiso de escritura.');
+                mbResponder(false, 'Las imágenes no están disponibles en este momento. Avísale a BI.');
+            }
+            $nueva = MB_CARPETA . '/' . bin2hex(random_bytes(12)) . '.jpg';
+            if (!mbGuardarJpegLimpio($tmp, mbRutaFoto($nueva), MB_PORTADA_LADO)) {
+                mbResponder(false, 'No pudimos procesar esa imagen. Prueba con otra.');
+            }
+            $portada = $nueva;
         }
 
         // enc_eventos.nombre es latin1: fuera lo que no quepa ahí (emojis). El
@@ -181,8 +218,8 @@ if ($accion === 'adm_guardar') {
                 $stmt->bind_param('sssi', $nombre, $inicio, $fin, $id);
                 $stmt->execute();
                 $stmt->close();
-                $stmt = $conn->prepare('UPDATE messbook_albumes SET titulo = ?, tipo = ?, invitados_evento = ?, invitados_sedes = ?, visible = ?, actualizado_por = ? WHERE id_evento = ?');
-                $stmt->bind_param('ssssisi', $titulo, $tipo, $invEvento, $invSedes, $visible, $noEmpleado, $id);
+                $stmt = $conn->prepare('UPDATE messbook_albumes SET titulo = ?, tipo = ?, invitados_evento = ?, invitados_sedes = ?, portada = ?, visible = ?, actualizado_por = ? WHERE id_evento = ?');
+                $stmt->bind_param('sssssisi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible, $noEmpleado, $id);
                 $stmt->execute();
                 $stmt->close();
             } else {
@@ -192,16 +229,19 @@ if ($accion === 'adm_guardar') {
                 $stmt->execute();
                 $id = (int)$conn->insert_id;
                 $stmt->close();
-                $stmt = $conn->prepare('INSERT INTO messbook_albumes (id_evento, titulo, tipo, invitados_evento, invitados_sedes, visible, actualizado_por) VALUES (?, ?, ?, ?, ?, ?, ?)');
-                $stmt->bind_param('issssis', $id, $titulo, $tipo, $invEvento, $invSedes, $visible, $noEmpleado);
+                $stmt = $conn->prepare('INSERT INTO messbook_albumes (id_evento, titulo, tipo, invitados_evento, invitados_sedes, portada, visible, actualizado_por) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->bind_param('isssssis', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible, $noEmpleado);
                 $stmt->execute();
                 $stmt->close();
             }
             $conn->commit();
         } catch (Throwable $e) {
             $conn->rollback();
+            if ($nueva !== null) @unlink(mbRutaFoto($nueva));    // sin fila, el archivo sobra
             throw $e;
         }
+        // La portada que se reemplazó o se quitó ya no la usa nadie.
+        if ($anterior !== null && $anterior !== $portada) @unlink(mbRutaFoto($anterior));
         mbOlvidarAlbumes();
         mbResponder(true, 'Álbum guardado.', ['id' => $id]);
     } catch (Throwable $e) {
@@ -242,7 +282,8 @@ if ($accion === 'adm_visible') {
 if ($accion === 'adm_borrar') {
     $id = (int)($_POST['id'] ?? 0);
     try {
-        if (!mbAdmAlbum($conn, $id)) mbResponder(false, 'Ese álbum ya no existe. Recarga la lista.');
+        $album = mbAdmAlbum($conn, $id);
+        if (!$album) mbResponder(false, 'Ese álbum ya no existe. Recarga la lista.');
         $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ?');
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -265,6 +306,8 @@ if ($accion === 'adm_borrar') {
             $conn->rollback();
             throw $e;
         }
+        $portada = mbPortadaPropia($album);
+        if ($portada !== null) @unlink(mbRutaFoto($portada));
         mbOlvidarAlbumes();
         mbResponder(true, 'Álbum borrado.');
     } catch (Throwable $e) {

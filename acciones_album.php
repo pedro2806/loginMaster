@@ -50,6 +50,7 @@ require_once __DIR__ . '/includes/album.php';
 const MB_MAX_FOTOS        = 30;    // por empleado, en cada álbum
 const MB_TEXTO_MAX        = 140;   // caracteres del texto del post (messbook_fotos.texto)
 const MB_FOTO_LADO        = 1600;  // px del lado largo al guardar
+const MB_PORTADA_LADO     = 1200;  // ídem, la portada que se elige en el modal
 const MB_FOTOS_POR_PAGINA = 30;
 const MB_CARPETA          = 'fotos_album';
 
@@ -136,6 +137,14 @@ function mbFotoSalida(array $f, string $noEmpleado): array {
         // Posición en el muro, para pedir "más viejas / más nuevas que ésta".
         'cursor'   => [(string)$f['fecha'], (string)$f['origen'], (int)$f['id']],
     ];
+}
+
+/** Portada elegida en el modal (messbook_albumes.portada), o null si no hay:
+    entonces la portada es la foto más reciente. Vive en MB_CARPETA, igual que
+    las fotos. */
+function mbPortadaPropia(array $evento): ?string {
+    $url = (string)($evento['portada'] ?? '');
+    return $url !== '' && mbRutaFoto($url) !== null ? $url : null;
 }
 
 /** Ruta en disco de una foto guardada. null si la url no es de las nuestras. */
@@ -327,8 +336,9 @@ if (!$eventos) {
 
 
 // ── albumes ──────────────────────────────────────────────────────────────────
-// Las portadas: una por álbum, con la foto más reciente (de empleados o de
-// invitados), cuántas fotos tiene y la fecha del evento. Las más nuevas primero.
+// Las portadas: una por álbum, con la que se eligió en el modal o, si no hay,
+// la foto más reciente (de empleados o de invitados); cuántas fotos tiene y la
+// fecha del evento. Las más nuevas primero.
 // `ventanas` es el horario de subida: con él la vista decide si enseña la caja
 // de subir o el aviso de cuándo abre (la regla la hace cumplir foto_subir).
 if ($accion === 'albumes') {
@@ -343,19 +353,24 @@ if ($accion === 'albumes') {
             $total = (int)$stmt->get_result()->fetch_row()[0];
             $stmt->close();
 
-            $stmt = $conn->prepare("SELECT t.origen, t.url FROM $muro ORDER BY t.fecha DESC, t.origen DESC, t.id DESC LIMIT 1");
-            $stmt->bind_param($tipos, ...$params);
-            $stmt->execute();
-            $ultima = $stmt->get_result()->fetch_assoc();
-            $stmt->close();
+            $portada = mbPortadaPropia($ev);
+            if ($portada === null) {
+                $stmt = $conn->prepare("SELECT t.origen, t.url FROM $muro ORDER BY t.fecha DESC, t.origen DESC, t.id DESC LIMIT 1");
+                $stmt->bind_param($tipos, ...$params);
+                $stmt->execute();
+                $ultima = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                $portada = $ultima ? mbUrlPublica($ultima) : null;
+            }
 
             $albumes[] = [
                 'id'       => $id,
                 'titulo'   => mbTituloAlbum($ev),
+                'logo'     => mbLogoAlbum($ev),
                 'fecha'    => mbFechaCorta((string)$ev['fecha_inicio']),
                 'orden'    => (string)$ev['fecha_inicio'],
                 'total'    => $total,
-                'portada'  => $ultima ? mbUrlPublica($ultima) : null,
+                'portada'  => $portada,
                 'ventanas' => $ev['ventanas'],
             ];
         }
