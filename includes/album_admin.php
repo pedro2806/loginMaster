@@ -150,8 +150,10 @@ if ($accion === 'adm_guardar') {
     if ($invEvento !== '') {
         if (!preg_match('/^[A-Za-z0-9_-]{1,64}$/', $invEvento)) mbResponder(false, 'El evento de invitados sólo lleva letras, números, - y _.');
         $sedes = array_values(array_unique(array_filter(array_map('trim', (array)($_POST['sedes'] ?? [])), 'strlen')));
+        // Tal como vienen de invitados.sede ('Bajio', 'SLP'), con minúsculas:
+        // el modal marca las casillas comparando el texto exacto.
         foreach ($sedes as $s) {
-            if (!preg_match('/^[A-Z0-9_]{1,20}$/', $s)) mbResponder(false, 'Sede no válida: ' . $s);
+            if (!preg_match('/^[A-Za-z0-9_]{1,20}$/', $s)) mbResponder(false, 'Sede no válida: ' . $s);
         }
         $invSedes = $sedes ? implode(',', $sedes) : null;
     } else {

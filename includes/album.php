@@ -108,7 +108,7 @@ function mbOlvidarAlbumes(): void {
 }
 
 /**
- * invitados_sedes ('BAJIO,SIN_SEDE') → ['BAJIO', null] para mbMuro; null si
+ * invitados_sedes ('Bajio,SIN_SEDE') → ['Bajio', null] para mbMuro; null si
  * vino vacío (todas las sedes). MB_SIN_SEDE se vuelve null: "sin sede".
  */
 function mbSedesDeTexto(?string $texto): ?array {
