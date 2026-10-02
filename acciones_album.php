@@ -60,6 +60,12 @@ const MB_CARPETA          = 'fotos_album';
 // álbum lo dicen invitados_evento / invitados_sedes de messbook_albumes.
 const MB_OKT_PREFIJO_URL  = '/oktobermess/';
 
+// El staff del evento (empleados) sube desde fotos-staff.php de oktoberMESS al
+// mismo foto_evento, con id_usr = 'staff-<noEmpleado>' (OKT_FOTOS_PREFIJO_STAFF
+// de su includes/fotos.php). Si cambia allá, cambia aquí y en los LIKE
+// 'staff-%' de MB_SQL_INVITADOS y mbMuro (y el 7 del SUBSTRING).
+const MB_OKT_PREFIJO_STAFF = 'staff-';
+
 
 function mbResponder(bool $success, string $message = '', array $extra = []): void {
     ob_end_clean();
@@ -107,7 +113,10 @@ function mbUrlPublica(array $f): ?string {
 
 /** Foto del muro tal como la consume la vista. */
 function mbFotoSalida(array $f, string $noEmpleado): array {
-    $invitado = $f['origen'] === 'OKT';
+    // Las del staff vienen de foto_evento (sólo lectura, como las de invitados),
+    // pero son de empleados: salen con su nombre y sin la marca de "Invitado".
+    $staff    = $f['origen'] === 'OKT' && strpos((string)$f['id_usr'], MB_OKT_PREFIJO_STAFF) === 0;
+    $invitado = $f['origen'] === 'OKT' && !$staff;
     return [
         // `clave` es lo que identifica a la foto en la pantalla: el id solo
         // se repite entre las dos tablas.
@@ -121,8 +130,9 @@ function mbFotoSalida(array $f, string $noEmpleado): array {
         // Texto plano: la vista lo escapa.
         'texto'    => (string)($f['texto'] ?? ''),
         'hora'     => date('d/m H:i', strtotime((string)$f['fecha'])),
-        // Dueño por origen + id_usr: el invitado 42 no es el empleado 42.
-        'mia'      => !$invitado && (string)$f['id_usr'] === $noEmpleado,
+        // Dueño por origen + id_usr: el invitado 42 no es el empleado 42. Las
+        // del staff tampoco son "mías" aquí: se borran desde la app del evento.
+        'mia'      => $f['origen'] === 'MB' && (string)$f['id_usr'] === $noEmpleado,
         // Posición en el muro, para pedir "más viejas / más nuevas que ésta".
         'cursor'   => [(string)$f['fecha'], (string)$f['origen'], (int)$f['id']],
     ];
@@ -178,15 +188,28 @@ const MB_SQL_EMPLEADOS = "
      WHERE f.id_evento = ?
        AND f.url REGEXP '^fotos_album/[a-f0-9]{24}[.]jpg$'";
 
+/*
+ * En foto_evento suben invitados (id_usr = invitados.id) y staff
+ * ('staff-<noEmpleado>', MB_OKT_PREFIJO_STAFF): cada uno se busca en su tabla.
+ * Sin separarlos, CAST('staff-523' AS UNSIGNED) da 0, la foto del staff no
+ * encontraba a nadie y quedaba sin nombre y "sin sede".
+ */
 const MB_SQL_INVITADOS = "
     SELECT 'OKT', o.id, o.fecha,
            CONVERT(o.id_usr USING utf8mb4) COLLATE utf8mb4_spanish_ci,
            CONVERT(o.url    USING utf8mb4) COLLATE utf8mb4_spanish_ci,
-           CONVERT(i.nombre USING utf8mb4) COLLATE utf8mb4_spanish_ci,
-           NULL, NULL,
+           COALESCE(CONVERT(i.nombre USING utf8mb4) COLLATE utf8mb4_spanish_ci,
+                    CONVERT(u.nombre USING utf8mb4) COLLATE utf8mb4_spanish_ci),
+           CONVERT(u.nombres   USING utf8mb4) COLLATE utf8mb4_spanish_ci,
+           CONVERT(u.apellidos USING utf8mb4) COLLATE utf8mb4_spanish_ci,
            NULL
       FROM mess_oktobermess.foto_evento o
-      LEFT JOIN mess_oktobermess.invitados i ON i.id = CAST(o.id_usr AS UNSIGNED)
+      LEFT JOIN mess_oktobermess.invitados i
+             ON o.id_usr NOT LIKE 'staff-%' AND i.id = CAST(o.id_usr AS UNSIGNED)
+      LEFT JOIN mess_rrhh.usuarios u
+             ON o.id_usr LIKE 'staff-%'
+            AND u.id = (SELECT MIN(u2.id) FROM mess_rrhh.usuarios u2
+                         WHERE u2.noEmpleado = SUBSTRING(o.id_usr, 7) AND u2.estatus = 1)
      WHERE o.evento = ?
        AND o.url REGEXP '^fotos/[a-f0-9]{24}[.]jpg$'";
 
@@ -197,7 +220,9 @@ const MB_SQL_INVITADOS = "
  *
  * Invitados: los de las dos sedes suben con el mismo foto_evento.evento, así
  * que cada álbum se queda con los de sus `sedes` (invitados.sede; null = sin
- * sede). El filtro va al final, así que cae en la rama de invitados del UNION.
+ * sede). El staff no tiene sede: en un álbum que separa por sede, sus fotos
+ * entran por el día en que se tomaron (mbRangoStaff). El filtro va al final,
+ * así que cae en la rama de invitados del UNION.
  */
 function mbMuro(array $evento): array {
     $sql = MB_SQL_EMPLEADOS; $tipos = 'i'; $params = [(int)$evento['id_evento']];
@@ -205,6 +230,10 @@ function mbMuro(array $evento): array {
     if (is_array($inv) && !empty($inv['evento'])) {
         $sql .= ' UNION ALL ' . MB_SQL_INVITADOS; $tipos .= 's'; $params[] = (string)$inv['evento'];
         if (isset($inv['sedes']) && is_array($inv['sedes'])) {
+            $rango = mbRangoStaff($evento);
+            $staff = $rango ? 'o.fecha >= ? AND o.fecha < ?' : '0';
+            if ($rango) { $tipos .= 'ss'; array_push($params, ...$rango); }
+
             $conSede = array_values(array_filter($inv['sedes'], 'is_string'));
             $cond = [];
             if ($conSede) {
@@ -213,10 +242,39 @@ function mbMuro(array $evento): array {
                 array_push($params, ...$conSede);
             }
             if (in_array(null, $inv['sedes'], true)) $cond[] = 'i.sede IS NULL';
-            $sql .= $cond ? ' AND (' . implode(' OR ', $cond) . ')' : ' AND 0';
+            $invitados = $cond ? implode(' OR ', $cond) : '0';
+
+            $sql .= " AND ((o.id_usr LIKE 'staff-%' AND $staff)
+                        OR (o.id_usr NOT LIKE 'staff-%' AND ($invitados)))";
         }
     }
     return ['(' . $sql . ') t', $tipos, $params];
+}
+
+/**
+ * Desde / hasta (DATETIME, hora de MB_ZONA) de las fotos del staff que le
+ * tocan a este álbum. foto_evento no guarda la sede y el staff sube igual en
+ * Bajío (9-oct) que en SLP (23-oct): la única pista es el día (decisión del
+ * 2026-10-02). Evento: su día, con la misma ventana con la que suben los
+ * empleados (mbDiaCompleto, hasta MB_DIA_HASTA del siguiente). General: los
+ * días de su periodo. Las tomadas fuera, p. ej. de prueba, no salen en ninguno.
+ * null si las fechas del álbum no se pueden leer.
+ */
+function mbRangoStaff(array $evento): ?array {
+    $zona = new DateTimeZone(MB_ZONA);
+    $dia  = mbDiaCompleto($evento);
+    if ($dia === null) {
+        $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', substr((string)$evento['fecha_inicio'], 0, 10), $zona);
+        if (!$inicio) return null;
+        $fin = DateTimeImmutable::createFromFormat('!Y-m-d', substr((string)($evento['fecha_fin'] ?? ''), 0, 10), $zona);
+        if (!$fin || $fin < $inicio) $fin = $inicio;
+        $dia = [$inicio->getTimestamp(), $fin->modify('+1 day')->getTimestamp()];
+    }
+    // foto_evento.fecha la pone NOW() de MySQL, en hora local, igual que
+    // messbook_fotos.fecha.
+    return array_map(function ($ts) use ($zona) {
+        return (new DateTimeImmutable('@' . $ts))->setTimezone($zona)->format('Y-m-d H:i:s');
+    }, $dia);
 }
 
 /** Álbum que pide la vista. Tiene que ser uno de los visibles: nunca se sube ni
