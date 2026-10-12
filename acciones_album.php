@@ -264,8 +264,9 @@ function mbMuro(array $evento): array {
  * Desde / hasta (DATETIME, hora de MB_ZONA) de las fotos del staff que le
  * tocan a este álbum. foto_evento no guarda la sede y el staff sube igual en
  * Bajío (9-oct) que en SLP (23-oct): la única pista es el día (decisión del
- * 2026-10-02). Evento: su día, con la misma ventana con la que suben los
- * empleados (mbDiaCompleto, hasta MB_DIA_HASTA del siguiente). General: los
+ * 2026-10-02). Evento: desde su día; si es de oktoberMESS, hasta que empieza
+ * el siguiente evento de oktoberMESS (mbInicioSiguienteOkt), y si no, con la
+ * misma ventana con la que suben los empleados (mbDiaCompleto). General: los
  * días de su periodo. Las tomadas fuera, p. ej. de prueba, no salen en ninguno.
  * null si las fechas del álbum no se pueden leer.
  */
@@ -278,12 +279,39 @@ function mbRangoStaff(array $evento): ?array {
         $fin = DateTimeImmutable::createFromFormat('!Y-m-d', substr((string)($evento['fecha_fin'] ?? ''), 0, 10), $zona);
         if (!$fin || $fin < $inicio) $fin = $inicio;
         $dia = [$inicio->getTimestamp(), $fin->modify('+1 day')->getTimestamp()];
+    } elseif (!empty($evento['cfg']['invitados'])) {
+        // Evento de oktoberMESS: el staff sube fotos del evento DÍAS después
+        // (el 11-oct entraron 27 del Bajío del 9-oct y no salían). Sus fotos
+        // cuentan hasta que empieza el SIGUIENTE evento de oktoberMESS, no sólo
+        // hasta MB_DIA_HASTA del día siguiente. Sin siguiente, MB_MAX_DIAS.
+        $dia[1] = mbInicioSiguienteOkt($evento) ?? $dia[0] + MB_MAX_DIAS * 86400;
     }
     // foto_evento.fecha la pone NOW() de MySQL, en hora local, igual que
     // messbook_fotos.fecha.
     return array_map(function ($ts) use ($zona) {
         return (new DateTimeImmutable('@' . $ts))->setTimezone($zona)->format('Y-m-d H:i:s');
     }, $dia);
+}
+
+/**
+ * 00:00 (MB_ZONA) del día del siguiente álbum de evento ligado a oktoberMESS
+ * después de `$evento` (visible u oculto), o null si no hay. Así las fotos del
+ * staff de foto_evento caen en un solo álbum: las de antes de que empiece SLP,
+ * en Bajío; desde ese día, en SLP.
+ */
+function mbInicioSiguienteOkt(array $evento): ?int {
+    global $conn;
+    $zona  = new DateTimeZone(MB_ZONA);
+    $desde = substr((string)$evento['fecha_inicio'], 0, 10);
+    $siguiente = null;
+    foreach (mbEventosAlbum($conn, true) as $id => $e) {
+        if ((int)$id === (int)$evento['id_evento'] || empty($e['cfg']['invitados'])) continue;
+        $dia = substr((string)$e['fecha_inicio'], 0, 10);
+        if ($dia > $desde && ($siguiente === null || $dia < $siguiente)) $siguiente = $dia;
+    }
+    if ($siguiente === null) return null;
+    $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', $siguiente, $zona);
+    return $inicio ? $inicio->getTimestamp() : null;
 }
 
 /** Álbum que pide la vista. Tiene que ser uno de los visibles: nunca se sube ni
