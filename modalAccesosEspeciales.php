@@ -161,6 +161,19 @@ if (!empty($_POST['accion']) && strpos($_POST['accion'], 'ae_') === 0) {
 // 
 $_ae_actual = intval($_COOKIE['noEmpleadoL'] ?? 0);
 if (!in_array($_ae_actual, $_ae_permitidos)) return;
+
+// Sistema 'avisos': "Información adicional" es el área con la que publica
+// (id de messbook_avisos_areas, o TODAS). En vez de texto libre se elige de una
+// lista; ver ae_actualizarCampoInfAdicional. Las áreas vienen de la BD
+// (includes/avisos.php, cargado por inicio.php).
+$_ae_areasAviso = [];
+if (function_exists('avAreas') && isset($conn)) {
+    try { $_ae_areasAviso = array_values(avAreas($conn)); } catch (Throwable $e) { error_log('modalAccesosEspeciales avisos: ' . $e->getMessage()); }
+}
+$_ae_opcionesArea = '<option value="TODAS">Todas las áreas</option>';
+foreach ($_ae_areasAviso as $_ae_a) {
+    $_ae_opcionesArea .= '<option value="' . (int)$_ae_a['id'] . '">' . htmlspecialchars($_ae_a['nombre']) . '</option>';
+}
 ?>
 
 <div class="modal fade" id="modalAccesosEspeciales" tabindex="-1" role="dialog" aria-hidden="true">
@@ -208,8 +221,10 @@ if (!in_array($_ae_actual, $_ae_permitidos)) return;
 
                 <div class="row mb-3" id="ae_rowInfAdicional">
                     <div class="col-md-9">
-                        <label class="small font-weight-bold text-dark mb-1">Información adicional</label>
+                        <label class="small font-weight-bold text-dark mb-1" id="ae_labelInfAdicional">Información adicional</label>
                         <textarea id="ae_textareaInfAdicional" class="form-control form-control-sm" rows="2" placeholder="Captura información adicional del registro"></textarea>
+                        <!-- Sólo para el sistema 'avisos': el área con la que publica -->
+                        <select id="ae_selectAreaAviso" class="form-control form-control-sm d-none"><?php echo $_ae_opcionesArea; ?></select>
                     </div>
                 </div>
 
@@ -250,9 +265,13 @@ if (!in_array($_ae_actual, $_ae_permitidos)) return;
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <textarea id="ae_inputInfAdicionalEditar" class="form-control" rows="4" 
+                <textarea id="ae_inputInfAdicionalEditar" class="form-control" rows="4"
                           style="resize: vertical;"></textarea>
+                <!-- Sólo para el sistema 'avisos': el área con la que publica -->
+                <label class="small font-weight-bold mb-1 d-none" id="ae_labelAreaAvisoEditar" for="ae_selectAreaAvisoEditar">Área con la que publica</label>
+                <select id="ae_selectAreaAvisoEditar" class="form-control d-none"><?php echo $_ae_opcionesArea; ?></select>
                 <input type="hidden" id="ae_idEditando">
+                <input type="hidden" id="ae_esAvisoEditando" value="0">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
@@ -290,6 +309,8 @@ function ae_actualizarCamposNuevoRegistro() {
     if (!mostrarOpcionNueva) {
         $('#ae_textareaOpcionNueva').val('');
     }
+
+    ae_actualizarCampoInfAdicional();
 }
 
 function ae_obtenerSistemaSeleccionado() {
@@ -306,6 +327,30 @@ function ae_obtenerOpcionSeleccionada() {
         return ($('#ae_textareaOpcionNueva').val() || '').trim();
     }
     return (opcion || '').trim();
+}
+
+//  Sistema 'avisos': "Información adicional" es el área con la que publica
+//  (id de messbook_avisos_areas o TODAS; lo lee includes/avisos.php, avPermiso).
+//  Se elige de una lista para que nadie tenga que saberse los números.
+const AE_AREAS_AVISO = <?php echo json_encode((object)array_column($_ae_areasAviso, 'nombre', 'id'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>;
+
+function ae_esAvisos(sistema) {
+    return String(sistema || '').trim().toLowerCase() === 'avisos';
+}
+
+/** Texto libre o lista de áreas, según el sistema elegido (o escrito en "Nuevo Registro"). */
+function ae_actualizarCampoInfAdicional() {
+    const avisos = ae_esAvisos(ae_obtenerSistemaSeleccionado());
+    $('#ae_textareaInfAdicional').toggleClass('d-none', avisos);
+    $('#ae_selectAreaAviso').toggleClass('d-none', !avisos);
+    $('#ae_labelInfAdicional').text(avisos ? 'Área con la que publica' : 'Información adicional');
+}
+
+/** '3' → 'Calidad'; vacío o TODAS → 'Todas las áreas'. Sólo para mostrar. */
+function ae_nombreAreaAviso(valor) {
+    const v = String(valor == null ? '' : valor).trim();
+    if (v === '' || v.toUpperCase() === 'TODAS') return 'Todas las áreas';
+    return AE_AREAS_AVISO[v] || v;
 }
 
 function ae_inicializarDataTableAccesos() {
@@ -451,6 +496,8 @@ function ae_inicializarEventos() {
     $('#ae_textareaSistemaNuevo, #ae_textareaOpcionNueva, #ae_textareaInfAdicional').on('input', function () {
         ae_actualizarBtnAgregar();
     });
+    // Si en "Nuevo Registro" escriben 'avisos', también sale la lista de áreas.
+    $('#ae_textareaSistemaNuevo').on('input', ae_actualizarCampoInfAdicional);
 }
 
 window.addEventListener('load', ae_inicializarEventos);
@@ -541,8 +588,11 @@ function ae_refrescarTabla() {
             let btnAccion = row.estatus == 1
                 ? '<button class="btn btn-warning btn-sm shadow-sm" onclick="ae_eliminarAcceso(' + row.id + ')"><i class="fas fa-minus-circle"></i> Desactivar</button>'
                 : '<button class="btn btn-info btn-sm shadow-sm" onclick="ae_reactivarAcceso(' + row.id + ')"><i class="fas fa-check-circle"></i> Reactivar</button>';
-            let infoAdicional = row.inf_adicional ? row.inf_adicional : '-';
-            let btnEditarInfo = '<button class="btn btn-secondary btn-sm shadow-sm" data-id="' + row.id + '" data-info="' + (row.inf_adicional || '').replace(/"/g, '&quot;') + '" onclick="ae_editarInfAdicional(this)"><i class="fas fa-edit"></i> Editar</button>';
+            // En avisos se guarda el id del área: se enseña su nombre.
+            let infoAdicional = ae_esAvisos(row.sistema)
+                ? ae_nombreAreaAviso(row.inf_adicional)
+                : (row.inf_adicional ? row.inf_adicional : '-');
+            let btnEditarInfo = '<button class="btn btn-secondary btn-sm shadow-sm" data-id="' + row.id + '" data-sistema="' + String(row.sistema || '').replace(/"/g, '&quot;') + '" data-info="' + (row.inf_adicional || '').replace(/"/g, '&quot;') + '" onclick="ae_editarInfAdicional(this)"><i class="fas fa-edit"></i> Editar</button>';
             
             html += '<tr>'
                   + '<td class="align-middle">' + row.sistema + '</td>'
@@ -565,7 +615,9 @@ function ae_agregarAcceso() {
     const sistema = ae_obtenerSistemaSeleccionado();
     const opcion  = ae_obtenerOpcionSeleccionada();
     const noEmp   = $('#ae_selectUsuario').val();
-    const infAdicional = ($('#ae_textareaInfAdicional').val() || '').trim();
+    const infAdicional = ae_esAvisos(sistema)
+        ? ($('#ae_selectAreaAviso').val() || 'TODAS')
+        : ($('#ae_textareaInfAdicional').val() || '').trim();
 
     if (!sistema || !opcion || !noEmp) {
         return Swal.fire('Atención', 'Debes seleccionar sistema, opción y usuario.', 'warning');
@@ -644,16 +696,34 @@ function ae_reactivarAcceso(id) {
 //  Editar información adicional 
 function ae_editarInfAdicional(btn) {
     const id  = $(btn).data('id');
-    const info = $(btn).data('info') || '';
+    // attr y no data(): data() convierte "3" en número.
+    const info = $(btn).attr('data-info') || '';
+    const avisos = ae_esAvisos($(btn).attr('data-sistema'));
 
     $('#ae_idEditando').val(id);
-    $('#ae_inputInfAdicionalEditar').val(info);
+    $('#ae_esAvisoEditando').val(avisos ? '1' : '0');
+    $('#ae_inputInfAdicionalEditar').val(info).toggleClass('d-none', avisos);
+    $('#ae_labelAreaAvisoEditar, #ae_selectAreaAvisoEditar').toggleClass('d-none', !avisos);
+    if (avisos) {
+        // Vacío = todas. Un valor que ya no está en la lista se deja sin
+        // elegir: que lo escojan, en vez de ampliarle el permiso a "todas".
+        const valor = info.trim() === '' ? 'TODAS' : info.trim().toUpperCase();
+        const $sel = $('#ae_selectAreaAvisoEditar');
+        if ($sel.find('option').filter(function () { return this.value === valor; }).length) $sel.val(valor);
+        else $sel.prop('selectedIndex', -1);
+    }
     $('#modalEditarInfAdicional').modal('show');
 }
 
 function ae_guardarInfAdicional() {
     const id      = $('#ae_idEditando').val();
-    const nuevaInfo = $('#ae_inputInfAdicionalEditar').val().trim();
+    const esAviso = $('#ae_esAvisoEditando').val() === '1';
+    const nuevaInfo = esAviso
+        ? ($('#ae_selectAreaAvisoEditar').val() || '')
+        : $('#ae_inputInfAdicionalEditar').val().trim();
+    if (esAviso && !nuevaInfo) {
+        return Swal.fire('Atención', 'Elige el área con la que publica.', 'warning');
+    }
 
     $.post(AE_URL,
         { accion: 'ae_actualizar_inf_adicional', id: id, inf_adicional: nuevaInfo },
