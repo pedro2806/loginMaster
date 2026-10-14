@@ -167,6 +167,25 @@ if ($tieneAlbum) {
     }
 }
 
+// Avisos (acciones_avisos.php, modalAvisos.php, js/avisos.js): todos los ven;
+// "Crear Aviso" sólo con permiso (includes/avisos.php, avPermiso).
+require_once __DIR__ . '/includes/avisos.php';
+$puedeCrearAviso = false;
+try {
+    $puedeCrearAviso = avPermiso($conn, (string)$_COOKIE['noEmpleadoL'])['crear'];
+} catch (Throwable $e) {
+    // Sin el botón la pestaña sigue sirviendo: no se tumba el inicio por esto.
+    error_log('inicio.php avisos: ' . $e->getMessage());
+}
+
+// Mural del mes (botón de Mi Espacio): el PDF que sube RRHH
+// (uploads/mural/mural_actual.pdf). Si aún no se ha subido ninguno, el PDF
+// histórico de WordPress como respaldo.
+$muralLocal = __DIR__ . '/uploads/mural/mural_actual.pdf';
+$muralSrc = file_exists($muralLocal)
+    ? 'uploads/mural/mural_actual.pdf?v=' . filemtime($muralLocal)
+    : 'https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-JUNIO_compressed.pdf';
+
 $tieneVehiculo = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $connCV = new mysqli("localhost", "mess_incidencias", "Pipmytrade123", "mess_control_vehicular");
@@ -893,79 +912,35 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </div>
                                 </div>
 
-                                <!-- ===== TAB 3: AVISOS ===== -->
+                                <!-- ===== TAB 3: AVISOS =====
+                                     Comunicados de las áreas (Administración, Calidad, RRHH, BI).
+                                     Todos los ven; "Crear Aviso" sólo con permiso ($puedeCrearAviso).
+                                     La lista la pide js/avisos.js a acciones_avisos.php al abrir
+                                     la pestaña; los modales están en modalAvisos.php. El mural,
+                                     las encuestas y la talla se movieron a Mi Espacio. -->
                                 <div class="tab-pane fade" id="tabAvisos" role="tabpanel">
-                                    <div class="row">
-                                        <!-- Mural / Tablero (solo PDF) -->
-                                        <div class="col-lg-7 mb-4">
-                                            <?php
-                                            // El mural se sirve desde el archivo local subido por RRHH (uploads/mural/mural_actual.pdf).
-                                            // Si aún no se ha subido ninguno, se muestra el PDF histórico de WordPress como respaldo.
-                                            $muralLocal = __DIR__ . '/uploads/mural/mural_actual.pdf';
-                                            $muralSrc = file_exists($muralLocal)
-                                                ? 'uploads/mural/mural_actual.pdf?v=' . filemtime($muralLocal)
-                                                : 'https://www.mess.com.mx/wp-content/uploads/2026/05/MURAL-JUNIO_compressed.pdf';
-                                            ?>
-                                            <div class="card shadow-sm h-100">
-                                                <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--card-soft); border-color: var(--border);">
-                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-bullhorn mr-2"></i>Mural / Tablero de avisos</h6>
-                                                    <?php if ($esAdmin): ?>
-                                                    <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('inputMural').click()" title="Subir un nuevo PDF para el mural">
-                                                        <i class="fas fa-upload mr-1"></i> Actualizar mural
-                                                    </button>
-                                                    <input type="file" id="inputMural" accept="application/pdf" style="display:none" onchange="subirMural(this)">
-                                                    <?php endif; ?>
-                                                </div>
-                                                <!-- El card-body pasa a flex y el visor crece con el:
-                                                     con height fijo de 600px el mural quedaba encerrado en
-                                                     su propio scroll y debajo sobraba media tarjeta. -->
-                                                <div class="card-body p-2 d-flex flex-column">
-                                                    <embed id="vistaPrevia" src='<?php echo $muralSrc; ?>' type="application/pdf" />
-                                                </div>
-                                            </div>
+                                    <div class="avisos-cabecera">
+                                        <div class="avisos-logo-caja"><?php echo avLogosHtml('avisos-logo'); ?></div>
+                                        <div class="avisos-herramientas">
+                                            <?php if ($puedeCrearAviso): ?>
+                                            <button type="button" class="btn btn-primary avisos-crear" id="avisosCrear">
+                                                <i class="fas fa-bullhorn mr-2"></i>Crear Aviso
+                                            </button>
+                                            <?php endif; ?>
+                                            <label class="avisos-buscar mb-0">
+                                                <i class="fas fa-search" aria-hidden="true"></i>
+                                                <input type="search" id="avisosBuscar" placeholder="Buscar" autocomplete="off" aria-label="Buscar avisos">
+                                            </label>
                                         </div>
-                                        <!-- Encuestas + Tallas -->
-                                        <div class="col-lg-5 mb-4" id="divCapacitacionCursos">
-                                            <div class="card shadow-sm h-100">
-                                                <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
-                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-poll mr-2"></i>Encuestas / Votaciones</h6>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div id="encuestasAsigandas"></div>
-                                                    <hr>
-                                                    <!-- Registro de Talla (movido aquí) -->
-                                                    <h6 class="font-weight-bold mb-2"><i class="fas fa-tshirt mr-2"></i>Talla de uniforme</h6>
-                                                    <form method="post">
-                                                        <div class="form-group">
-                                                            <div id="alertTalla" class="alert alert-danger py-2" role="alert" style="font-size:.85rem;">
-                                                                <strong>Importante:</strong> Por favor, registra tu talla.
-                                                            </div>
-                                                            <label for="talla" class="mb-1">Talla:</label>
-                                                            <select class="form-control form-control-sm" id="talla" name="talla" required>
-                                                                <option value="">Seleccione una talla</option>
-                                                                <option value="XS">XS</option>
-                                                                <option value="S">S</option>
-                                                                <option value="M">M</option>
-                                                                <option value="L">L</option>
-                                                                <option value="XL">XL</option>
-                                                            </select>
-                                                            <input type="hidden" name="noEmpleadoT" id="noEmpleadoT" value="">
-                                                        </div>
-                                                        <div class="text-center">
-                                                            <div class="btn-group btn-group-sm" role="group">
-                                                                <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar</button>
-                                                                <?php
-                                                                $usuariosRegistran = array(183, 276, 523, 403);
-                                                                if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
-                                                                    echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
-                                                                }
-                                                                ?>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    </div>
+                                    <div class="empty-state text-center text-muted py-5" id="avisosCargando">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                        <p class="mb-0">Cargando avisos...</p>
+                                    </div>
+                                    <div class="avisos-grid" id="avisosLista"></div>
+                                    <div class="empty-state text-center text-muted py-5" id="avisosVacio" hidden>
+                                        <i class="fas fa-bullhorn fa-2x mb-2" style="opacity:.4;"></i>
+                                        <p class="mb-0" id="avisosVacioTexto">Todavía no hay avisos.</p>
                                     </div>
                                 </div>
 
@@ -1047,10 +1022,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                          alguien que cumpla hoy; si no, este contenedor queda vacío. -->
                                     <div id="cumpleanosHoy"></div>
                                     <div class="row">
-                                        <!-- Columna izquierda: Notificaciones + En Resguardo -->
+                                        <!-- Columna izquierda: Notificaciones · Mural · Encuestas · En Resguardo · Talla -->
                                         <div class="col-lg-5 mb-4 d-flex flex-column">
                                             <!-- Notificaciones -->
-                                            <div class="card shadow-sm mb-4">
+                                            <div class="card shadow-sm mb-3">
                                                 <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-bell mr-2"></i>Notificaciones</h6>
                                                 </div>
@@ -1060,9 +1035,35 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <!-- Mis Activos -->
-                                            <div class="card shadow-sm flex-grow-1">
-                                                <div id="headerResguardo" class="card-header d-flex justify-content-between align-items-center collapsed" style="background: var(--card-soft); border-color: var(--border); cursor:pointer;" data-toggle="collapse" data-target="#collapseResguardo" role="button" aria-expanded="false" aria-controls="collapseResguardo">
+
+                                            <!-- Mural del mes: abre el PDF en una pestaña nueva ($muralSrc).
+                                                 Los admins lo cambian con el botón de al lado (subirMural). -->
+                                            <div class="mural-boton mb-3">
+                                                <a class="btn btn-block mv-btn-accent shadow-sm" id="btnMural" href="<?php echo htmlspecialchars($muralSrc); ?>" target="_blank" rel="noopener">
+                                                    <i class="fas fa-image mr-2"></i>Mural del mes
+                                                </a>
+                                                <?php if ($esAdmin): ?>
+                                                <button type="button" class="btn mv-btn-ghost shadow-sm" onclick="document.getElementById('inputMural').click()" title="Actualizar mural (subir un PDF nuevo)" aria-label="Actualizar mural">
+                                                    <i class="fas fa-upload"></i>
+                                                </button>
+                                                <input type="file" id="inputMural" accept="application/pdf" style="display:none" onchange="subirMural(this)">
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Encuestas / Votaciones: sólo se ve si hay alguna activa
+                                                 (cargarMisEncuestas la muestra u oculta). -->
+                                            <div class="card shadow-sm mb-3" id="cardEncuestas" hidden>
+                                                <div class="card-header" style="background: var(--card-soft); border-color: var(--border);">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-poll mr-2"></i>Encuestas / Votaciones</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="encuestasAsigandas"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Mis Activos (plegable) -->
+                                            <div class="card shadow-sm mb-3">
+                                                <div id="headerResguardo" class="card-header mi-plegable d-flex justify-content-between align-items-center collapsed" data-toggle="collapse" data-target="#collapseResguardo" role="button" aria-expanded="false" aria-controls="collapseResguardo">
                                                     <h6 class="m-0 font-weight-bold"><i class="fas fa-box mr-2"></i>En Resguardo</h6>
                                                     <span class="d-flex align-items-center" style="gap:.5rem;">
                                                         <small class="text-muted"><span id="activosTotal">0</span> registrados</small>
@@ -1079,14 +1080,51 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <!--
-                                                <div class="card-footer text-right" style="background: var(--card-soft); border-color: var(--border);">
-                                                    <button type="button" id="btnExportarActivosCSV" class="btn btn-sm btn-outline-success" disabled>
-                                                        <i class="fas fa-file-csv mr-1"></i> Exportar CSV
-                                                    </button>
-                                                </div>
+                                            </div>
 
-                                                -->
+                                            <!-- Talla de uniforme (plegable). Si no la ha registrado, el
+                                                 encabezado lo dice aunque esté cerrado (cargarTalla). -->
+                                            <div class="card shadow-sm">
+                                                <div id="headerTalla" class="card-header mi-plegable d-flex justify-content-between align-items-center collapsed" data-toggle="collapse" data-target="#collapseTalla" role="button" aria-expanded="false" aria-controls="collapseTalla">
+                                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-tshirt mr-2"></i>Talla de uniforme</h6>
+                                                    <span class="d-flex align-items-center" style="gap:.5rem;">
+                                                        <span class="badge badge-danger" id="badgeTalla" hidden>Pendiente</span>
+                                                        <small class="text-muted" id="tallaActual"></small>
+                                                        <i class="fas fa-chevron-down"></i>
+                                                    </span>
+                                                </div>
+                                                <div class="collapse" id="collapseTalla">
+                                                    <div class="card-body">
+                                                        <form method="post">
+                                                            <div class="form-group">
+                                                                <div id="alertTalla" class="alert alert-danger py-2" role="alert" style="font-size:.85rem;">
+                                                                    <strong>Importante:</strong> Por favor, registra tu talla.
+                                                                </div>
+                                                                <label for="talla" class="mb-1">Talla:</label>
+                                                                <select class="form-control form-control-sm" id="talla" name="talla" required>
+                                                                    <option value="">Seleccione una talla</option>
+                                                                    <option value="XS">XS</option>
+                                                                    <option value="S">S</option>
+                                                                    <option value="M">M</option>
+                                                                    <option value="L">L</option>
+                                                                    <option value="XL">XL</option>
+                                                                </select>
+                                                                <input type="hidden" name="noEmpleadoT" id="noEmpleadoT" value="">
+                                                            </div>
+                                                            <div class="text-center">
+                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                    <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar</button>
+                                                                    <?php
+                                                                    $usuariosRegistran = array(183, 276, 523, 403);
+                                                                    if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
+                                                                        echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
+                                                                    }
+                                                                    ?>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <!-- Columna derecha: Calendario de Vacaciones (más grande) -->
@@ -1610,6 +1648,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <!-- Modal Administrar álbumes de fotos (engrane de la pestaña Fotos; sólo $adminAlbum) -->
     <?php include 'modalAlbumes.php'; ?>
 
+    <!-- Avisos: pop-up "NUEVO AVISO", ver aviso y crear/editar (js/avisos.js) -->
+    <?php include 'modalAvisos.php'; ?>
+
     <!-- Modal MessbookID (oculto hasta liberar: ver $mostrarMessbookID) -->
     <?php if ($mostrarMessbookID): ?>
     <div class="modal fade" id="modalMessbookID" tabindex="-1" role="dialog" aria-labelledby="modalMessbookIDLabel" aria-hidden="true">
@@ -1836,6 +1877,15 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
     <!-- Funciones Globales -->
     <script src="funcionesGlobales.js"></script>
+
+    <!-- Avisos (acciones_avisos.php). El editor del contenido (Summernote) sólo
+         se carga para quien puede publicar. -->
+    <?php if ($puedeCrearAviso): ?>
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs4.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+    <?php endif; ?>
+    <script src="js/avisos.js?v=<?php echo filemtime(__DIR__ . '/js/avisos.js'); ?>"></script>
 
     <script>
         // Variables globales para calendarios (lazy-init en tabs)
@@ -2531,11 +2581,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                             </div>`;
                         }
                     });
-                } else {
-                    html = '<div class="text-center text-muted small py-3">Sin actividades asignadas.</div>';
                 }
 
+                // La tarjeta de Mi Espacio sólo se ve si hay alguna activa (el
+                // servidor ya manda sólo las que están dentro de sus fechas).
                 $('#encuestasAsigandas').html(html);
+                $('#cardEncuestas').prop('hidden', !data.length);
             }, 'json');
         }
 
@@ -3976,8 +4027,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 dataType: 'json'
             }).done(function(res) {
                 if (res && res.success) {
-                    var emb = document.getElementById('vistaPrevia');
-                    if (emb && res.src) emb.src = res.src;
+                    // El botón "Mural del mes" de Mi Espacio apunta al PDF nuevo.
+                    if (res.src) $('#btnMural').attr('href', res.src);
                     Swal.fire('¡Mural actualizado!', 'El nuevo PDF ya está visible para todos.', 'success');
                 } else {
                     Swal.fire('Error', (res && res.message) || 'No se pudo actualizar el mural.', 'error');
@@ -4036,12 +4087,16 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     noEmpleado: noEmpleadoL
                 },
                 success: function(response) {
-                    if (response.success && response.exists && response.talla) {
+                    // La tarjeta está plegada: el encabezado dice la talla o "Pendiente".
+                    var tiene = !!(response.success && response.exists && response.talla);
+                    if (tiene) {
                         $('#alertTalla').hide();
                         $('#talla').val(response.talla);
                     } else {
                         $('#alertTalla').show();
                     }
+                    $('#badgeTalla').prop('hidden', tiene);
+                    $('#tallaActual').text(tiene ? response.talla : '');
                 }
             });
         }
