@@ -1262,31 +1262,33 @@ body.sidebar-hidden .nav-tabs-main {
     background-color: rgba(40, 167, 69, .06);
 }
 
-#headerResguardo .fa-chevron-down {
+/* Tarjetas plegables de Mi Espacio (En Resguardo, Talla de uniforme): en
+   celular y en escritorio. Antes En Resguardo se forzaba abierta en
+   escritorio; ahora las dos empiezan cerradas debajo de Notificaciones. */
+.mi-plegable {
+    background: var(--card-soft);
+    border-color: var(--border);
+    cursor: pointer;
+}
+
+/* SB Admin 2 pinta su propia flecha (::after) en todo card-header plegable;
+   aquí ya va la nuestra. */
+.mi-plegable::after { display: none !important; }
+
+.mi-plegable .fa-chevron-down {
     transition: transform 0.2s ease-in-out;
 }
 
-#headerResguardo.collapsed .fa-chevron-down {
+.mi-plegable.collapsed .fa-chevron-down {
     transform: rotate(-90deg);
 }
 
-/* El colapsable de En Resguardo es solo para móvil; en desktop se ve y se
-   comporta exactamente como antes (siempre abierto, sin flechita ni
-   cursor de "clickeable"). */
-@media (min-width: 769px) {
-    #headerResguardo {
-        cursor: default;
-    }
-
-    #headerResguardo .fa-chevron-down {
-        display: none;
-    }
-
-    #collapseResguardo {
-        display: block !important;
-        height: auto !important;
-    }
+/* Botón "Mural del mes" (+ "Actualizar" para admins) bajo Notificaciones */
+.mural-boton {
+    display: flex;
+    gap: .5rem;
 }
+.mural-boton .btn-block { flex: 1; margin-top: 0; }
 
 .theme-toggle {
     display: flex;
@@ -1526,8 +1528,9 @@ body.theme-dark .fc-col-header-cell {
     border: 1px solid var(--border);
     border-radius: 0.75rem;
     padding: 1rem;
-    min-height: 150px;
-    max-height: 285px;
+    /* Más alto que antes (150–285px): se ven más notificaciones sin scroll. */
+    min-height: 220px;
+    max-height: 460px;
     overflow-y: auto;
 }
 
@@ -2567,3 +2570,232 @@ body.album-sin-scroll { overflow: hidden; }
     font-weight: 600;
     color: var(--accent);
 }
+
+/* ══ Avisos (pestaña AVISOS, pop-up "NUEVO AVISO"; js/avisos.js) ══════════
+   Cada aviso lleva a la izquierda la barra del color de su área
+   (--aviso-color, de messbook_avisos_areas). */
+
+/* Cabecera de la pestaña: logo a la izquierda; Crear Aviso y buscador a la derecha */
+.avisos-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+/* Los PNG traen margen vacío arriba y abajo: la altura cuenta con él */
+.avisos-logo-caja { flex: 0 1 auto; min-width: 0; }
+.avisos-logo { display: block; height: 5rem; width: auto; max-width: 100%; object-fit: contain; }
+.avisos-herramientas {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .6rem;
+    flex: 0 1 22rem;
+}
+.avisos-crear { min-width: 11rem; }
+.avisos-buscar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .4rem .9rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card-bg);
+    color: var(--text-muted);
+}
+.avisos-buscar input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+}
+
+/* Rejilla: 2 columnas desde tablet, 1 en celular */
+.avisos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+@media (min-width: 768px) { .avisos-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.aviso-tarjeta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: .9rem 1rem .6rem 1.4rem;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform .15s, box-shadow .15s;
+}
+.aviso-tarjeta:hover { transform: translateY(-2px); box-shadow: 0 .75rem 1.5rem rgba(0, 0, 0, .12); }
+/* La barra del área */
+.aviso-tarjeta::before {
+    content: "";
+    position: absolute;
+    left: .45rem;
+    top: .55rem;
+    bottom: .55rem;
+    width: 5px;
+    border-radius: 3px;
+    background: var(--aviso-color, #5B9BD5);
+}
+.aviso-tarjeta__cabeza {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .75rem;
+}
+.aviso-fecha {
+    flex: none;
+    font-size: .8rem;
+    color: var(--accent);
+    white-space: nowrap;
+}
+.aviso-titulo { font-weight: 700; font-size: 1rem; line-height: 1.25; text-transform: uppercase; }
+.aviso-subtitulo { font-weight: 700; font-size: .95rem; margin-top: .1rem; }
+.aviso-tarjeta__cuerpo {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-top: .35rem;
+}
+.aviso-extracto {
+    flex: 1;
+    margin: 0;
+    font-size: .88rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.aviso-tarjeta__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: .25rem;
+}
+.aviso-vermas { padding: 0; font-size: .85rem; text-decoration: underline; }
+.aviso-leido { color: var(--text-muted); font-size: .75rem; }
+
+/* Ícono de PDF (tarjeta, pop-up y "ver más") */
+.aviso-pdf {
+    flex: none;
+    color: #e53935;
+    font-size: 3rem;
+    line-height: 1;
+}
+.aviso-pdf:hover { color: #c62828; }
+.aviso-tarjeta .aviso-pdf { font-size: 2.6rem; }
+
+/* Modales de avisos: encabezado azul marino como la propuesta */
+.aviso-modal .modal-content {
+    border: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg);
+    color: var(--text);
+}
+.aviso-modal__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .8rem 1.25rem;
+    background: linear-gradient(180deg, #0d3170 0%, #0a1c61 100%);
+    color: #fff;
+    font-size: 1.1rem;
+    letter-spacing: .02em;
+}
+.aviso-modal__cabecera small { opacity: .8; font-size: .8rem; }
+.aviso-modal__cabecera .close { opacity: .9; text-shadow: none; }
+.aviso-modal__logo { display: block; height: 4.5rem; width: auto; max-width: 80%; object-fit: contain; margin: 0 auto .75rem; }
+.aviso-modal__pie { padding: .25rem 1.25rem 1.25rem; text-align: center; }
+.aviso-aceptar { min-width: 9rem; padding: .45rem 1.5rem; font-size: 1rem; }
+
+/* Cuerpo del aviso: barra del área + texto (+ PDF a la derecha) */
+.aviso-cuerpo {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding-left: 1rem;
+    border-left: 6px solid var(--aviso-color, #5B9BD5);
+}
+.aviso-cuerpo__texto { flex: 1; min-width: 0; }
+.aviso-cuerpo .aviso-titulo { font-size: 1.05rem; }
+.aviso-html { margin-top: .6rem; font-size: .95rem; overflow-wrap: anywhere; }
+.aviso-html p { margin-bottom: .6rem; }
+.aviso-html p:last-child { margin-bottom: 0; }
+.aviso-html a { color: var(--accent); text-decoration: underline; }
+.aviso-html table { border-collapse: collapse; margin: .5rem 0; max-width: 100%; }
+.aviso-html td, .aviso-html th { border: 1px solid var(--border); padding: .25rem .5rem; }
+.aviso-html ul, .aviso-html ol { padding-left: 1.25rem; margin-bottom: .6rem; }
+.aviso-html blockquote { border-left: 3px solid var(--border); margin: .5rem 0; padding-left: .75rem; color: var(--text-muted); }
+
+.aviso-meta { margin: 1rem 0 0; font-size: .8rem; color: var(--text-muted); }
+
+/* Autor / admin: quién lo leyó, editar, ocultar */
+.aviso-gestion {
+    margin-top: 1rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--border);
+}
+.aviso-quienes {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: .75rem;
+    font-size: .85rem;
+}
+@media (min-width: 576px) { .aviso-quienes { grid-template-columns: repeat(2, 1fr); } }
+.aviso-quienes ul {
+    max-height: 16rem;
+    overflow-y: auto;
+    margin: .35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+/* Formulario Crear / editar */
+.aviso-form label { font-weight: 700; margin-bottom: .25rem; }
+.aviso-form .form-control { border: 2px solid var(--accent); border-radius: 8px; }
+.aviso-drop {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    padding: 1rem;
+    border: 2px dashed var(--accent);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-weight: 400 !important;
+    text-align: center;
+    cursor: pointer;
+}
+.aviso-drop i { color: var(--accent); font-size: 1.5rem; }
+.aviso-drop.arrastrando,
+.aviso-drop.tiene-archivo { background: var(--accent-soft); color: var(--text); }
+.aviso-pdf-actual { margin-top: .5rem; font-size: .9rem; }
+.aviso-pdf-actual .fa-file-pdf { color: #e53935; margin-right: .35rem; }
+.aviso-editor-simple { min-height: 12rem; height: auto; overflow-y: auto; }
+
+/* Logo con megáfono: uno por tema (includes/avisos.php, avLogosHtml) */
+.avisos-logo--oscuro { display: none !important; }
+body.theme-dark .avisos-logo--claro { display: none !important; }
+body.theme-dark .avisos-logo--oscuro { display: block !important; }
+
+/* Summernote en modo oscuro */
+body.theme-dark .note-editor.note-frame { border-color: var(--border); }
+body.theme-dark .note-editor .note-editable { background: var(--card-bg); color: var(--text); }
+body.theme-dark .note-editor .note-toolbar,
+body.theme-dark .note-editor .note-statusbar { background: var(--card-soft); }
