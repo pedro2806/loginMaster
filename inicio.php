@@ -4377,6 +4377,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 var area   = dirEscape(e.area   || '—');
                 var puesto = dirEscape(e.puesto || '—');
                 var correo = dirEscape(e.correo || '');
+                // Nombre de la nave (getInfoLoginMaster.php ya lo resuelve del catálogo)
+                var nave   = dirEscape(e.nave || '');
                 var avatar = e.foto
                     ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
                     : '<div class="dir-avatar" style="background:' + col + '">' + ini + '</div>';
@@ -4397,7 +4399,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                             <div class="dir-info">
                                 <div class="dir-name">${nombre} ${noEmp ? `<span class="dir-noemp">- noEmpleado: ${noEmp}</span>` : ''}</div>
                                 <div class="dir-meta">${area} - ${puesto}</div>
-                                <div class="dir-meta"></div>
+                                ${nave ? `<div class="dir-meta"><i class="fas fa-map-marker-alt mr-1"></i>${nave}</div>` : ''}
                                 ${correo ? `<span class="dir-mail">${correo}</span>` : ''}
                                 ${botonVerPlantas}
                                 ${botonAccessoPlanta}
