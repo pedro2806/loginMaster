@@ -17,7 +17,7 @@
  *
  * Reglas que cuida el guardado, para que en cada momento haya a lo más un
  * álbum recibiendo fotos (includes/album.php):
- *   - dos álbumes de EVENTO visibles no caen el mismo día;
+ *   - dos álbumes de EVENTO visibles no se enciman (MB_EVENTO_HORAS cada uno);
  *   - dos GENERALES visibles no se enciman en su periodo.
  */
 
@@ -39,14 +39,16 @@ function mbAdmFecha(string $f): ?string {
 
 /**
  * ¿Choca con otro álbum visible? Devuelve el aviso para la pantalla o ''.
- * Evento: otro evento el mismo día. General: otro general con periodo encimado.
+ * Evento: otro evento cuya ventana se encima (a menos de MB_EVENTO_HORAS, en
+ * días, uno del otro). General: otro general con periodo encimado.
  */
 function mbAdmConflicto(mysqli $conn, int $id, string $tipo, string $desde, string $hasta): string {
+    $diasEvento = (int)ceil(MB_EVENTO_HORAS / 24);
     if ($tipo === 'evento') {
         $stmt = $conn->prepare("SELECT a.titulo FROM messbook_albumes a JOIN enc_eventos e ON e.id_evento = a.id_evento
                                  WHERE a.visible = 1 AND a.tipo = 'evento' AND a.id_evento <> ?
-                                   AND DATE(e.fecha_inicio) = ? LIMIT 1");
-        $stmt->bind_param('is', $id, $desde);
+                                   AND ABS(DATEDIFF(DATE(e.fecha_inicio), ?)) < ? LIMIT 1");
+        $stmt->bind_param('isi', $id, $desde, $diasEvento);
     } else {
         $stmt = $conn->prepare("SELECT a.titulo FROM messbook_albumes a JOIN enc_eventos e ON e.id_evento = a.id_evento
                                  WHERE a.visible = 1 AND a.tipo = 'general' AND a.id_evento <> ?
@@ -58,7 +60,8 @@ function mbAdmConflicto(mysqli $conn, int $id, string $tipo, string $desde, stri
     $stmt->close();
     if (!$fila) return '';
     return $tipo === 'evento'
-        ? 'Ya hay un álbum de evento ese día: «' . $fila[0] . '». Cambia la fecha u oculta el otro.'
+        ? 'Se encima con el álbum de evento «' . $fila[0] . '»: cada uno recibe fotos ' . MB_EVENTO_HORAS
+          . ' horas desde su día, así que tienen que estar a ' . $diasEvento . ' días o más. Cambia la fecha u oculta el otro.'
         : 'El periodo se encima con el álbum general «' . $fila[0] . '». Ajusta las fechas u oculta el otro.';
 }
 

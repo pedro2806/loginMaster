@@ -67,6 +67,24 @@ const MB_OKT_PREFIJO_URL  = '/oktobermess/';
 // 'staff-%' de MB_SQL_INVITADOS y mbMuro (y el 7 del SUBSTRING).
 const MB_OKT_PREFIJO_STAFF = 'staff-';
 
+// Fotos del staff de oktoberMESS: un álbum de evento puede recibirlas desde
+// ANTES de su día (y el anterior deja de recibirlas ese mismo día). Llave =
+// fecha_inicio del álbum; valor = desde qué día. Es el mismo dato de
+// oktoberMESS (config_evento.php → eventos.<sede>.fotos_staff_desde): si cambia
+// allá, cambia aquí. 2026-10-15: lo que sube el equipo desde hoy ya es de SLP.
+const MB_OKT_STAFF_DESDE = [
+    '2026-10-23' => '2026-10-15',   // SLP
+];
+
+// Álbum de evento de oktoberMESS ya CERRADO que conserva fotos de la app
+// subidas después de su ventana (MB_EVENTO_HORAS): las toma hasta ese día, no
+// hasta que acaba la ventana. Llave = fecha_inicio del álbum; valor = hasta qué
+// día (sin incluirlo). 2026-10-15: el Bajío se queda con las 27 que el staff
+// subió el 11-oct; lo que llegue después ya no es suyo.
+const MB_OKT_HASTA = [
+    '2026-10-09' => '2026-10-12',   // Bajío
+];
+
 
 function mbResponder(bool $success, string $message = '', array $extra = []): void {
     ob_end_clean();
@@ -227,22 +245,23 @@ const MB_SQL_INVITADOS = "
  * sus tipos y parámetros para bind_param. Quien la usa agrega su WHERE /
  * ORDER BY sobre t.
  *
- * Invitados: los de las dos sedes suben con el mismo foto_evento.evento, así
- * que cada álbum se queda con los de sus `sedes` (invitados.sede; null = sin
- * sede). El staff no tiene sede: en un álbum que separa por sede, sus fotos
- * entran por el día en que se tomaron (mbRangoStaff). El filtro va al final,
- * así que cae en la rama de invitados del UNION.
+ * Lo de la app (staff e invitados) entra por la fecha en que se subió
+ * (mbRangoOkt): foto_evento no dice a qué evento de oktoberMESS pertenece.
+ * Además, los invitados de las dos sedes suben con el mismo foto_evento.evento,
+ * así que cada álbum se queda con los de sus `sedes` (invitados.sede; null =
+ * sin sede); el staff no tiene sede. Los filtros van al final, así que caen en
+ * la rama de invitados del UNION.
  */
 function mbMuro(array $evento): array {
     $sql = MB_SQL_EMPLEADOS; $tipos = 'i'; $params = [(int)$evento['id_evento']];
     $inv = $evento['cfg']['invitados'] ?? null;
     if (is_array($inv) && !empty($inv['evento'])) {
         $sql .= ' UNION ALL ' . MB_SQL_INVITADOS; $tipos .= 's'; $params[] = (string)$inv['evento'];
-        if (isset($inv['sedes']) && is_array($inv['sedes'])) {
-            $rango = mbRangoStaff($evento);
-            $staff = $rango ? 'o.fecha >= ? AND o.fecha < ?' : '0';
-            if ($rango) { $tipos .= 'ss'; array_push($params, ...$rango); }
+        $rango = mbRangoOkt($evento);
+        if ($rango) { $sql .= ' AND o.fecha >= ? AND o.fecha < ?'; $tipos .= 'ss'; array_push($params, ...$rango); }
+        else $sql .= ' AND 0';
 
+        if (isset($inv['sedes']) && is_array($inv['sedes'])) {
             $conSede = array_values(array_filter($inv['sedes'], 'is_string'));
             $cond = [];
             if ($conSede) {
@@ -253,26 +272,27 @@ function mbMuro(array $evento): array {
             if (in_array(null, $inv['sedes'], true)) $cond[] = 'i.sede IS NULL';
             $invitados = $cond ? implode(' OR ', $cond) : '0';
 
-            $sql .= " AND ((o.id_usr LIKE 'staff-%' AND $staff)
-                        OR (o.id_usr NOT LIKE 'staff-%' AND ($invitados)))";
+            $sql .= " AND (o.id_usr LIKE 'staff-%' OR ($invitados))";
         }
     }
     return ['(' . $sql . ') t', $tipos, $params];
 }
 
 /**
- * Desde / hasta (DATETIME, hora de MB_ZONA) de las fotos del staff que le
- * tocan a este álbum. foto_evento no guarda la sede y el staff sube igual en
- * Bajío (9-oct) que en SLP (23-oct): la única pista es el día (decisión del
- * 2026-10-02). Evento: desde su día; si es de oktoberMESS, hasta que empieza
- * el siguiente evento de oktoberMESS (mbInicioSiguienteOkt), y si no, con la
- * misma ventana con la que suben los empleados (mbDiaCompleto). General: los
- * días de su periodo. Las tomadas fuera, p. ej. de prueba, no salen en ninguno.
- * null si las fechas del álbum no se pueden leer.
+ * Desde / hasta (DATETIME, hora de MB_ZONA) de las fotos de la app (staff e
+ * invitados) que le tocan a este álbum. El staff sube igual en Bajío (9-oct)
+ * que en SLP (23-oct): la única pista es la fecha (decisión del 2026-10-02).
+ *
+ * Evento: la misma ventana con la que suben los empleados (mbVentanaEvento,
+ * MB_EVENTO_HORAS); si es de oktoberMESS, puede empezar antes
+ * (MB_OKT_STAFF_DESDE), acabar en un día fijo (MB_OKT_HASTA) y nunca pasa de
+ * donde empieza el siguiente (mbInicioSiguienteOkt). General: los días de su
+ * periodo. Lo subido fuera no sale en ninguno. null si las fechas del álbum no
+ * se pueden leer.
  */
-function mbRangoStaff(array $evento): ?array {
+function mbRangoOkt(array $evento): ?array {
     $zona = new DateTimeZone(MB_ZONA);
-    $dia  = mbDiaCompleto($evento);
+    $dia  = mbVentanaEvento($evento);
     if ($dia === null) {
         $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', substr((string)$evento['fecha_inicio'], 0, 10), $zona);
         if (!$inicio) return null;
@@ -280,11 +300,15 @@ function mbRangoStaff(array $evento): ?array {
         if (!$fin || $fin < $inicio) $fin = $inicio;
         $dia = [$inicio->getTimestamp(), $fin->modify('+1 day')->getTimestamp()];
     } elseif (!empty($evento['cfg']['invitados'])) {
-        // Evento de oktoberMESS: el staff sube fotos del evento DÍAS después
-        // (el 11-oct entraron 27 del Bajío del 9-oct y no salían). Sus fotos
-        // cuentan hasta que empieza el SIGUIENTE evento de oktoberMESS, no sólo
-        // hasta MB_DIA_HASTA del día siguiente. Sin siguiente, MB_MAX_DIAS.
-        $dia[1] = mbInicioSiguienteOkt($evento) ?? $dia[0] + MB_MAX_DIAS * 86400;
+        // Evento de oktoberMESS (decisión del 2026-10-15): lo de la app cuenta
+        // en la ventana del evento, salvo los días que fijen MB_OKT_STAFF_DESDE
+        // y MB_OKT_HASTA, y nunca se mete en el siguiente evento.
+        $hasta = MB_OKT_HASTA[substr((string)$evento['fecha_inicio'], 0, 10)] ?? null;
+        $hasta = $hasta ? DateTimeImmutable::createFromFormat('!Y-m-d', $hasta, $zona) : null;
+        if ($hasta) $dia[1] = $hasta->getTimestamp();
+        $siguiente = mbInicioSiguienteOkt($evento);
+        if ($siguiente !== null) $dia[1] = min($dia[1], $siguiente);
+        $dia[0] = mbInicioStaffOkt($evento) ?? $dia[0];
     }
     // foto_evento.fecha la pone NOW() de MySQL, en hora local, igual que
     // messbook_fotos.fecha.
@@ -304,13 +328,29 @@ function mbInicioSiguienteOkt(array $evento): ?int {
     $zona  = new DateTimeZone(MB_ZONA);
     $desde = substr((string)$evento['fecha_inicio'], 0, 10);
     $siguiente = null;
+    $sigEvento = null;
     foreach (mbEventosAlbum($conn, true) as $id => $e) {
         if ((int)$id === (int)$evento['id_evento'] || empty($e['cfg']['invitados'])) continue;
         $dia = substr((string)$e['fecha_inicio'], 0, 10);
-        if ($dia > $desde && ($siguiente === null || $dia < $siguiente)) $siguiente = $dia;
+        if ($dia > $desde && ($siguiente === null || $dia < $siguiente)) { $siguiente = $dia; $sigEvento = $e; }
     }
     if ($siguiente === null) return null;
+    // Si el siguiente recibe fotos del staff desde antes de su día, aquí se corta ese día
+    $adelanto = mbInicioStaffOkt($sigEvento);
+    if ($adelanto !== null) return $adelanto;
     $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', $siguiente, $zona);
+    return $inicio ? $inicio->getTimestamp() : null;
+}
+
+/**
+ * 00:00 (MB_ZONA) del día desde el que un álbum de evento recibe las fotos del
+ * staff de oktoberMESS, si es antes de su día (MB_OKT_STAFF_DESDE); null si
+ * empieza en su día, como todos.
+ */
+function mbInicioStaffOkt(array $evento): ?int {
+    $desde = MB_OKT_STAFF_DESDE[substr((string)$evento['fecha_inicio'], 0, 10)] ?? null;
+    if ($desde === null) return null;
+    $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', $desde, new DateTimeZone(MB_ZONA));
     return $inicio ? $inicio->getTimestamp() : null;
 }
 

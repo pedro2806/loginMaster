@@ -116,8 +116,8 @@ if (empty($adminAlbum)) return;
                 </div>
 
                 <p class="small text-muted mb-2">
-                    En cada momento sólo un álbum recibe fotos: el de <strong>evento</strong> en su día (todo el día, hasta las 12:00 del
-                    siguiente) y, fuera de los eventos, el <strong>general</strong> en su periodo (de 12:00 a 15:00 y de 18:00 a 06:00).
+                    En cada momento sólo un álbum recibe fotos: el de <strong>evento</strong> en su día (a cualquier hora, <?php echo MB_EVENTO_HORAS; ?> horas
+                    desde las 00:00) y, fuera de los eventos, el <strong>general</strong> en su periodo (de 12:00 a 15:00 y de 18:00 a 06:00).
                     El que está recibiendo ahora va marcado con <i class="fas fa-circle text-success" style="font-size:.6rem;"></i>.
                 </p>
 
@@ -192,7 +192,7 @@ if (empty($adminAlbum)) return;
         $a('alb_cajaHasta').hidden = !general;
         $a('alb_ayudaTipo').textContent = general
             ? 'Recibe fotos en su periodo, de 12:00 a 15:00 y de 18:00 a 06:00, menos los días de evento.'
-            : 'Recibe fotos todo su día, desde las 00:00 hasta las 12:00 del día siguiente.';
+            : 'Recibe fotos a cualquier hora durante <?php echo MB_EVENTO_HORAS; ?> horas, desde las 00:00 de su día.';
     }
     $a('alb_tipoEvento').addEventListener('change', pintarTipo);
     $a('alb_tipoGeneral').addEventListener('change', pintarTipo);

@@ -17,9 +17,10 @@
  *
  * Hay dos tipos de álbum (decisión del 2026-09-25):
  *
- *   EVENTO — recibe fotos SÓLO en su día (la fecha de fecha_inicio), a
- *   cualquier hora: de las 00:00 a MB_DIA_HASTA del día siguiente. Mientras
- *   tanto, todo lo que se sube va a él.
+ *   EVENTO — recibe fotos SÓLO en su día (la fecha de fecha_inicio) y lo que
+ *   sigue, a cualquier hora: MB_EVENTO_HORAS desde las 00:00 de ese día
+ *   (decisión del 2026-10-15; antes, hasta las 12:00 del día siguiente).
+ *   Mientras tanto, todo lo que se sube va a él.
  *
  *   GENERAL ("Pruebas") — recibe fotos en su periodo (fecha_inicio a
  *   fecha_fin; sólo cuenta el día) y sólo en las ventanas de MB_VENTANAS,
@@ -27,7 +28,7 @@
  *
  * Así, en cada momento a lo más un álbum recibe fotos (el "activo"), y el
  * botón de la tarjeta sube siempre a ése. El modal no deja guardar dos eventos
- * el mismo día ni dos generales con periodos encimados. Un álbum oculto
+ * con ventanas encimadas ni dos generales con periodos encimados. Un álbum oculto
  * (visible = 0) no sale en la pestaña ni recibe fotos.
  *
  * Fotos de invitados: las de mess_oktobermess.foto_evento cuyo `evento` sea
@@ -48,7 +49,7 @@ const MB_SIN_SEDE = 'SIN_SEDE';
  */
 const MB_ZONA      = 'America/Mexico_City';
 const MB_VENTANAS  = [['12:00', '15:00'], ['18:00', '06:00']];   // álbum general
-const MB_DIA_HASTA = '12:00';   // del día siguiente al evento
+const MB_EVENTO_HORAS = 48;    // álbum de evento: desde las 00:00 de su día
 const MB_MAX_DIAS  = 366;       // tope de días por álbum: una fecha_fin mal capturada no genera años de ventanas
 
 
@@ -88,12 +89,12 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
         // los días de evento. Los ocultos no cuentan para nada.
         $diasEvento = [];
         foreach ($cache as $e) {
-            $d = $e['visible'] ? mbDiaCompleto($e) : null;
+            $d = $e['visible'] ? mbVentanaEvento($e) : null;
             if ($d) $diasEvento[] = $d;
         }
         foreach ($cache as $id => $e) {
             if (!$e['visible']) continue;
-            $d = mbDiaCompleto($e);
+            $d = mbVentanaEvento($e);
             $cache[$id]['ventanas'] = $d ? [$d] : mbRestar(mbVentanasPeriodo($e), $diasEvento);
         }
     }
@@ -159,13 +160,13 @@ function mbLogoAlbum(array $evento): ?string {
 }
 
 /**
- * El día de un álbum de evento como [inicio, fin) en segundos Unix: de las
- * 00:00 de `dia` a MB_DIA_HASTA del siguiente. null si es álbum general.
+ * La ventana de un álbum de evento como [inicio, fin) en segundos Unix:
+ * MB_EVENTO_HORAS desde las 00:00 de `dia`. null si es álbum general.
  */
-function mbDiaCompleto(array $evento): ?array {
+function mbVentanaEvento(array $evento): ?array {
     $dia = DateTimeImmutable::createFromFormat('!Y-m-d', (string)($evento['cfg']['dia'] ?? ''), new DateTimeZone(MB_ZONA));
     if (!$dia) return null;
-    return [$dia->getTimestamp(), $dia->modify('+1 day')->modify(MB_DIA_HASTA)->getTimestamp()];
+    return [$dia->getTimestamp(), $dia->modify('+' . MB_EVENTO_HORAS . ' hours')->getTimestamp()];
 }
 
 /** Ventanas de MB_VENTANAS en cada día del periodo, juntas y en orden. */
