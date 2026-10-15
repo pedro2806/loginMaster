@@ -120,24 +120,10 @@ if (!empty($_COOKIE['noEmpleadoL'])) {
     $stmtAbi->close();
 }
 
-// Pestaña "Fotos" (álbum del evento): OCULTA por el momento, sólo la ve el
-// departamento de BI (usuarios.departamento = 27) mientras se prueba. Para
-// liberarla a todos, dejar $tieneAlbum = true y borrar la consulta.
-//
-// Sólo esconde la pestaña: acciones_album.php NO revisa esta regla, así que
-// quien llame al endpoint directo sigue pudiendo ver el muro y subir fotos
-// (decisión del 2026-09-24).
-$tieneAlbum = false;
-if (!empty($_COOKIE['noEmpleadoL'])) {
-    $noEmpAlb = intval($_COOKIE['noEmpleadoL']);
-    $stmtAlb = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
-                               WHERE noEmpleado = ? AND estatus = 1 AND departamento = 27
-                               LIMIT 1");
-    $stmtAlb->bind_param("i", $noEmpAlb);
-    $stmtAlb->execute();
-    $tieneAlbum = (bool) $stmtAlb->get_result()->fetch_assoc();
-    $stmtAlb->close();
-}
+// Pestaña "Fotos" (álbum del evento): la ve TODO el que tenga cuenta de MESS,
+// sin importar rol ni departamento (liberada el 2026-10-15; antes sólo BI,
+// departamento 27, mientras se probaba).
+$tieneAlbum = !empty($_COOKIE['noEmpleadoL']);
 
 // Botón "Subir fotos" bajo la tarjeta de usuario: se ve en los MISMOS horarios
 // en que se puede subir, y sube al álbum que esté recibiendo fotos en ese
@@ -1247,7 +1233,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 <!-- ===== TAB: FOTOS (álbum del evento) =====
                                      Mismo muro que el de oktoberMESS. Todo por AJAX contra
                                      acciones_album.php; esta vista no abre la BD.
-                                     Oculta por ahora: sólo BI ($tieneAlbum). -->
+                                     La ve todo el que tenga cuenta ($tieneAlbum). -->
                                 <?php if ($tieneAlbum): ?>
                                 <div class="tab-pane fade" id="tabAlbum" role="tabpanel">
                                     <div class="album-caja">
