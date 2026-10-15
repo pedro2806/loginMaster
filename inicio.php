@@ -762,12 +762,16 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             </div>
                                         </div>
 
-                                        <!-- TICKETS BI -->
+                                        <!-- TICKETS BI
+                                             "messbook Support Center" es el branding de Tickets; el
+                                             logo vive en su propio repo (el mismo de sus correos).
+                                             48px de alto, como QRide y NEST. -->
                                         <div class="col-md-3 mb-3" id="divTicketsBI" style="display:none">
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../Tickets/" class="btn btn-outline-primary btn-block">
-                                                        <i class="fas fa-ticket-alt fa-lg d-block mb-2"></i> Tickets BI
+                                                        <img src="../Tickets/img/Tickets%20Messbook.png" alt="Tickets BI"
+                                                             class="d-block mx-auto mb-0" style="height:48px;width:auto;max-width:100%">
                                                     </a>
                                                 </div>
                                             </div>
