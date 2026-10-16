@@ -1866,7 +1866,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- Funciones Globales -->
-    <script src="funcionesGlobales.js"></script>
+    <script src="funcionesGlobales.js?v=<?php echo filemtime(__DIR__ . '/funcionesGlobales.js'); ?>"></script>
 
     <!-- Avisos (acciones_avisos.php). El editor del contenido (Summernote) sólo
          se carga para quien puede publicar. -->

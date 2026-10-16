@@ -107,6 +107,9 @@ function obtenerIconoNotificacion(sistema) {
     if (sistema.indexOf('sivac') !== -1) {
         return 'fas fa-user-tie';
     }
+    if (sistema.indexOf('avisos') !== -1) {
+        return 'fas fa-bullhorn';
+    }
     return 'fas fa-bell';
 }
 
@@ -346,6 +349,12 @@ function procesarRedireccionNotificacion(response, idNotificacion, sistema, arch
 
 // Función para construir la URL de destino según el sistema y archivo
 function construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro) {
+    // Avisos vive en el mismo loginMaster: no pasa por un validaLoginNot.
+    if (sistema === 'avisos') {
+        abrirAvisoNotificacion(idRegistro);
+        return;
+    }
+
     var endpointsPorSistema = {
         entradasEq: '/planeacion/validaLoginNot.php',
         planeacion: '/planeacion/validaLoginNot.php',
@@ -398,6 +407,18 @@ function construirUrlNotificacion(idNotificacion, sistema, archivo, idRegistro) 
             alert('Hubo un error de conexión con el servidor.');
         }
     });
+}
+
+// Abre el aviso de una notificación. En inicio.php js/avisos.js deja
+// window.mbAbrirAviso (pestaña AVISOS + "ver más"); en cualquier otra página
+// se va a inicio.php?aviso=<id>, que lo abre al cargar.
+function abrirAvisoNotificacion(idAviso) {
+    var id = parseInt(idAviso || 0, 10);
+    if (typeof window.mbAbrirAviso === 'function') {
+        window.mbAbrirAviso(id);
+        return;
+    }
+    window.location.href = 'inicio.php?aviso=' + id;
 }
 
 // Llama a acciones_notificaciones.php para generar notificaciones internas

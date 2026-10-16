@@ -9,7 +9,8 @@
  *   ver        — uno completo
  *   pendientes — vigentes que este empleado no ha aceptado: el pop-up
  *   aceptar    — "Aceptar" del pop-up
- *   guardar    — crear o editar (con PDF opcional)
+ *   guardar    — crear o editar (con PDF opcional); al crear, notifica a todos
+ *                en la campana del portal (avNotificar)
  *   ocultar    — deja de verse; no se borra
  *   quienes    — quién aceptó y quién falta (autor o admin)
  *
@@ -78,6 +79,32 @@ function avAviso(mysqli $conn, int $id, bool $soloVisibles = true): ?array {
 /** Empleados activos (usuarios es MyISAM y noEmpleado se repite: se cuentan distintos). */
 function avTotalEmpleados(mysqli $conn): int {
     return (int)$conn->query('SELECT COUNT(DISTINCT noEmpleado) FROM mess_rrhh.usuarios WHERE estatus = 1')->fetch_row()[0];
+}
+
+/**
+ * Campana del portal (mess_rrhh.notificacion_historial, la que leen todos los
+ * sistemas): una notificación por empleado activo, menos el autor. Va aparte
+ * del pop-up: aceptar el aviso no la marca leída ni al revés. Si falla, el
+ * aviso ya quedó publicado: se registra en el log y se sigue.
+ * El REGEXP deja fuera los noEmpleado vacíos o con letras, que en modo
+ * estricto tumbarían todo el INSERT al meterlos en id_usuario_destino.
+ */
+function avNotificar(mysqli $conn, int $idAviso, string $autor, string $area, string $titulo): void {
+    $texto    = mb_substr('Nuevo aviso de ' . $area . ': ' . $titulo, 0, 500, 'UTF-8');
+    $autorInt = (int)$autor;
+    try {
+        $stmt = $conn->prepare("INSERT INTO mess_rrhh.notificacion_historial
+                                       (id_usuario_actualiza, id_usuario_destino, accion, sistema, archivo,
+                                        id_registro_referencia, fecha_creacion, fecha_atencion, recordar, estatus)
+                                SELECT ?, u.noEmpleado, 'NuevoAviso', 'avisos', 'aviso', ?, NOW(), NULL, ?, 'NoLeida'
+                                  FROM (SELECT DISTINCT noEmpleado FROM mess_rrhh.usuarios
+                                         WHERE estatus = 1 AND noEmpleado REGEXP '^[0-9]+$' AND noEmpleado <> ?) u");
+        $stmt->bind_param('iiss', $autorInt, $idAviso, $texto, $autor);
+        $stmt->execute();
+        $stmt->close();
+    } catch (Throwable $e) {
+        error_log('messbook acciones_avisos: no se crearon las notificaciones del aviso ' . $idAviso . ': ' . $e->getMessage());
+    }
 }
 
 /** El aviso tal como lo consume la vista. `$completo`: con el HTML. */
@@ -327,6 +354,9 @@ if ($accion === 'guardar') {
         }
         // El PDF que se reemplazó o se quitó ya no lo usa nadie.
         if ($anterior !== null && $anterior !== $pdf) @unlink(avRutaPdf($anterior));
+
+        // Sólo al publicarlo: editarlo no vuelve a notificar.
+        if ($esNuevo) avNotificar($conn, $id, $noEmpleado, $areas[$idArea]['nombre'], $titulo);
 
         avResponder(true, $esNuevo ? '¡Aviso publicado!' : 'Aviso actualizado.', ['id' => $id]);
     } catch (Throwable $e) {

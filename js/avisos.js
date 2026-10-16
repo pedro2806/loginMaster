@@ -27,6 +27,17 @@
         pdf: null, quitarPdf: false                 // PDF del formulario
     };
 
+    // inicio.php?aviso=<id>: viene de la campana del portal (funcionesGlobales.js,
+    // abrirAvisoNotificacion). Se quita de la URL para que recargar no lo reabra.
+    var avisoUrl = (function () {
+        var m = /[?&]aviso=(\d+)/.exec(location.search);
+        return m ? parseInt(m[1], 10) : 0;
+    })();
+    if (avisoUrl && window.history && history.replaceState) {
+        var busqueda = location.search.replace(/([?&])aviso=\d+&?/, '$1').replace(/[?&]$/, '');
+        history.replaceState(null, '', location.pathname + busqueda + location.hash);
+    }
+
     // ── Utilidades ───────────────────────────────────────────────────────
     function pedir(accion, datos) {
         var fd = datos instanceof FormData ? datos : new FormData();
@@ -79,16 +90,22 @@
     // ── 1. Pop-up "NUEVO AVISO" ──────────────────────────────────────────
     function revisarPendientes() {
         pedir('pendientes').then(function (d) {
-            if (!d.success || !d.avisos || !d.avisos.length) return;
+            if (!d.success || !d.avisos || !d.avisos.length) { abrirDeUrl(); return; }
             estado.pendientes = d.avisos;
             estado.totalPendientes = d.avisos.length;
+            // El de la URL viene en la cola: ya lo va a leer en el pop-up.
+            if (d.avisos.some(function (a) { return a.id === avisoUrl; })) avisoUrl = 0;
             mostrarSiguiente();
-        }).catch(function () { /* sin red: saldrá la próxima vez que entre */ });
+        }).catch(function () { abrirDeUrl(); /* sin red: el pop-up saldrá la próxima vez que entre */ });
     }
 
     function mostrarSiguiente() {
         var a = estado.pendientes[0];
-        if (!a) { $('#modalAvisoNuevo').modal('hide'); return; }
+        if (!a) {
+            // El de la URL se abre hasta que se cierre el pop-up: dos modales a la vez se enciman.
+            $('#modalAvisoNuevo').one('hidden.bs.modal', abrirDeUrl).modal('hide');
+            return;
+        }
         estado.actual = a;
         $('#avNuevoCuerpo').html(cuerpoHtml(a));
         var n = estado.totalPendientes - estado.pendientes.length + 1;
@@ -190,6 +207,22 @@
             }
             $('#modalAvisoVer').modal('show');
         }).catch(function () { error(); });
+    }
+
+    // Lo usa la campana del portal (funcionesGlobales.js, abrirAvisoNotificacion).
+    window.mbAbrirAviso = function (id) {
+        if (!id) return;
+        $('#tabAvisos-tab').tab('show');                // carga la lista (shown.bs.tab)
+        // En móvil el perfil va encima de las pestañas: bajar a ellas.
+        var tabs = document.getElementById('mainTabs');
+        if (tabs) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        abrirVer(id);
+    };
+
+    function abrirDeUrl() {
+        var id = avisoUrl;
+        avisoUrl = 0;
+        if (id) window.mbAbrirAviso(id);
     }
 
     $('#avVerQuienes').on('click', function () {
