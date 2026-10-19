@@ -1757,20 +1757,20 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         </div>
     </div>
 
-    <!-- Modal accesos a plantas -->
+<!-- Modal accesos a plantas y documentos -->
     <div class="modal fade" id="modalAccesosPlantas" tabindex="-1" role="dialog" aria-labelledby="modalAccesosPlantasLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title font-weight-bold" id="modalAccesosPlantasLabel">
-                        <i class="fas fa-building mr-2"></i>Accesos a Plantas
+                        <i class="fas fa-id-card mr-2"></i>Control de Accesos y Documentación
                     </h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body bg-light">
-                    <!-- Filtros Dinámicos con Select2 -->
+                    <!-- Filtros Dinámicos con Select2 (Aplica para ambas pestañas) -->
                     <div class="card shadow-sm mb-3">
                         <div class="card-body py-3 px-3">
                             <div class="form-row align-items-end">
@@ -1781,9 +1781,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </select>
                                 </div>
                                 <div class="form-group col-md-4 mb-2 mb-md-0">
-                                    <label class="small font-weight-bold text-dark mb-1"><i class="fas fa-industry mr-1"></i>Planta / Cliente:</label>
+                                    <label class="small font-weight-bold text-dark mb-1"><i class="fas fa-folder-open mr-1"></i>Cliente / Documento:</label>
                                     <select id="filtroCliente" class="form-control form-control-sm select2-filtro" style="width: 100%;">
-                                        <option value="">-- Todos los Clientes --</option>
+                                        <option value="">-- Todos --</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-3 mb-2 mb-md-0">
@@ -1804,20 +1804,59 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         </div>
                     </div>
 
-                    <!-- Tabla de Datos -->
-                    <div class="table-responsive bg-white p-3 rounded shadow-sm">
-                        <table id="TablaAccesosPlantas" class="table table-bordered table-hover table-striped w-100">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Empleado</th>
-                                    <th>Planta / Cliente</th>
-                                    <th>Vigencia</th>
-                                    <th>Área</th>
-                                    <th>Estatus</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <!-- Pestañas de Navegación -->
+                    <ul class="nav nav-tabs mb-3" id="tabsGeneral" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active font-weight-bold text-secondary" id="tab-plantas-btn" data-toggle="tab" href="#tab-plantas" role="tab" aria-controls="tab-plantas" aria-selected="true">
+                                <i class="fas fa-industry mr-1"></i> Accesos a Plantas
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link font-weight-bold text-secondary" id="tab-docs-btn" data-toggle="tab" href="#tab-docs" role="tab" aria-controls="tab-docs" aria-selected="false">
+                                <i class="fas fa-file-alt mr-1"></i> Documentación
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Contenedor de las Tablas -->
+                    <div class="tab-content bg-white p-3 rounded shadow-sm" id="tabsGeneralContent">
+                        
+                        <!-- Pestaña 1: Accesos a Plantas -->
+                        <div class="tab-pane fade show active" id="tab-plantas" role="tabpanel" aria-labelledby="tab-plantas-btn">
+                            <div class="table-responsive">
+                                <table id="TablaAccesosPlantas" class="table table-bordered table-hover table-striped w-100">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Empleado</th>
+                                            <th>Planta / Cliente</th>
+                                            <th>Vigencia</th>
+                                            <th>Área</th>
+                                            <th>Estatus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Pestaña 2: Documentación -->
+                        <div class="tab-pane fade" id="tab-docs" role="tabpanel" aria-labelledby="tab-docs-btn">
+                            <div class="table-responsive">
+                                <table id="TablaDocumentosGeneral" class="table table-bordered table-hover table-striped w-100">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Empleado</th>
+                                            <th>Documento</th>
+                                            <th>Vigencia</th>
+                                            <th>Área</th>
+                                            <th>Estatus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -4433,7 +4472,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
                 var botonAccessoPlanta = '';
                 if (noEmpleadoLog == 521 || noEmpleadoLog == 276 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
-                    botonAccessoPlanta = `<br><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="event.stopPropagation(); agregarAccesosPlantas('${noEmp}', '${nombre}')">+ Accesos Plantas</button>`;
+                    botonAccessoPlanta = `<br><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="event.stopPropagation(); gestionarAccesosYDocumentos('${noEmp}', '${nombre}')">+ Accesos Plantas</button>`;
                 }
 
 
@@ -4632,6 +4671,354 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             });
         }
 
+function gestionarAccesosYDocumentos(noEmpleado, nombre) {
+    
+    // =====================================================================
+    // VARIABLES DEL SEMÁFORO (DÍAS DE VIGENCIA)
+    // Modifica estos números según las reglas de negocio que te soliciten.
+    // =====================================================================
+    const DIAS_ALERTA_AMARILLA = 30; // 30 días o menos para vencer -> Amarillo
+    const DIAS_ALERTA_ROJA = 15;     // 15 días o menos (o ya vencido) -> Rojo
+    // (Cualquier valor mayor a DIAS_ALERTA_AMARILLA se pintará Verde)
+
+    // Sub-función para evaluar el color del semáforo según la fecha
+    function evaluarSemaforo(fechaString) {
+        if (!fechaString) return 'vacio';
+
+        // Fecha de hoy limpia (sin horas)
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        // Fecha del documento (se divide para evitar problemas de zona horaria de JS)
+        const partes = fechaString.split('-');
+        const fechaDoc = new Date(partes[0], partes[1] - 1, partes[2]);
+        fechaDoc.setHours(0, 0, 0, 0);
+
+        // Calcular la diferencia en días
+        const diferenciaTiempo = fechaDoc.getTime() - hoy.getTime();
+        const diferenciaDias = Math.ceil(diferenciaTiempo / (1000 * 3600 * 24));
+
+        if (diferenciaDias <= DIAS_ALERTA_ROJA) {
+            return 'rojo';
+        } else if (diferenciaDias <= DIAS_ALERTA_AMARILLA) {
+            return 'amarillo';
+        } else {
+            return 'verde';
+        }
+    }
+
+    // 1. Consultar accesos y documentos actuales del empleado
+    $.ajax({
+        url: 'acciones_inicio.php',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            accion: 'obtener_accesos_y_documentos',
+            noEmpleado: noEmpleado
+        },
+        success: function(response) {
+            // --- CONSTRUIR HTML DE PLANTAS ---
+            let listadoPlantasHtml = '';
+            if (response.success && response.accesos && response.accesos.length > 0) {
+                listadoPlantasHtml = `
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-bold small text-primary">Plantas ya asignadas:</label>
+                        <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr class="small">
+                                        <th>Cliente</th>
+                                        <th>Vigencia</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                response.accesos.forEach(acc => {
+                    listadoPlantasHtml += `
+                        <tr id="fila-existente-${acc.id}">
+                            <td class="small">${acc.cliente}</td>
+                            <td class="small">${acc.vigencia}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1" onclick="eliminarAccesoExistente(${acc.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                listadoPlantasHtml += `</tbody></table></div></div><hr class="my-3">`;
+            } else {
+                listadoPlantasHtml = `
+                    <div class="alert alert-light text-start py-2 small text-muted mb-3">
+                        Este empleado no tiene plantas asignadas actualmente.
+                    </div><hr class="my-3">
+                `;
+            }
+
+            // --- CONSTRUIR HTML DE DOCUMENTOS (CON SEMÁFORO) ---
+            let listadoDocsHtml = '<div class="text-start" style="max-height: 300px; overflow-y: auto; overflow-x: hidden; padding-right: 5px;">';
+            if (response.success && response.documentos && response.documentos.length > 0) {
+                response.documentos.forEach(doc => {
+                    let valorVigencia = doc.fecha_vigencia ? doc.fecha_vigencia : '';
+                    let estadoSemaforo = evaluarSemaforo(valorVigencia);
+                    
+                    // Variables para aplicar estilos
+                    let rowStyle = 'border-bottom: 1px solid #dee2e6;';
+                    let iconClass = '<i class="far fa-circle text-secondary me-2"></i>';
+                    let textClass = 'text-secondary';
+                    let inputClass = '';
+
+                    // Pintar de acuerdo al semáforo
+                    if (estadoSemaforo === 'verde') {
+                        rowStyle = 'background-color: #d4edda; border-left: 4px solid #198754; border-bottom: none;';
+                        iconClass = '<i class="fas fa-check-circle text-success me-2"></i>';
+                        textClass = 'text-success fw-bold';
+                        inputClass = 'border-success text-success fw-bold';
+                    } else if (estadoSemaforo === 'amarillo') {
+                        rowStyle = 'background-color: #fff3cd; border-left: 4px solid #ffc107; border-bottom: none;';
+                        iconClass = '<i class="fas fa-exclamation-triangle text-warning me-2"></i>';
+                        textClass = 'text-warning fw-bold';
+                        inputClass = 'border-warning text-warning fw-bold';
+                    } else if (estadoSemaforo === 'rojo') {
+                        rowStyle = 'background-color: #f8d7da; border-left: 4px solid #dc3545; border-bottom: none;';
+                        iconClass = '<i class="fas fa-times-circle text-danger me-2"></i>';
+                        textClass = 'text-danger fw-bold';
+                        inputClass = 'border-danger text-danger fw-bold';
+                    }
+
+                    listadoDocsHtml += `
+                        <div class="row g-2 mb-2 align-items-center fila-documento pb-2 pt-2 px-2 rounded" style="transition: all 0.3s ease; ${rowStyle}">
+                            <div class="col-7 text-start small ${textClass} doc-texto">
+                                <input type="hidden" class="doc-id" value="${doc.id_documento}">
+                                ${iconClass}<span>${doc.nombre_documento}</span>
+                            </div>
+                            <div class="col-5">
+                                <input type="date" class="form-control form-control-sm doc-vigencia ${inputClass}" value="${valorVigencia}">
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                listadoDocsHtml += '<p class="small text-muted">No hay documentos en el catálogo.</p>';
+            }
+            listadoDocsHtml += '</div>';
+
+            // 2. Mostrar el SweetAlert con Pestañas
+            Swal.fire({
+                title: 'Gestión del Ingeniero',
+                html: `
+                    <p class="text-muted small mb-3">Empleado: <strong>${nombre} (${noEmpleado})</strong></p>
+                    
+                    <!-- PESTAÑAS (NAVEGACIÓN) -->
+                    <ul class="nav nav-tabs mb-3" style="cursor: pointer;">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tab-btn-plantas">Accesos a Plantas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-btn-docs">Documentación</a>
+                        </li>
+                    </ul>
+
+                    <!-- CONTENIDO DE LAS PESTAÑAS -->
+                    <div id="tab-content-plantas">
+                        ${listadoPlantasHtml}
+                        <label class="form-label fw-bold small text-success text-start d-block">Agregar nuevos accesos:</label>
+                        <div id="contenedor-accesos">
+                            <div class="fila-acceso row g-2 mb-2">
+                                <div class="col-6">
+                                    <input type="text" class="form-control form-control-sm cliente-input" placeholder="Ej. Planta Norte">
+                                </div>
+                                <div class="col-5">
+                                    <input type="date" class="form-control form-control-sm vigencia-input">
+                                </div>
+                                <div class="col-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-success btn-sm mt-2 w-100" id="btn-agregar-fila">
+                            <i class="fas fa-plus"></i> Agregar otro cliente
+                        </button>
+                    </div>
+
+                    <div id="tab-content-docs" style="display: none;">
+                        <label class="form-label fw-bold small text-primary text-start d-block mb-3">Actualizar Vigencia de Documentos:</label>
+                        ${listadoDocsHtml}
+                    </div>
+                `,
+                width: '650px',
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Cambios',
+                cancelButtonText: 'Cerrar',
+                didOpen: () => {
+                    // Lógica para agregar filas de plantas
+                    const contenedor = document.getElementById('contenedor-accesos');
+                    document.getElementById('btn-agregar-fila').addEventListener('click', () => {
+                        const nuevaFila = document.createElement('div');
+                        nuevaFila.className = 'fila-acceso row g-2 mb-2';
+                        nuevaFila.innerHTML = `
+                            <div class="col-6">
+                                <input type="text" class="form-control form-control-sm cliente-input" placeholder="Ej. Planta Sur">
+                            </div>
+                            <div class="col-5">
+                                <input type="date" class="form-control form-control-sm vigencia-input">
+                            </div>
+                            <div class="col-1 d-flex align-items-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.fila-acceso').remove()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                        contenedor.appendChild(nuevaFila);
+                    });
+
+                    // Cambio de pestañas
+                    const btnPlantas = document.getElementById('tab-btn-plantas');
+                    const btnDocs = document.getElementById('tab-btn-docs');
+                    const contentPlantas = document.getElementById('tab-content-plantas');
+                    const contentDocs = document.getElementById('tab-content-docs');
+
+                    btnPlantas.addEventListener('click', () => {
+                        btnPlantas.classList.add('active');
+                        btnDocs.classList.remove('active');
+                        contentPlantas.style.display = 'block';
+                        contentDocs.style.display = 'none';
+                    });
+
+                    btnDocs.addEventListener('click', () => {
+                        btnDocs.classList.add('active');
+                        btnPlantas.classList.remove('active');
+                        contentDocs.style.display = 'block';
+                        contentPlantas.style.display = 'none';
+                    });
+
+                    // EVENTO: Pintar el semáforo en vivo cuando se cambia la fecha
+                    const inputsDocs = document.querySelectorAll('.doc-vigencia');
+                    inputsDocs.forEach(input => {
+                        input.addEventListener('change', function() {
+                            const fila = this.closest('.fila-documento');
+                            const icono = fila.querySelector('i');
+                            const textoContainer = fila.querySelector('.doc-texto');
+                            const estadoSem = evaluarSemaforo(this.value);
+
+                            // Limpiar estilos anteriores
+                            fila.style.backgroundColor = 'transparent';
+                            fila.style.borderLeft = 'none';
+                            fila.style.borderBottom = '1px solid #dee2e6';
+                            icono.className = 'far fa-circle text-secondary me-2';
+                            textoContainer.className = 'col-7 text-start small text-secondary doc-texto';
+                            this.className = 'form-control form-control-sm doc-vigencia';
+
+                            // Aplicar nuevos estilos según el color
+                            if (estadoSem === 'verde') {
+                                fila.style.borderBottom = 'none';
+                                fila.style.backgroundColor = '#d4edda';
+                                fila.style.borderLeft = '4px solid #198754';
+                                icono.className = 'fas fa-check-circle text-success me-2';
+                                textoContainer.classList.add('text-success', 'fw-bold');
+                                textoContainer.classList.remove('text-secondary');
+                                this.classList.add('border-success', 'text-success', 'fw-bold');
+                            } else if (estadoSem === 'amarillo') {
+                                fila.style.borderBottom = 'none';
+                                fila.style.backgroundColor = '#fff3cd';
+                                fila.style.borderLeft = '4px solid #ffc107';
+                                icono.className = 'fas fa-exclamation-triangle text-warning me-2';
+                                textoContainer.classList.add('text-warning', 'fw-bold');
+                                textoContainer.classList.remove('text-secondary');
+                                this.classList.add('border-warning', 'text-warning', 'fw-bold');
+                            } else if (estadoSem === 'rojo') {
+                                fila.style.borderBottom = 'none';
+                                fila.style.backgroundColor = '#f8d7da';
+                                fila.style.borderLeft = '4px solid #dc3545';
+                                icono.className = 'fas fa-times-circle text-danger me-2';
+                                textoContainer.classList.add('text-danger', 'fw-bold');
+                                textoContainer.classList.remove('text-secondary');
+                                this.classList.add('border-danger', 'text-danger', 'fw-bold');
+                            }
+                        });
+                    });
+                },
+                preConfirm: () => {
+                    const filasPlantas = document.querySelectorAll('.fila-acceso');
+                    const accesosNuevos = [];
+                    let valido = true;
+
+                    filasPlantas.forEach(fila => {
+                        const cliente = fila.querySelector('.cliente-input').value.trim();
+                        const vigencia = fila.querySelector('.vigencia-input').value;
+
+                        if (cliente || vigencia) {
+                            if (!cliente || !vigencia) {
+                                valido = false;
+                            } else {
+                                accesosNuevos.push({ cliente: cliente, vigencia: vigencia });
+                            }
+                        }
+                    });
+
+                    if (!valido) {
+                        Swal.showValidationMessage('Asegúrate de completar el cliente y la vigencia en las plantas agregadas.');
+                        document.getElementById('tab-btn-plantas').click();
+                        return false;
+                    }
+
+                    const filasDocs = document.querySelectorAll('.fila-documento');
+                    const documentosActualizados = [];
+
+                    filasDocs.forEach(fila => {
+                        const idDoc = fila.querySelector('.doc-id').value;
+                        const vigenciaDoc = fila.querySelector('.doc-vigencia').value;
+                        
+                        if (vigenciaDoc !== "") {
+                            documentosActualizados.push({ id_documento: idDoc, fecha_vigencia: vigenciaDoc });
+                        }
+                    });
+
+                    return {
+                        accesos: accesosNuevos,
+                        documentos: documentosActualizados
+                    };
+                }
+            }).then((result) => {
+                // Al guardar exitosamente
+                if (result.isConfirmed && result.value) {
+                    $.ajax({
+                        url: 'acciones_inicio.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            accion: 'guardar_accesos_y_documentos',
+                            noEmpleado: noEmpleado,
+                            accesos: result.value.accesos,
+                            documentos: result.value.documentos
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Alerta de éxito breve y reapertura del modal
+                                Swal.fire({
+                                    title: '¡Éxito!',
+                                    text: 'La información se ha guardado correctamente.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    // REABRE EL MODAL AUTOMÁTICAMENTE
+                                    gestionarAccesosYDocumentos(noEmpleado, nombre);
+                                });
+                            } else {
+                                Swal.fire('Error', response.message || 'Hubo un problema al guardar.', 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
         function verAccesosPlantas(noEmpleado, nombre) {            
             $.ajax({
                 url: 'acciones_inicio.php',
@@ -4736,107 +5123,163 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         let dtAccesosPlantas = null;
 
         function verAccesosPlanta() {
-            $('#modalAccesosPlantas').modal('show');
+    $('#modalAccesosPlantas').modal('show');
 
-            // Inicializar Select2 en los 3 selects dentro del modal
-            $('.select2-filtro').select2({
-                dropdownParent: $('#modalAccesosPlantas'),
-                placeholder: 'Seleccionar...',
-                allowClear: true,
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    }
-                }
-            });
-
-            $.ajax({
-                url: 'acciones_inicio.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    accion: 'obtener_todos_accesos_ingenieros'
-                },
-                success: function(response) {
-                    // Destruir instancia previa de DataTables si existe
-                    if ($.fn.DataTable.isDataTable('#TablaAccesosPlantas')) {
-                        dtAccesosPlantas.destroy();
-                    }
-
-                    var tablaBody = $('#TablaAccesosPlantas tbody').empty();
-                    
-                    var selectArea = $('#filtroArea').empty().append('<option value="">-- Todas las Áreas --</option>');
-                    var selectCliente = $('#filtroCliente').empty().append('<option value="">-- Todos los Clientes --</option>');
-                    
-                    let areasSet = new Set();
-                    let clientesSet = new Set();
-
-                    if (response.success && response.accesos.length > 0) {
-                        let hoy = new Date();
-                        hoy.setHours(0, 0, 0, 0);
-
-                        response.accesos.forEach(function(acc) {
-                            let fechaParts = acc.vigencia.split('-');
-                            let fechaVigencia = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]);
-                            
-                            let diferenciaMs = fechaVigencia - hoy;
-                            let diasRestantes = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
-
-                            let estatus = 'Vigente';
-                            let badgeClass = 'badge-success';
-
-                            if (diasRestantes < 0) {
-                                estatus = 'Vencido';
-                                badgeClass = 'badge-danger';
-                            } else if (diasRestantes <= 30) {
-                                estatus = 'Por vencer';
-                                badgeClass = 'badge-warning';
-                            }
-
-                            // Guardar áreas y clientes únicos para los select2
-                            if (acc.area) areasSet.add(acc.area);
-                            if (acc.cliente) clientesSet.add(acc.cliente);
-
-                            tablaBody.append(
-                                '<tr>' +
-                                    '<td class="font-weight-bold text-dark">' + acc.noEmpleado + ' - ' + acc.nombre + '</td>' +
-                                    '<td>' + acc.cliente + '</td>' +
-                                    '<td>' + acc.vigencia + '</td>' +
-                                    '<td>' + acc.area + '</td>' +
-                                    '<td class="text-center"><span class="badge ' + badgeClass + ' px-2 py-1">' + estatus + '</span></td>' +
-                                '</tr>'
-                            );
-                        });
-
-                        // Llenar select de áreas únicas
-                        areasSet.forEach(function(area) {
-                            selectArea.append('<option value="' + area + '">' + area + '</option>');
-                        });
-
-                        // Llenar select de clientes únicos
-                        clientesSet.forEach(function(cliente) {
-                            selectCliente.append('<option value="' + cliente + '">' + cliente + '</option>');
-                        });
-
-                        // Disparar actualización en Select2
-                        $('.select2-filtro').trigger('change.select2');
-
-                        // Inicializar DataTables
-                        dtAccesosPlantas = $('#TablaAccesosPlantas').DataTable({
-                            language: {
-                                url: 'vendor/datatables/es-ES.json'
-                            },
-                            pageLength: 10,
-                            responsive: true,
-                            order: [[2, 'asc']] // Ordenar por vigencia ascendente
-                        });
-
-                    } else {
-                        tablaBody.html('<tr><td colspan="5" class="text-center text-muted">No hay accesos a plantas registrados.</td></tr>');
-                    }
-                }
-            });
+    // Inicializar Select2
+    $('.select2-filtro').select2({
+        dropdownParent: $('#modalAccesosPlantas'),
+        placeholder: 'Seleccionar...',
+        allowClear: true,
+        language: {
+            noResults: function() { return "No se encontraron resultados"; }
         }
+    });
+
+    $.ajax({
+        url: 'acciones_inicio.php',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            accion: 'obtener_todos_accesos_ingenieros'
+        },
+        success: function(response) {
+            // Destruir instancias previas
+            if ($.fn.DataTable.isDataTable('#TablaAccesosPlantas')) {
+                $('#TablaAccesosPlantas').DataTable().destroy();
+            }
+            if ($.fn.DataTable.isDataTable('#TablaDocumentosGeneral')) {
+                $('#TablaDocumentosGeneral').DataTable().destroy();
+            }
+
+            var bodyPlantas = $('#TablaAccesosPlantas tbody').empty();
+            var bodyDocs = $('#TablaDocumentosGeneral tbody').empty();
+            
+            var selectArea = $('#filtroArea').empty().append('<option value="">-- Todas las Áreas --</option>');
+            var selectCliente = $('#filtroCliente').empty().append('<option value="">-- Todos --</option>');
+            
+            let areasSet = new Set();
+            let elementosSet = new Set();
+
+            if (response.success && response.accesos.length > 0) {
+                let hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+
+                const DIAS_AMARILLO = 30; // De 30 a 16 días -> Amarillo
+                const DIAS_ROJO = 15;     // 15 días o menos -> Rojo
+
+                response.accesos.forEach(function(acc) {
+                    let fechaParts = acc.vigencia.split('-');
+                    let fechaVigencia = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]);
+                    fechaVigencia.setHours(0, 0, 0, 0);
+                    
+                    let diferenciaMs = fechaVigencia - hoy;
+                    let diasRestantes = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+
+                    let estatus = 'Vigente';
+                    let badgeClass = 'bg-success text-white';
+                    let filtroEstatus = 'Vigente'; // Variable oculta para que el filtro funcione perfecto
+
+                    // Lógica del semáforo
+                    if (diasRestantes < 0) {
+                        estatus = 'Vencido';
+                        filtroEstatus = 'Vencido';
+                        badgeClass = 'bg-danger text-white';
+                    } else if (diasRestantes <= DIAS_ROJO) {
+                        estatus = 'Vence en ' + diasRestantes + ' días';
+                        filtroEstatus = 'Por vencer'; // Para que el filtro "Por vencer" atrape estos también
+                        badgeClass = 'bg-danger text-white';
+                    } else if (diasRestantes <= DIAS_AMARILLO) {
+                        estatus = 'Por vencer';
+                        filtroEstatus = 'Por vencer';
+                        badgeClass = 'bg-warning text-dark';
+                    }
+
+                    // Guardar para filtros Select2
+                    if (acc.area) areasSet.add(acc.area);
+                    if (acc.elemento) elementosSet.add(acc.elemento);
+
+                    // Agregamos data-search para que los filtros ocultos de DataTables funcionen de forma exacta
+                    let filaHTML = '<tr>' +
+                        '<td class="font-weight-bold text-dark">' + acc.noEmpleado + '<br>' + acc.nombre + '</td>' +
+                        '<td>' + acc.elemento + '</td>' +
+                        '<td>' + acc.vigencia + '</td>' +
+                        '<td>' + acc.area + '</td>' +
+                        '<td class="text-center" data-search="' + filtroEstatus + '"><span class="badge ' + badgeClass + ' px-2 py-1">' + estatus + '</span></td>' +
+                    '</tr>';
+
+                    // Separar en la pestaña correspondiente
+                    if (acc.tipo === 'Planta') {
+                        bodyPlantas.append(filaHTML);
+                    } else {
+                        bodyDocs.append(filaHTML);
+                    }
+                });
+
+                // Llenar selects
+                areasSet.forEach(area => selectArea.append('<option value="' + area + '">' + area + '</option>'));
+                elementosSet.forEach(elemento => selectCliente.append('<option value="' + elemento + '">' + elemento + '</option>'));
+                
+                // Disparamos el Select2 pero sin disparar el evento de búsqueda aún
+                $('#filtroArea, #filtroCliente, #filtroEstatus').val('');
+                $('.select2-filtro').trigger('change.select2');
+
+                // Configuracion común para ambas tablas
+                let dtConfig = {
+                    language: { url: 'vendor/datatables/es-ES.json' },
+                    pageLength: 10,
+                    responsive: true,
+                    order: [[2, 'asc']] // Ordenar por vigencia
+                };
+
+                // Inicializar ambas tablas
+                let tablaPlantas = $('#TablaAccesosPlantas').DataTable(dtConfig);
+                let tablaDocs = $('#TablaDocumentosGeneral').DataTable(dtConfig);
+
+                // =========================================================
+                // LÓGICA DE FILTROS: AQUÍ SE CONECTAN SELECT2 Y DATATABLES
+                // =========================================================
+                
+                // Evento al cambiar cualquier Select2
+                $('#filtroArea, #filtroCliente, #filtroEstatus').off('change').on('change', function() {
+                    let valArea = $('#filtroArea').val();
+                    let valCliente = $('#filtroCliente').val();
+                    let valEstatus = $('#filtroEstatus').val();
+
+                    // Aplicamos a ambas tablas. (Usamos regex para búsquedas exactas)
+                    tablaPlantas.column(3).search(valArea ? '^' + $.fn.dataTable.util.escapeRegex(valArea) + '$' : '', true, false);
+                    tablaDocs.column(3).search(valArea ? '^' + $.fn.dataTable.util.escapeRegex(valArea) + '$' : '', true, false);
+
+                    tablaPlantas.column(1).search(valCliente ? '^' + $.fn.dataTable.util.escapeRegex(valCliente) + '$' : '', true, false);
+                    tablaDocs.column(1).search(valCliente ? '^' + $.fn.dataTable.util.escapeRegex(valCliente) + '$' : '', true, false);
+
+                    tablaPlantas.column(4).search(valEstatus ? '^' + $.fn.dataTable.util.escapeRegex(valEstatus) + '$' : '', true, false);
+                    tablaDocs.column(4).search(valEstatus ? '^' + $.fn.dataTable.util.escapeRegex(valEstatus) + '$' : '', true, false);
+
+                    // Redibujar tablas con los datos filtrados
+                    tablaPlantas.draw();
+                    tablaDocs.draw();
+                });
+
+                // Evento Botón Limpiar
+                $('#btnLimpiarFiltros').off('click').on('click', function() {
+                    $('#filtroArea, #filtroCliente, #filtroEstatus').val('').trigger('change.select2');
+                    
+                    tablaPlantas.search('').columns().search('').draw();
+                    tablaDocs.search('').columns().search('').draw();
+                });
+
+                // FIX DATATABLES EN TABS: Ajustar el ancho de las columnas cuando cambias de pestaña
+                $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust().responsive.recalc();
+                });
+
+            } else {
+                bodyPlantas.html('<tr><td colspan="5" class="text-center text-muted">No hay accesos a plantas registrados.</td></tr>');
+                bodyDocs.html('<tr><td colspan="5" class="text-center text-muted">No hay documentos registrados.</td></tr>');
+            }
+        }
+    });
+}
 
         $(document).on('click', '#dirPagPrev', function () {
             if (directorioPagina > 1) { directorioPagina--; pintarPaginaDirectorio(); }
