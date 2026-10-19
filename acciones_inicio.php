@@ -823,11 +823,39 @@ if ($accion == 'subir_mural') {
 }
 
 if($accion == 'obtener_todos_accesos_ingenieros'){
-    $sql = "SELECT ap.id, ap.noEmpleado, u.nombre, ap.cliente, ap.vigencia, d.departamento as area
-            FROM accesos_plantas_ingenieros ap
-            INNER JOIN usuarios u ON ap.noEmpleado = u.noEmpleado
-            INNER JOIN departamento d ON u.departamento = d.id            
-            ORDER BY u.nombre ASC";
+    // Unimos las plantas y los documentos en una sola consulta
+    $sql = "
+        SELECT 
+            ap.id, 
+            ap.noEmpleado, 
+            u.nombre, 
+            'Planta' AS tipo, 
+            ap.cliente AS elemento, 
+            ap.vigencia, 
+            d.departamento AS area
+        FROM accesos_plantas_ingenieros ap
+        INNER JOIN usuarios u ON ap.noEmpleado = u.noEmpleado
+        INNER JOIN departamento d ON u.departamento = d.id            
+
+        UNION ALL
+
+        SELECT 
+            idoc.id, 
+            idoc.noEmpleado, 
+            u.nombre, 
+            'Documento' AS tipo, 
+            cd.nombre_documento AS elemento, 
+            idoc.fecha_vigencia AS vigencia, 
+            d.departamento AS area
+        FROM ingeniero_documentos idoc
+        INNER JOIN catalogo_documentos cd ON idoc.id_documento = cd.id
+        INNER JOIN usuarios u ON idoc.noEmpleado = u.noEmpleado
+        INNER JOIN departamento d ON u.departamento = d.id
+        WHERE idoc.fecha_vigencia IS NOT NULL
+        
+        ORDER BY nombre ASC, vigencia ASC
+    ";
+    
     $result = $conn->query($sql);
 
     $accesosData = [];
@@ -841,4 +869,100 @@ if($accion == 'obtener_todos_accesos_ingenieros'){
     $conn->close();
     exit;
 }
+
+if($accion == 'obtener_accesos_y_documentos'){
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    
+    // 1. Obtener Accesos a Plantas
+    $sql_plantas = "SELECT id, cliente, vigencia FROM accesos_plantas_ingenieros WHERE noEmpleado = ?";
+    $stmt_plantas = $conn->prepare($sql_plantas);
+    $stmt_plantas->bind_param("s", $noEmpleado); 
+    $stmt_plantas->execute();
+    $result_plantas = $stmt_plantas->get_result();
+    
+    $accesos = [];
+    while ($row = $result_plantas->fetch_assoc()) {
+        $accesos[] = $row;
+    }
+    $stmt_plantas->close();
+
+    // 2. Obtener Documentos (Agrupados por MAX para evitar que se dibujen duplicados)
+    $sql_docs = "
+        SELECT 
+            c.id AS id_documento, 
+            c.nombre_documento, 
+            MAX(i.fecha_vigencia) AS fecha_vigencia 
+        FROM catalogo_documentos c
+        LEFT JOIN ingeniero_documentos i 
+            ON c.id = i.id_documento AND i.noEmpleado = ?
+        GROUP BY c.id, c.nombre_documento
+        ORDER BY c.id ASC
+    ";
+    
+    $stmt_docs = $conn->prepare($sql_docs);
+    $stmt_docs->bind_param("s", $noEmpleado);
+    $stmt_docs->execute();
+    $result_docs = $stmt_docs->get_result();
+
+    $documentos = [];
+    while ($row = $result_docs->fetch_assoc()) {
+        $documentos[] = $row;
+    }
+    $stmt_docs->close();
+    $conn->close();
+    
+    echo json_encode([
+        'success'    => true, 
+        'accesos'    => $accesos,
+        'documentos' => $documentos
+    ]);
+    exit;
+}
+
+if($accion == 'guardar_accesos_y_documentos'){
+    $noEmpleado = $_POST['noEmpleado'] ?? '';
+    $accesos = isset($_POST['accesos']) ? $_POST['accesos'] : [];
+    $documentos = isset($_POST['documentos']) ? $_POST['documentos'] : [];
+
+    // 1. Guardar nuevas plantas
+    if (!empty($accesos)) {
+        $sql_plantas = "INSERT INTO accesos_plantas_ingenieros (noEmpleado, cliente, vigencia) VALUES (?, ?, ?)";
+        $stmt_plantas = $conn->prepare($sql_plantas);
+        foreach ($accesos as $acceso) {
+            $stmt_plantas->bind_param("sss", $noEmpleado, $acceso['cliente'], $acceso['vigencia']);
+            $stmt_plantas->execute();
+        }
+        $stmt_plantas->close();
+    }
+
+    // 2. Guardar vigencia de documentos (Limpieza y reemplazo seguro)
+    if (!empty($documentos)) {
+        
+        // Preparamos las sentencias una sola vez por rendimiento
+        $del_stmt = $conn->prepare("DELETE FROM ingeniero_documentos WHERE noEmpleado = ? AND id_documento = ?");
+        $ins_stmt = $conn->prepare("INSERT INTO ingeniero_documentos (noEmpleado, id_documento, fecha_vigencia) VALUES (?, ?, ?)");
+        
+        foreach ($documentos as $doc) {
+            $id_doc = $doc['id_documento'];
+            $fecha_vigencia = !empty($doc['fecha_vigencia']) ? $doc['fecha_vigencia'] : null;
+            
+            // A) Borramos cualquier registro duplicado o viejo que exista de ese documento para este empleado
+            $del_stmt->bind_param("si", $noEmpleado, $id_doc);
+            $del_stmt->execute();
+            
+            // B) Insertamos el registro nuevo limpio
+            $ins_stmt->bind_param("sis", $noEmpleado, $id_doc, $fecha_vigencia);
+            $ins_stmt->execute();
+        }
+        
+        $del_stmt->close();
+        $ins_stmt->close();
+    }
+
+    $conn->close();
+
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 ?>
