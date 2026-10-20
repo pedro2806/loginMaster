@@ -114,7 +114,7 @@ if (!isset($puedeCrearAviso) || !function_exists('avLogosHtml')) return;
                 <div class="form-group">
                     <label for="avVigencia">Vigencia del aviso</label>
                     <input type="datetime-local" class="form-control" id="avVigencia">
-                    <small class="text-muted">Hasta esta fecha sale como pop-up al entrar a messbook. Después sigue en la sección Avisos.</small>
+                    <small class="text-muted">Hasta esta fecha sale como pop-up al entrar a messbook y se ve en Avisos. Después deja de verse; tú lo sigues viendo como vencido para extender la fecha.</small>
                 </div>
                 <div class="form-group">
                     <label for="avPdf">Adjuntar PDF</label>

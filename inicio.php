@@ -313,7 +313,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
-    <link href="css/loginMaster.css" rel="stylesheet">
+    <link href="css/loginMaster.css?v=<?php echo filemtime(__DIR__ . '/css/loginMaster.css'); ?>" rel="stylesheet">
     <link href="css/modales.css" rel="stylesheet">
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
   

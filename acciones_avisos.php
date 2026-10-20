@@ -4,9 +4,10 @@
  * pop-up "NUEVO AVISO" de inicio.php; la vista está en modalAvisos.php +
  * js/avisos.js).
  *
- *   listar     — todos los visibles, del más nuevo al más viejo (sin el HTML
- *                completo: un extracto en texto para la tarjeta y el buscador)
- *   ver        — uno completo
+ *   listar     — los vigentes, del más nuevo al más viejo (sin el HTML
+ *                completo: un extracto en texto para la tarjeta y el buscador);
+ *                los vencidos, sólo a quien puede editarlos
+ *   ver        — uno completo (vencido: igual que en listar)
  *   pendientes — vigentes que este empleado no ha aceptado: el pop-up
  *   aceptar    — "Aceptar" del pop-up
  *   guardar    — crear o editar (con PDF opcional); al crear, notifica a todos
@@ -36,6 +37,12 @@ const AV_SUBTITULO_MAX = 160;
 const AV_HTML_MAX      = 60000;    // caracteres del HTML ya limpio
 const AV_EXTRACTO      = 400;      // caracteres del texto que viaja en `listar`
 
+// Vigente = no ha pasado su fecha. Con el reloj de MySQL en todos lados (pop-up,
+// lista y "ver más") para que no se contradigan si PHP y MySQL difieren de hora.
+// Al vencer, el empleado deja de verlo; quien puede editarlo lo sigue viendo
+// marcado como vencido, para extender la fecha o revisar quién lo leyó.
+const AV_VIGENTE = '(a.vigencia_hasta >= NOW())';
+
 
 function avResponder(bool $success, string $message = '', array $extra = []): void {
     ob_end_clean();
@@ -63,9 +70,12 @@ function avPuedeEditar(array $aviso, array $perm, string $noEmpleado): bool {
     return $perm['admin'] || ($perm['crear'] && (string)$aviso['publicado_por'] === $noEmpleado);
 }
 
-/** Fila de un aviso con su área, o null. Con `$soloVisibles`, los ocultos no existen. */
+/**
+ * Fila de un aviso con su área, o null. Con `$soloVisibles`, los ocultos no existen.
+ * Los vencidos sí: quien puede editarlo todavía lo abre (ver `ver`).
+ */
 function avAviso(mysqli $conn, int $id, bool $soloVisibles = true): ?array {
-    $stmt = $conn->prepare('SELECT a.*, ar.nombre AS area, ar.color
+    $stmt = $conn->prepare('SELECT a.*, ar.nombre AS area, ar.color, ' . AV_VIGENTE . ' AS vigente
                               FROM mess_rrhh.messbook_avisos a
                               JOIN mess_rrhh.messbook_avisos_areas ar ON ar.id = a.id_area
                              WHERE a.id = ?' . ($soloVisibles ? ' AND a.estatus = 1' : ''));
@@ -122,7 +132,7 @@ function avSalida(array $a, array $perm, string $noEmpleado, bool $completo): ar
         'vigencia'  => avFecha((string)$a['vigencia_hasta']),
         // Para el <input type="datetime-local"> del modal de edición.
         'vigencia_input' => $editar ? date('Y-m-d\TH:i', strtotime((string)$a['vigencia_hasta'])) : null,
-        'vigente'   => strtotime((string)$a['vigencia_hasta']) >= time(),
+        'vigente'   => (bool)$a['vigente'],                 // AV_VIGENTE, del SELECT
         'editar'    => $editar,
     ];
     if ($completo) $salida['html']  = (string)$a['contenido_html'];
@@ -159,12 +169,13 @@ $accion = (string)($_POST['accion'] ?? '');
 
 
 // ── listar ───────────────────────────────────────────────────────────────────
-// Para quien puede editar, además cuántos lo aceptaron de cuántos empleados.
+// Los vigentes; los vencidos, sólo a quien puede editarlos (AV_VIGENTE). Para
+// quien puede editar, además cuántos lo aceptaron de cuántos empleados.
 if ($accion === 'listar') {
     try {
         $res = $conn->query('SELECT a.id, a.id_area, a.titulo, a.subtitulo, a.contenido_html, a.pdf,
                                     a.vigencia_hasta, a.publicado_por, a.publicado_el,
-                                    ar.nombre AS area, ar.color,
+                                    ar.nombre AS area, ar.color, ' . AV_VIGENTE . ' AS vigente,
                                     (SELECT COUNT(*) FROM mess_rrhh.messbook_avisos_aceptados ac WHERE ac.id_aviso = a.id) AS aceptados
                                FROM mess_rrhh.messbook_avisos a
                                JOIN mess_rrhh.messbook_avisos_areas ar ON ar.id = a.id_area
@@ -172,6 +183,7 @@ if ($accion === 'listar') {
                               ORDER BY a.publicado_el DESC, a.id DESC');
         $avisos = array_map(function ($a) use ($perm, $noEmpleado) { return avSalida($a, $perm, $noEmpleado, false); },
                             $res->fetch_all(MYSQLI_ASSOC));
+        $avisos = array_values(array_filter($avisos, function ($a) { return $a['vigente'] || $a['editar']; }));
 
         $extra = ['avisos' => $avisos, 'puede_crear' => $perm['crear']];
         if ($perm['crear']) {
@@ -192,7 +204,9 @@ if ($accion === 'listar') {
 if ($accion === 'ver') {
     try {
         $a = avAviso($conn, (int)($_POST['id'] ?? 0));
-        if (!$a) avResponder(false, 'Ese aviso ya no está disponible.');
+        // Vencido: igual que en `listar`, sólo para quien puede editarlo (p. ej.
+        // una notificación de la campana que se abre ya fuera de vigencia).
+        if (!$a || (!$a['vigente'] && !avPuedeEditar($a, $perm, $noEmpleado))) avResponder(false, 'Ese aviso ya no está disponible.');
         $salida = avSalida($a, $perm, $noEmpleado, true);
         if ($salida['editar']) {
             $stmt = $conn->prepare('SELECT COUNT(*) FROM mess_rrhh.messbook_avisos_aceptados WHERE id_aviso = ?');
@@ -214,10 +228,10 @@ if ($accion === 'ver') {
 // más nuevo (así se leen en el orden en que se publicaron).
 if ($accion === 'pendientes') {
     try {
-        $stmt = $conn->prepare('SELECT a.*, ar.nombre AS area, ar.color
+        $stmt = $conn->prepare('SELECT a.*, ar.nombre AS area, ar.color, 1 AS vigente
                                   FROM mess_rrhh.messbook_avisos a
                                   JOIN mess_rrhh.messbook_avisos_areas ar ON ar.id = a.id_area
-                                 WHERE a.estatus = 1 AND a.vigencia_hasta >= NOW()
+                                 WHERE a.estatus = 1 AND ' . AV_VIGENTE . '
                                    AND NOT EXISTS (SELECT 1 FROM mess_rrhh.messbook_avisos_aceptados ac
                                                     WHERE ac.id_aviso = a.id AND ac.noEmpleado = ?)
                                  ORDER BY a.publicado_el ASC, a.id ASC');
