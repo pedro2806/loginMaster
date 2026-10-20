@@ -4471,7 +4471,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 var botonVerPlantas = `<br><button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="event.stopPropagation(); verAccesosPlantas('${noEmp}', '${nombre}')"><i class="fas fa-building"></i> Accesos Plantas</button>`;
 
                 var botonAccessoPlanta = '';
-                if (noEmpleadoLog == 521 || noEmpleadoLog == 276 || noEmpleadoLog == 183 || noEmpleadoLog == 523) {
+                if (noEmpleadoLog == 521 || noEmpleadoLog == 276 || noEmpleadoLog == 183 || noEmpleadoLog == 523 || noEmpleadoLog == 177 || noEmpleadoLog == 360 || noEmpleadoLog == 161 || noEmpleadoLog == 435) {
                     botonAccessoPlanta = `<br><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="event.stopPropagation(); gestionarAccesosYDocumentos('${noEmp}', '${nombre}')">+ Accesos Plantas</button>`;
                 }
 
