@@ -2687,6 +2687,18 @@ body.album-sin-scroll { overflow: hidden; }
 }
 .aviso-vermas { padding: 0; font-size: .85rem; text-decoration: underline; }
 .aviso-leido { color: var(--text-muted); font-size: .75rem; }
+.aviso-tarjeta__estado { display: inline-flex; align-items: center; gap: .5rem; }
+/* Vencido: sólo lo ve quien puede editarlo (acciones_avisos.php, AV_VIGENTE) */
+.aviso-tarjeta--vencida { opacity: .75; }
+.aviso-vencido {
+    padding: .05rem .5rem;
+    border: 1px solid var(--danger);
+    border-radius: 999px;
+    color: var(--danger);
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
 
 /* Ícono de PDF (tarjeta, pop-up y "ver más") */
 .aviso-pdf {

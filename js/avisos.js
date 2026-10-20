@@ -153,7 +153,10 @@
         var leido = a.editar && estado.totalEmpleados
             ? '<small class="aviso-leido">Leído por ' + (a.aceptados || 0) + ' de ' + estado.totalEmpleados + '</small>'
             : '';
-        return '<article class="aviso-tarjeta" style="--aviso-color:' + color(a.color) + '" data-ver="' + a.id + '" title="' + esc(a.area) + '">'
+        // Vencido: sólo le llega a quien puede editarlo (los demás ya no lo ven).
+        var vencido = a.vigente ? ''
+            : '<span class="aviso-vencido" title="Ya no lo ven los empleados. Edítalo para extender la vigencia.">Vencido</span>';
+        return '<article class="aviso-tarjeta' + (a.vigente ? '' : ' aviso-tarjeta--vencida') + '" style="--aviso-color:' + color(a.color) + '" data-ver="' + a.id + '" title="' + esc(a.area) + '">'
             +   '<div class="aviso-tarjeta__cabeza">'
             +     '<div class="aviso-titulo">' + esc(a.titulo) + '</div>'
             +     '<time class="aviso-fecha">' + esc(a.fecha) + '</time>'
@@ -165,7 +168,7 @@
             +   '</div>'
             +   '<div class="aviso-tarjeta__pie">'
             +     '<button type="button" class="btn btn-link aviso-vermas" data-ver="' + a.id + '">ver más</button>'
-            +     leido
+            +     '<span class="aviso-tarjeta__estado">' + vencido + leido + '</span>'
             +   '</div>'
             + '</article>';
     }
@@ -198,8 +201,10 @@
             var a = d.aviso;
             estado.ver = a;
             $('#avVerCuerpo').html(cuerpoHtml(a));
+            // Un vencido sólo lo abre quien puede editarlo.
             $('#avVerMeta').text('Publicado por ' + a.area + ' · ' + a.fecha
-                + (a.vigente ? ' · Vigente hasta el ' + a.vigencia : ''));
+                + (a.vigente ? ' · Vigente hasta el ' + a.vigencia
+                             : ' · Venció el ' + a.vigencia + ' (ya no lo ven los empleados)'));
             $('#avVerGestion').prop('hidden', !a.editar);
             $('#avVerQuienesLista').prop('hidden', true).empty();
             if (a.editar) {
