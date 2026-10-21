@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // 
 // Cuando se llama vía AJAX (POST con accion ae_*), resuelve y termina aquí.
 // Cuando se incluye desde inicio.php, renderiza el modal.
