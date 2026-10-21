@@ -2005,11 +2005,12 @@ footer.sticky-footer .fb-footer-logo {
 
 /* En inicio.php el logo y el copyright se movieron del footer al pie de la
    columna del perfil. La regla de arriba está acotada a footer.sticky-footer,
-   asi que no alcanzaba a la nueva ubicación; se repite aquí. El invert lo
-   vuelve blanco sobre el degradado azul de la columna, igual que antes. */
+   asi que no alcanzaba a la nueva ubicación; se repite aquí. Sin filtro:
+   el logo de aquí (img/B1_blanco.png) ya es claro y la columna es azul en los
+   dos temas. */
 .perfil-footer .fb-footer-logo {
     max-height: 66px !important;
-    filter: brightness(0) invert(1) !important;
+    filter: none !important;
     opacity: 0.95;
     display: block;
     margin: 0 auto 3px;
@@ -2018,6 +2019,26 @@ footer.sticky-footer .fb-footer-logo {
 
 .perfil-footer {
     padding-bottom: 0.5rem;
+}
+
+/* Logo sobre la tarjeta del usuario (inicio.php). El de siempre es azul: el
+   filtro lo pinta de blanco sobre la columna. */
+.logo-encabezado {
+    max-width: 200px;
+    width: 80%;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+/* El de temporada ($logoTemporada) ya trae sus colores: sin el invert. Ocupa
+   la misma caja de 83 px de alto que el de siempre, para que el botón del
+   menú (encabezado.php, top:38px) siga centrado con él, y no pasa de 220 px de
+   ancho para no meterse debajo de ese botón. */
+.logo-encabezado--temporada {
+    max-width: 220px;
+    width: 90%;
+    height: 83px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .fb-footer-links {
@@ -2046,10 +2067,14 @@ footer.sticky-footer .fb-footer-logo {
     padding: 0 !important;
 }
 
+/* La tarjeta llena lo que queda de la columna con flex, no con height:100%:
+   empieza debajo del logo, y con el 100% se salía de la columna lo que mide
+   ese bloque (~107 px), dejando una franja azul de otro tono al fondo de la
+   página. min-height:auto: que nunca se encoja por debajo de su contenido. */
 .profile-card {
     flex: 1 1 auto !important;
-    height: 100% !important;
-    min-height: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
     background: transparent !important;
     margin-bottom: 0 !important;
     padding-bottom: 1rem !important;

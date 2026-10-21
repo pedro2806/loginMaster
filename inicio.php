@@ -14,6 +14,12 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 // llama), así que para liberarlo basta con poner true aquí.
 $mostrarMessbookID = false;
 
+// Logo de temporada sobre la tarjeta del usuario (Día de Muertos): se ve hasta
+// el 6 de noviembre de 2026 inclusive y el 7 a las 00:00 (hora de CDMX) vuelve
+// solo el de siempre, sin tener que desplegar nada.
+$zonaMx        = new DateTimeZone('America/Mexico_City');
+$logoTemporada = new DateTimeImmutable('now', $zonaMx) < new DateTimeImmutable('2026-11-07 00:00', $zonaMx);
+
 // Acceso especial a la pestaña KPI's (tabla accesos_especiales, gestionada desde modalAccesosEspeciales.php).
 // El campo inf_adicional guarda el pk (contraseña) que se inyecta al iframe de KPIs.
 $tieneKpis = false;
@@ -334,10 +340,13 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         <div class="col-xl-3 col-md-4">
                             <!-- El logo bajó aquí desde el encabezado que se quitó: encabeza
                                  la columna del usuario y deja despejada la zona de pestañas.
-                                 El filtro lo pinta de blanco sobre el fondo azul. -->
+                                 El de temporada sale mientras $logoTemporada (arriba). -->
                             <div class="text-center pt-3 pb-2">
-                                <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook"
-                                     style="max-width: 200px; width: 80%; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                                <?php if ($logoTemporada): ?>
+                                <img src="../loginMaster/img/temporada/messbook_dia_de_muertos.png" alt="Messbook" class="logo-encabezado logo-encabezado--temporada">
+                                <?php else: ?>
+                                <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook" class="logo-encabezado">
+                                <?php endif; ?>
                             </div>
                             <div class="profile-card text-center">
                                 <div id= "info_us_card" class="stat-box" style="border: .5px solid white;">                                                   
@@ -481,7 +490,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                      inicio_res) siguen usando el footer viejo, por eso su
                                      CSS sigue en loginMaster.css. -->
                                 <div class="perfil-footer text-center mt-4">
-                                    <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
+                                    <img src="../loginMaster/img/B1_blanco.png" alt="Grupo Mess · Business Intelligence" class="fb-footer-logo">
                                     <div class="fb-footer-links">
                                         Business Intelligence | Messbook © <?php echo date("Y"); ?>
                                     </div>
