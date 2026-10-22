@@ -174,6 +174,9 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
     exit;
 }
 // ===== FIN BLOQUE RECUPERAR CONTRASEÑA =====
+
+// Logo de temporada (Día de Muertos), con el mismo corte que inicio.php.
+require_once __DIR__ . '/includes/temporada.php';
 ?>
 <!DOCTYPE html>
 <html lang="sp">
@@ -194,7 +197,7 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
     <link href="../ControlVehicular/css/sb-admin-2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css">
     
-    <link href="css/login.css" rel="stylesheet">
+    <link href="css/login.css?v=<?php echo filemtime(__DIR__ . '/css/login.css'); ?>" rel="stylesheet">
 </head>
 <body>
     <div class="fb-container">
@@ -202,7 +205,16 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
             <div class="fb-inner">
                 <!--IZQUIERDA: BRANDING-->
                 <div class="fb-left">
+                    <?php if (mbHayLogoTemporada()): ?>
+                    <!-- El de temporada trae letras blancas: en celular, donde el
+                         login es blanco, sigue el de siempre. Mide lo mismo que él. -->
+                    <picture class="fb-logo-picture">
+                        <source media="(max-width: 576px)" srcset="../loginMaster/img/messbook_logo3.png">
+                        <img src="../loginMaster/<?php echo MB_LOGO_TEMPORADA; ?>" alt="Messbook" class="fb-logo-img fb-logo-img--temporada">
+                    </picture>
+                    <?php else: ?>
                     <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook" class="fb-logo-img">
+                    <?php endif; ?>
                     <h2 class="fb-tagline" style="font-size: 18px !important;">
                         Messbook es el sistema central de gestión de identidades y accesos de la empresa.
                         Acceso seguro a todo tu ecosistema corporativo.
@@ -243,6 +255,8 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
                                 <strong>Messbook es desarrollado por el equipo de BI</strong><br>
                                 <a href="mailto:pedro.martinez@mess.com.mx">pedro.martinez@mess.com.mx</a><br>
                                 <a href="mailto:sebastian.gutierrez@mess.com.mx">sebastian.gutierrez@mess.com.mx</a>
+                                <!-- El mismo aviso que enlazan las landings de oktoberMESS -->
+                                <a href="https://www.mess.com.mx/AVISO-DE-PRIVACIDAD/" target="_blank" rel="noopener noreferrer" class="fb-privacidad">Aviso de privacidad</a>
                             </div>
                         </div>
                     </div>
@@ -258,7 +272,7 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
             <div class="fb-footer-inner">
                
                 
-                <img src="../loginMaster/img/mess-desarrollo-b1.png" alt="Grupo Mess" class="fb-footer-logo">
+                <img src="../loginMaster/img/B1_blanco.png" alt="Grupo Mess · Business Intelligence" class="fb-footer-logo">
                 
                 <div class="fb-footer-links">
                    Business Intelligence | Messbook ©️ <?php echo date("Y"); ?>

@@ -18,6 +18,11 @@
  * su dueño por origen + id_usr. Si no, el empleado 42 sería dueño de la foto
  * del invitado 42.
  *
+ * CONCURSO (tipo de álbum, includes/album.php): 1 foto por empleado y 3 likes
+ * para repartir entre las de los demás (messbook_votos). Las reglas se cuidan
+ * aquí: foto_subir (tope de 1), foto_borrar (sólo antes de la votación), voto
+ * (dar / quitar like) y ranking (sólo BI y RRHH).
+ *
  * CREDENCIAL: la cookie noEmpleadoL, como el resto del portal (decisión del
  * 2026-09-23). OJO: esa cookie no va firmada, así que quien la cambie a mano
  * puede subir a nombre de otro y borrar sus fotos. La regla "cada quien borra
@@ -362,6 +367,98 @@ function mbAlbumPedido(array $eventos): int {
     return $album;
 }
 
+/** "Juan Carlos" + "Pérez López" → "Juan Carlos Pérez López". El ranking lo
+    lee RRHH: ahí va el nombre completo, no el corto del muro. */
+function mbNombreCompleto(array $f): string {
+    $completo = trim((string)preg_replace('/\s+/u', ' ', trim((string)($f['nombres'] ?? '')) . ' ' . trim((string)($f['apellidos'] ?? ''))));
+    if ($completo !== '') return $completo;
+    $nombre = trim((string)preg_replace('/\s+/u', ' ', (string)($f['nombre'] ?? '')));
+    return $nombre !== '' ? $nombre : 'Empleado ' . ($f['noEmpleado'] ?? '');
+}
+
+/** Fotos que `$noEmpleado` tiene en un álbum. */
+function mbFotosDe(mysqli $conn, int $idEvento, string $noEmpleado): int {
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ? AND noEmpleado = ?');
+    $stmt->bind_param('is', $idEvento, $noEmpleado);
+    $stmt->execute();
+    $n = (int)$stmt->get_result()->fetch_row()[0];
+    $stmt->close();
+    return $n;
+}
+
+/** Por qué no puede subir otra foto al concurso. */
+function mbYaParticipas(array $evento, int $ahora): string {
+    return mbVotacionEmpezo($evento, $ahora)
+        ? 'Ya participas en el concurso con tu foto.'
+        : 'Ya participas en el concurso con tu foto. Si quieres cambiarla, bórrala primero: se puede hasta que abra la votación.';
+}
+
+/**
+ * Bloquea la fila del concurso hasta el COMMIT. Las subidas y los likes de un
+ * concurso pasan así de uno en uno, y dos peticiones a la vez (doble toque, dos
+ * pestañas) no se saltan el tope de 1 foto ni el de 3 likes, que se cuentan
+ * después de esto. Es un bloqueo de fila: vale con cualquier nivel de
+ * aislamiento.
+ */
+function mbBloquearConcurso(mysqli $conn, int $idEvento): void {
+    $stmt = $conn->prepare('SELECT id_evento FROM messbook_albumes WHERE id_evento = ? FOR UPDATE');
+    $stmt->bind_param('i', $idEvento);
+    $stmt->execute();
+    $stmt->get_result();
+    $stmt->close();
+}
+
+/**
+ * Lo del concurso que depende de quién pregunta: los likes que le quedan y si
+ * ya subió su foto. Va con las portadas y con cada página del muro, junto con
+ * los periodos (Unix), para que la vista decida qué enseñar con su reloj.
+ */
+function mbEstadoConcurso(mysqli $conn, array $evento, string $noEmpleado): array {
+    $id = (int)$evento['id_evento'];
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_votos WHERE id_evento = ? AND noEmpleado = ?');
+    $stmt->bind_param('is', $id, $noEmpleado);
+    $stmt->execute();
+    $dados = (int)$stmt->get_result()->fetch_row()[0];
+    $stmt->close();
+    return [
+        'subida'    => $evento['cfg']['concurso']['subida'],
+        'votacion'  => $evento['cfg']['concurso']['votacion'],
+        'votos_max' => MB_CONCURSO_VOTOS,
+        'restantes' => max(0, MB_CONCURSO_VOTOS - $dados),
+        'mi_foto'   => mbFotosDe($conn, $id, $noEmpleado) >= MB_CONCURSO_FOTOS,
+    ];
+}
+
+/**
+ * Likes de las fotos del concurso (las de mbFotoSalida): `votado`, si quien
+ * pregunta ya le dio like, y `votos`, cuántos lleva. `votos` es null mientras
+ * la votación no cierra (decisión del 2026-10-21): así nadie vota por la que
+ * va ganando. El ranking en vivo es aparte, sólo para BI y RRHH.
+ */
+function mbConLikes(mysqli $conn, array $evento, array $fotos, string $noEmpleado): array {
+    $ids = [];
+    foreach ($fotos as $f) if ($f['origen'] === 'MB') $ids[] = (int)$f['id'];
+    $likes = [];
+    if ($ids) {
+        $marcas = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("SELECT id_foto, COUNT(*), MAX(noEmpleado = ?) FROM messbook_votos
+                                 WHERE id_evento = ? AND id_foto IN ($marcas) GROUP BY id_foto");
+        $params = array_merge([$noEmpleado, (int)$evento['id_evento']], $ids);
+        $stmt->bind_param('si' . str_repeat('i', count($ids)), ...$params);
+        $stmt->execute();
+        foreach ($stmt->get_result()->fetch_all() as [$idFoto, $n, $mio]) $likes[(int)$idFoto] = [(int)$n, (bool)$mio];
+        $stmt->close();
+    }
+    $cerrada = mbVotacionCerrada($evento, time());
+    return array_map(function ($f) use ($likes, $cerrada) {
+        if ($f['origen'] !== 'MB') return $f;
+        [$n, $mio] = $likes[$f['id']] ?? [0, false];
+        $f['votado'] = $mio;
+        $f['votos']  = $cerrada ? $n : null;
+        return $f;
+    }, $fotos);
+}
+
 
 // ── Credencial ───────────────────────────────────────────────────────────────
 $noEmpleado = mbEmpleadoSesion();
@@ -396,6 +493,77 @@ $accion = (string)($_POST['accion'] ?? '');
 // álbumes": justo cuando no hay ninguno es cuando hace falta crear uno.
 if (strpos($accion, 'adm_') === 0) {
     require __DIR__ . '/includes/album_admin.php';
+}
+
+
+// ── ranking ──────────────────────────────────────────────────────────────────
+// Las fotos de un concurso de más a menos likes, con el nombre completo de
+// quién la subió. Sólo BI y RRHH (mbPuedeVerRanking), en vivo aunque la
+// votación siga abierta. Va antes del aviso de "no hay álbumes" y lee también
+// los ocultos: el modal de álbumes lo abre desde cualquier fila.
+if ($accion === 'ranking') {
+    try {
+        if (!mbPuedeVerRanking($conn, $noEmpleado)) mbResponder(false, 'No tienes permiso para ver el ranking.');
+        $todos = mbEventosAlbum($conn, true);
+        $album = (int)($_POST['album'] ?? 0);
+        if (!isset($todos[$album]) || !mbEsConcurso($todos[$album])) mbResponder(false, 'Ese concurso no existe.');
+
+        // Los likes en una tabla derivada, no con GROUP BY sobre el JOIN: así
+        // vale también con ONLY_FULL_GROUP_BY (usuarios y departamento no
+        // dependen de f.id para MySQL).
+        $stmt = $conn->prepare("SELECT f.id, f.url, f.texto, f.fecha, f.noEmpleado,
+                                       u.nombre, u.nombres, u.apellidos, d.departamento AS area,
+                                       COALESCE(v.votos, 0) AS votos
+                                  FROM messbook_fotos f
+                                  LEFT JOIN (SELECT id_foto, COUNT(*) AS votos FROM messbook_votos
+                                              WHERE id_evento = ? GROUP BY id_foto) v ON v.id_foto = f.id
+                                  LEFT JOIN usuarios u
+                                         ON u.id = (SELECT MIN(u2.id) FROM usuarios u2
+                                                     WHERE u2.noEmpleado = f.noEmpleado AND u2.estatus = 1)
+                                  LEFT JOIN departamento d ON d.id = u.departamento
+                                 WHERE f.id_evento = ?
+                                 ORDER BY votos DESC, f.fecha ASC, f.id ASC");
+        $stmt->bind_param('ii', $album, $album);
+        $stmt->execute();
+        $filas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        $stmt = $conn->prepare('SELECT COUNT(DISTINCT noEmpleado) FROM messbook_votos WHERE id_evento = ?');
+        $stmt->bind_param('i', $album);
+        $stmt->execute();
+        $votantes = (int)$stmt->get_result()->fetch_row()[0];
+        $stmt->close();
+
+        // Los empates comparten lugar y el siguiente salta: 1, 1, 3.
+        $ranking = [];
+        $lugar   = 0;
+        $previo  = null;
+        foreach ($filas as $i => $f) {
+            if ((int)$f['votos'] !== $previo) { $lugar = $i + 1; $previo = (int)$f['votos']; }
+            $ranking[] = [
+                'lugar'      => $lugar,
+                'id'         => (int)$f['id'],
+                'url'        => mbUrlPublica(['origen' => 'MB', 'url' => $f['url']]),
+                'nombre'     => mbNombreCompleto($f),
+                'noEmpleado' => (string)$f['noEmpleado'],
+                'area'       => (string)($f['area'] ?? ''),
+                'texto'      => (string)($f['texto'] ?? ''),
+                'votos'      => (int)$f['votos'],
+                'hora'       => date('d/m H:i', strtotime((string)$f['fecha'])),
+            ];
+        }
+
+        mbResponder(true, '', [
+            'titulo'        => mbTituloAlbum($todos[$album]),
+            'votacion'      => mbVotacion($todos[$album]),
+            'ranking'       => $ranking,
+            'participantes' => count($ranking),
+            'votantes'      => $votantes,
+            'likes'         => array_sum(array_column($ranking, 'votos')),
+        ]);
+    } catch (Throwable $e) {
+        mbFallo('No pudimos cargar el ranking.', $e);
+    }
 }
 
 if (!$eventos) {
@@ -440,6 +608,8 @@ if ($accion === 'albumes') {
                 'total'    => $total,
                 'portada'  => $portada,
                 'ventanas' => $ev['ventanas'],
+                // Sólo en el concurso: sus periodos y lo que le toca a quien pregunta.
+                'concurso' => mbEsConcurso($ev) ? mbEstadoConcurso($conn, $ev, $noEmpleado) : null,
             ];
         }
         usort($albumes, function ($a, $b) { return strcmp($b['orden'], $a['orden']); });
@@ -503,9 +673,18 @@ if ($accion === 'fotos') {
         // Una fila con url que no es nuestra (p. ej. capturada a mano) no se enseña.
         $fotos = array_values(array_filter($fotos, function ($f) { return $f['url'] !== null; }));
 
+        // El concurso: los likes de cada foto y lo que le toca a quien mira,
+        // al día con cada página (también con el sondeo de cada 5 min).
+        $concurso = null;
+        if (mbEsConcurso($eventos[$album])) {
+            $fotos    = mbConLikes($conn, $eventos[$album], $fotos, $noEmpleado);
+            $concurso = mbEstadoConcurso($conn, $eventos[$album], $noEmpleado);
+        }
+
         mbResponder(true, '', array_merge([
-            'fotos'   => $fotos,
-            'hay_mas' => $hayMas,
+            'fotos'    => $fotos,
+            'hay_mas'  => $hayMas,
+            'concurso' => $concurso,
         ], $orillas));
     } catch (Throwable $e) {
         mbFallo('No pudimos cargar las fotos.', $e);
@@ -551,12 +730,14 @@ if ($accion === 'foto_subir') {
         $motivo = mbRevisarImagen($tmp);
         if ($motivo !== '') mbResponder(false, $motivo);
 
-        $evento = $album;
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ? AND noEmpleado = ?');
-        $stmt->bind_param('is', $evento, $noEmpleado);
-        $stmt->execute();
-        $ya = (int)$stmt->get_result()->fetch_row()[0];
-        $stmt->close();
+        $evento     = $album;
+        $esConcurso = mbEsConcurso($eventos[$album]);
+        // Aviso temprano, antes de gastar en guardar la imagen. En el concurso
+        // se vuelve a contar abajo, con la fila bloqueada.
+        $ya = mbFotosDe($conn, $evento, $noEmpleado);
+        if ($esConcurso && $ya >= MB_CONCURSO_FOTOS) {
+            mbResponder(false, mbYaParticipas($eventos[$album], $ahora), ['ya_participa' => true]);
+        }
         if ($ya >= MB_MAX_FOTOS) {
             mbResponder(false, 'Llegaste al máximo de ' . MB_MAX_FOTOS . ' fotos en este álbum. Borra alguna para subir otra.');
         }
@@ -576,12 +757,23 @@ if ($accion === 'foto_subir') {
         }
 
         try {
+            $conn->begin_transaction();
+            if ($esConcurso) {
+                mbBloquearConcurso($conn, $evento);
+                if (mbFotosDe($conn, $evento, $noEmpleado) >= MB_CONCURSO_FOTOS) {
+                    $conn->rollback();
+                    @unlink($ruta);
+                    mbResponder(false, mbYaParticipas($eventos[$album], $ahora), ['ya_participa' => true]);
+                }
+            }
             $stmt = $conn->prepare('INSERT INTO messbook_fotos (id_evento, noEmpleado, url, texto, fecha) VALUES (?, ?, ?, ?, NOW())');
             $stmt->bind_param('isss', $evento, $noEmpleado, $url, $texto);
             $stmt->execute();
             $idFoto = (int)$conn->insert_id;
             $stmt->close();
+            $conn->commit();
         } catch (Throwable $e) {
+            $conn->rollback();
             @unlink($ruta);                             // sin fila, el archivo sobra
             throw $e;
         }
@@ -597,7 +789,14 @@ if ($accion === 'foto_subir') {
         $nueva = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        mbResponder(true, '¡Foto publicada!', ['foto' => mbFotoSalida($nueva, $noEmpleado)]);
+        $salida = mbFotoSalida($nueva, $noEmpleado);
+        if ($esConcurso) {
+            mbResponder(true, '¡Ya participas en el concurso!', [
+                'foto'     => mbConLikes($conn, $eventos[$album], [$salida], $noEmpleado)[0],
+                'concurso' => mbEstadoConcurso($conn, $eventos[$album], $noEmpleado),
+            ]);
+        }
+        mbResponder(true, '¡Foto publicada!', ['foto' => $salida]);
     } catch (Throwable $e) {
         mbFallo('No pudimos publicar tu foto. Inténtalo de nuevo en un momento.', $e);
     }
@@ -616,12 +815,20 @@ if ($accion === 'foto_borrar') {
     try {
         // El dueño se comprueba en el WHERE, no después: aunque alguien mande
         // el id de una foto ajena, la consulta simplemente no la encuentra.
-        $stmt = $conn->prepare('SELECT url FROM messbook_fotos WHERE id = ? AND noEmpleado = ? LIMIT 1');
+        $stmt = $conn->prepare('SELECT url, id_evento FROM messbook_fotos WHERE id = ? AND noEmpleado = ? LIMIT 1');
         $stmt->bind_param('is', $idFoto, $noEmpleado);
         $stmt->execute();
         $fila = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         if (!$fila) mbResponder(false, 'Solo puedes borrar las fotos que tú subiste.');
+
+        // La del concurso se queda desde que abre la votación (decisión del
+        // 2026-10-21): borrarla tiraría los likes que ya tenga.
+        $suAlbum = mbEventosAlbum($conn, true)[(int)$fila['id_evento']] ?? null;
+        $esConcurso = $suAlbum !== null && mbEsConcurso($suAlbum);
+        if ($esConcurso && mbVotacionEmpezo($suAlbum, time())) {
+            mbResponder(false, 'La votación ya empezó: tu foto del concurso ya no se puede borrar.');
+        }
 
         $stmt = $conn->prepare('DELETE FROM messbook_fotos WHERE id = ? AND noEmpleado = ?');
         $stmt->bind_param('is', $idFoto, $noEmpleado);
@@ -631,9 +838,87 @@ if ($accion === 'foto_borrar') {
         $ruta = mbRutaFoto((string)$fila['url']);
         if ($ruta !== null && is_file($ruta)) @unlink($ruta);
 
-        mbResponder(true, 'Foto borrada.', ['id' => $idFoto]);
+        mbResponder(true, 'Foto borrada.', [
+            'id'       => $idFoto,
+            // En el concurso, para que la caja de subir vuelva a aparecer.
+            'concurso' => $esConcurso ? mbEstadoConcurso($conn, $suAlbum, $noEmpleado) : null,
+        ]);
     } catch (Throwable $e) {
         mbFallo('No pudimos borrar la foto. Inténtalo de nuevo.', $e);
+    }
+}
+
+
+// ── voto ─────────────────────────────────────────────────────────────────────
+// Dar (dar=1) o quitar (dar=0) un like en el concurso. Idempotente: dar uno que
+// ya está o quitar uno que no está no cambia nada, así un doble toque no lo
+// revierte. Reglas (decisión del 2026-10-21): sólo con la votación abierta, a lo
+// más MB_CONCURSO_VOTOS por persona, uno por foto y nunca a la propia.
+if ($accion === 'voto') {
+    $album  = mbAlbumPedido($eventos);
+    $ev     = $eventos[$album];
+    $idFoto = (int)($_POST['id'] ?? 0);
+    $dar    = !empty($_POST['dar']);
+    if (!mbEsConcurso($ev)) mbResponder(false, 'En este álbum no se vota.');
+
+    $ahora = time();
+    if (!mbVotacionAbierta($ev, $ahora)) {
+        $v = mbVotacion($ev);
+        mbResponder(false, $v && $ahora < $v[0]
+            ? 'La votación todavía no abre: empieza ' . mbCuando($v[0], $ahora) . '.'
+            : 'La votación ya cerró.', ['fuera_de_horario' => true]);
+    }
+    // En un concurso sólo hay fotos de empleados ('MB'): el id de otra tabla
+    // nunca se confunde con uno de aquí.
+    if ($idFoto <= 0 || ($_POST['origen'] ?? 'MB') !== 'MB') mbResponder(false, 'No encontramos esa foto.');
+
+    try {
+        $conn->begin_transaction();
+        mbBloquearConcurso($conn, $album);
+
+        $stmt = $conn->prepare('SELECT noEmpleado FROM messbook_fotos WHERE id = ? AND id_evento = ? LIMIT 1');
+        $stmt->bind_param('ii', $idFoto, $album);
+        $stmt->execute();
+        $foto = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $error = !$foto ? 'Esa foto ya no está en el concurso.'
+               : ((string)$foto['noEmpleado'] === $noEmpleado ? 'No puedes darle like a tu propia foto.' : '');
+        if ($error !== '') {
+            $conn->rollback();
+            mbResponder(false, $error);
+        }
+
+        // Los likes que ya dio en este concurso.
+        $stmt = $conn->prepare('SELECT id_foto FROM messbook_votos WHERE id_evento = ? AND noEmpleado = ?');
+        $stmt->bind_param('is', $album, $noEmpleado);
+        $stmt->execute();
+        $mios = array_map('intval', array_column($stmt->get_result()->fetch_all(), 0));
+        $stmt->close();
+        $ya = in_array($idFoto, $mios, true);
+
+        if ($dar && !$ya) {
+            if (count($mios) >= MB_CONCURSO_VOTOS) {
+                $conn->rollback();
+                mbResponder(false, 'Ya usaste tus ' . MB_CONCURSO_VOTOS . ' likes. Quita uno para dárselo a otra foto.', ['restantes' => 0]);
+            }
+            $stmt = $conn->prepare('INSERT INTO messbook_votos (id_evento, id_foto, noEmpleado, fecha) VALUES (?, ?, ?, NOW())');
+            $stmt->bind_param('iis', $album, $idFoto, $noEmpleado);
+            $stmt->execute();
+            $stmt->close();
+            $mios[] = $idFoto;
+        } elseif (!$dar && $ya) {
+            $stmt = $conn->prepare('DELETE FROM messbook_votos WHERE id_foto = ? AND noEmpleado = ?');
+            $stmt->bind_param('is', $idFoto, $noEmpleado);
+            $stmt->execute();
+            $stmt->close();
+            $mios = array_values(array_diff($mios, [$idFoto]));
+        }
+        $conn->commit();
+
+        mbResponder(true, '', ['id' => $idFoto, 'votado' => $dar, 'restantes' => max(0, MB_CONCURSO_VOTOS - count($mios))]);
+    } catch (Throwable $e) {
+        $conn->rollback();
+        mbFallo('No pudimos registrar tu like. Inténtalo de nuevo.', $e);
     }
 }
 

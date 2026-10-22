@@ -19,6 +19,10 @@
  * álbum recibiendo fotos (includes/album.php):
  *   - dos álbumes de EVENTO visibles no se enciman (MB_EVENTO_HORAS cada uno);
  *   - dos GENERALES visibles no se enciman en su periodo.
+ * El CONCURSO recibe aparte y no choca con nadie. Lleva vigencia (fecha_inicio..
+ * fecha_fin) y, dentro de ella, la subida y la votación (fecha y hora); la
+ * votación no abre antes que la subida ni la subida cierra después que la
+ * votación. Un álbum con fotos no se vuelve concurso ni deja de serlo.
  */
 
 if (!isset($conn, $noEmpleado, $accion)) exit;   // sólo vía acciones_album.php
@@ -37,12 +41,29 @@ function mbAdmFecha(string $f): ?string {
     return $d && $d->format('Y-m-d') === $f ? $f : null;
 }
 
+/** Lo que manda un <input type="datetime-local"> ('AAAA-MM-DDThh:mm', a veces
+    con segundos) → 'AAAA-MM-DD hh:mm:ss' para la BD, o null si no es válido. */
+function mbAdmFechaHora(string $f): ?string {
+    $f = str_replace('T', ' ', trim($f));
+    foreach (['Y-m-d H:i', 'Y-m-d H:i:s'] as $formato) {
+        $d = DateTimeImmutable::createFromFormat('!' . $formato, $f);
+        if ($d && $d->format($formato) === $f) return $d->format('Y-m-d H:i:s');
+    }
+    return null;
+}
+
+/** DATETIME de la BD → valor de un <input type="datetime-local"> ('' si no hay). */
+function mbAdmLocal(?string $f): string {
+    return $f ? str_replace(' ', 'T', substr($f, 0, 16)) : '';
+}
+
 /**
  * ¿Choca con otro álbum visible? Devuelve el aviso para la pantalla o ''.
  * Evento: otro evento cuya ventana se encima (a menos de MB_EVENTO_HORAS, en
  * días, uno del otro). General: otro general con periodo encimado.
  */
 function mbAdmConflicto(mysqli $conn, int $id, string $tipo, string $desde, string $hasta): string {
+    if ($tipo === 'concurso') return '';   // recibe aparte: no le quita fotos a nadie
     $diasEvento = (int)ceil(MB_EVENTO_HORAS / 24);
     if ($tipo === 'evento') {
         $stmt = $conn->prepare("SELECT a.titulo FROM messbook_albumes a JOIN enc_eventos e ON e.id_evento = a.id_evento
@@ -63,6 +84,16 @@ function mbAdmConflicto(mysqli $conn, int $id, string $tipo, string $desde, stri
         ? 'Se encima con el álbum de evento «' . $fila[0] . '»: cada uno recibe fotos ' . MB_EVENTO_HORAS
           . ' horas desde su día, así que tienen que estar a ' . $diasEvento . ' días o más. Cambia la fecha u oculta el otro.'
         : 'El periodo se encima con el álbum general «' . $fila[0] . '». Ajusta las fechas u oculta el otro.';
+}
+
+/** Fotos de empleados que tiene un álbum. */
+function mbAdmFotos(mysqli $conn, int $id): int {
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $n = (int)$stmt->get_result()->fetch_row()[0];
+    $stmt->close();
+    return $n;
 }
 
 /** Fila de messbook_albumes + fechas, o null. */
@@ -89,6 +120,12 @@ if ($accion === 'adm_listar') {
         $res = $conn->query('SELECT id_evento, COUNT(*) FROM messbook_fotos GROUP BY id_evento');
         foreach ($res->fetch_all() as [$idEv, $n]) $fotos[(int)$idEv] = (int)$n;
 
+        // Likes por concurso, para la columna de fotos.
+        $likes = [];
+        $res = $conn->query('SELECT id_evento, COUNT(*) FROM messbook_votos GROUP BY id_evento');
+        foreach ($res->fetch_all() as [$idEv, $n]) $likes[(int)$idEv] = (int)$n;
+
+        $ahora   = time();
         $albumes = [];
         foreach (array_reverse($todos, true) as $id => $e) {   // los más nuevos arriba
             $albumes[] = [
@@ -102,7 +139,13 @@ if ($accion === 'adm_listar') {
                 'portada'   => mbPortadaPropia($e) ?? '',
                 'visible'   => (bool)$e['visible'],
                 'fotos'     => $fotos[$id] ?? 0,
-                'activo'    => $id === $activo,
+                'likes'     => $likes[$id] ?? 0,
+                // El concurso no es "el activo", pero también se marca mientras recibe.
+                'activo'    => $id === $activo || (mbEsConcurso($e) && mbSubidaAbierta($e['ventanas'], $ahora)),
+                'subida_desde'   => mbAdmLocal($e['subida_desde']),
+                'subida_hasta'   => mbAdmLocal($e['subida_hasta']),
+                'votacion_desde' => mbAdmLocal($e['votacion_desde']),
+                'votacion_hasta' => mbAdmLocal($e['votacion_hasta']),
             ];
         }
 
@@ -133,23 +176,52 @@ if ($accion === 'adm_guardar') {
 
     if ($titulo === '')                            mbResponder(false, 'Escribe el nombre del álbum.');
     if (mb_strlen($titulo, 'UTF-8') > 80)          mbResponder(false, 'El nombre es muy largo: máximo 80 caracteres.');
-    if (!in_array($tipo, ['evento', 'general'], true)) mbResponder(false, 'Elige si es un evento o un álbum general.');
+    if (!in_array($tipo, ['evento', 'general', 'concurso'], true)) mbResponder(false, 'Elige si es un evento, un álbum general o un concurso.');
 
     if ($tipo === 'evento') {
         $desde = mbAdmFecha((string)($_POST['dia'] ?? ''));
         if (!$desde) mbResponder(false, 'Elige el día del evento.');
         $hasta = $desde;
     } else {
+        // General: su periodo. Concurso: su vigencia.
         $desde = mbAdmFecha((string)($_POST['desde'] ?? ''));
         $hasta = mbAdmFecha((string)($_POST['hasta'] ?? ''));
-        if (!$desde || !$hasta) mbResponder(false, 'Elige el inicio y el fin del periodo.');
+        if (!$desde || !$hasta) mbResponder(false, $tipo === 'concurso' ? 'Elige el inicio y el fin de la vigencia del concurso.' : 'Elige el inicio y el fin del periodo.');
         if ($hasta < $desde)    mbResponder(false, 'El fin del periodo no puede ser antes del inicio.');
         $dias = (new DateTime($desde))->diff(new DateTime($hasta))->days + 1;
         if ($dias > MB_MAX_DIAS) mbResponder(false, 'El periodo no puede pasar de ' . MB_MAX_DIAS . ' días.');
     }
 
-    // Invitados de oktoberMESS: opcional. Sedes vacías = todas.
-    $invEvento = trim((string)($_POST['invitados'] ?? ''));
+    // Concurso: la subida de fotos y la votación, con fecha y hora, dentro de la
+    // vigencia. NULL en los demás tipos.
+    $periodos = ['subida_desde' => null, 'subida_hasta' => null, 'votacion_desde' => null, 'votacion_hasta' => null];
+    if ($tipo === 'concurso') {
+        $nombres = [
+            'subida_desde'   => 'la apertura de la subida de fotos',
+            'subida_hasta'   => 'el cierre de la subida de fotos',
+            'votacion_desde' => 'la apertura de la votación',
+            'votacion_hasta' => 'el cierre de la votación',
+        ];
+        foreach ($nombres as $campo => $nombre) {
+            $periodos[$campo] = mbAdmFechaHora((string)($_POST[$campo] ?? ''));
+            if ($periodos[$campo] === null) mbResponder(false, 'Elige la fecha y la hora de ' . $nombre . '.');
+        }
+        // Todo va como 'AAAA-MM-DD hh:mm:ss': se compara bien como texto. La
+        // vigencia acaba al terminar su último día.
+        $vigInicio = $desde . ' 00:00:00';
+        $vigFin    = (new DateTimeImmutable($hasta))->modify('+1 day')->format('Y-m-d') . ' 00:00:00';
+        if ($periodos['subida_hasta'] <= $periodos['subida_desde'])     mbResponder(false, 'La subida de fotos tiene que cerrar después de abrir.');
+        if ($periodos['votacion_hasta'] <= $periodos['votacion_desde']) mbResponder(false, 'La votación tiene que cerrar después de abrir.');
+        if ($periodos['votacion_desde'] < $periodos['subida_desde'])    mbResponder(false, 'La votación no puede abrir antes que la subida de fotos.');
+        if ($periodos['subida_hasta'] > $periodos['votacion_hasta'])    mbResponder(false, 'La subida de fotos no puede cerrar después de la votación: esas fotos ya no recibirían likes.');
+        if ($periodos['subida_desde'] < $vigInicio || $periodos['votacion_hasta'] > $vigFin) {
+            mbResponder(false, 'La subida y la votación tienen que caer dentro de la vigencia del concurso.');
+        }
+    }
+
+    // Invitados de oktoberMESS: opcional. Sedes vacías = todas. El concurso es
+    // sólo de empleados: nunca lleva.
+    $invEvento = $tipo === 'concurso' ? '' : trim((string)($_POST['invitados'] ?? ''));
     $invSedes  = null;
     if ($invEvento !== '') {
         if (!preg_match('/^[A-Za-z0-9_-]{1,64}$/', $invEvento)) mbResponder(false, 'El evento de invitados sólo lleva letras, números, - y _.');
@@ -181,6 +253,13 @@ if ($accion === 'adm_guardar') {
     try {
         $album = $id > 0 ? mbAdmAlbum($conn, $id) : null;
         if ($id > 0 && !$album) mbResponder(false, 'Ese álbum ya no existe. Recarga la lista.');
+        // Con fotos, un álbum no se vuelve concurso ni deja de serlo: sus reglas
+        // (1 foto por persona, likes) no se aplican hacia atrás.
+        if ($album && ($album['tipo'] === 'concurso') !== ($tipo === 'concurso') && mbAdmFotos($conn, $id) > 0) {
+            mbResponder(false, $tipo === 'concurso'
+                ? 'Este álbum ya tiene fotos: no se puede convertir en concurso. Crea uno nuevo.'
+                : 'Este concurso ya tiene fotos: no se puede cambiar a otro tipo.');
+        }
         if ($visible) {
             $choque = mbAdmConflicto($conn, $id, $tipo, $desde, $hasta);
             if ($choque !== '') mbResponder(false, $choque);
@@ -221,8 +300,12 @@ if ($accion === 'adm_guardar') {
                 $stmt->bind_param('sssi', $nombre, $inicio, $fin, $id);
                 $stmt->execute();
                 $stmt->close();
-                $stmt = $conn->prepare('UPDATE messbook_albumes SET titulo = ?, tipo = ?, invitados_evento = ?, invitados_sedes = ?, portada = ?, visible = ?, actualizado_por = ? WHERE id_evento = ?');
-                $stmt->bind_param('sssssisi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible, $noEmpleado, $id);
+                $stmt = $conn->prepare('UPDATE messbook_albumes SET titulo = ?, tipo = ?, invitados_evento = ?, invitados_sedes = ?, portada = ?, visible = ?,
+                                               subida_desde = ?, subida_hasta = ?, votacion_desde = ?, votacion_hasta = ?, actualizado_por = ?
+                                         WHERE id_evento = ?');
+                $stmt->bind_param('sssssisssssi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
+                                  $periodos['subida_desde'], $periodos['subida_hasta'], $periodos['votacion_desde'], $periodos['votacion_hasta'],
+                                  $noEmpleado, $id);
                 $stmt->execute();
                 $stmt->close();
             } else {
@@ -232,8 +315,12 @@ if ($accion === 'adm_guardar') {
                 $stmt->execute();
                 $id = (int)$conn->insert_id;
                 $stmt->close();
-                $stmt = $conn->prepare('INSERT INTO messbook_albumes (id_evento, titulo, tipo, invitados_evento, invitados_sedes, portada, visible, actualizado_por) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-                $stmt->bind_param('isssssis', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible, $noEmpleado);
+                $stmt = $conn->prepare('INSERT INTO messbook_albumes (id_evento, titulo, tipo, invitados_evento, invitados_sedes, portada, visible,
+                                                                     subida_desde, subida_hasta, votacion_desde, votacion_hasta, actualizado_por)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->bind_param('isssssisssss', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
+                                  $periodos['subida_desde'], $periodos['subida_hasta'], $periodos['votacion_desde'], $periodos['votacion_hasta'],
+                                  $noEmpleado);
                 $stmt->execute();
                 $stmt->close();
             }
@@ -287,11 +374,7 @@ if ($accion === 'adm_borrar') {
     try {
         $album = mbAdmAlbum($conn, $id);
         if (!$album) mbResponder(false, 'Ese álbum ya no existe. Recarga la lista.');
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ?');
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $n = (int)$stmt->get_result()->fetch_row()[0];
-        $stmt->close();
+        $n = mbAdmFotos($conn, $id);
         if ($n > 0) mbResponder(false, "Este álbum tiene $n " . ($n === 1 ? 'foto' : 'fotos') . ': no se puede borrar. Ocúltalo.');
 
         $conn->begin_transaction();

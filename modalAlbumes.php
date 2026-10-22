@@ -6,8 +6,11 @@
  * se guarda vía acciones_album.php (acciones adm_*, en
  * includes/album_admin.php), que vuelve a revisar el permiso en cada una.
  *
- * inicio.php lo incluye sólo si $adminAlbum (de momento, BI). Al guardar
+ * inicio.php lo incluye sólo si $adminAlbum (acceso especial album /
+ * administrarAlbumes; includes/album.php, mbPuedeAdministrar). Al guardar
  * avisa con el evento 'mb:albumes' para que la pestaña recargue sus portadas.
+ * El 🏆 de un concurso cierra este modal y pide el ranking con 'mb:ranking'
+ * (el modal del ranking vive en inicio.php: también lo usa RRHH).
  */
 if (empty($adminAlbum)) return;
 ?>
@@ -46,6 +49,10 @@ if (empty($adminAlbum)) return;
                                     <input type="radio" id="alb_tipoGeneral" name="alb_tipo" value="general" class="custom-control-input">
                                     <label class="custom-control-label small" for="alb_tipoGeneral">General</label>
                                 </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="alb_tipoConcurso" name="alb_tipo" value="concurso" class="custom-control-input">
+                                    <label class="custom-control-label small" for="alb_tipoConcurso">Concurso</label>
+                                </div>
                                 <small class="text-muted d-block" id="alb_ayudaTipo"></small>
                             </div>
                         </div>
@@ -56,13 +63,13 @@ if (empty($adminAlbum)) return;
                                 <label class="small mb-1" for="alb_dia">Día del evento</label>
                                 <input type="date" class="form-control form-control-sm" id="alb_dia">
                             </div>
-                            <!-- General: periodo -->
+                            <!-- General: periodo. Concurso: vigencia. -->
                             <div class="col-md-4 mb-2" id="alb_cajaDesde" hidden>
-                                <label class="small mb-1" for="alb_desde">Desde</label>
+                                <label class="small mb-1" for="alb_desde" id="alb_lblDesde">Desde</label>
                                 <input type="date" class="form-control form-control-sm" id="alb_desde">
                             </div>
                             <div class="col-md-4 mb-2" id="alb_cajaHasta" hidden>
-                                <label class="small mb-1" for="alb_hasta">Hasta</label>
+                                <label class="small mb-1" for="alb_hasta" id="alb_lblHasta">Hasta</label>
                                 <input type="date" class="form-control form-control-sm" id="alb_hasta">
                             </div>
                             <div class="col-md-4 mb-2 d-flex align-items-end">
@@ -73,8 +80,28 @@ if (empty($adminAlbum)) return;
                             </div>
                         </div>
 
+                        <!-- Concurso: la subida de fotos y la votación, con hora, dentro de la vigencia -->
+                        <div class="form-row" id="alb_cajaConcurso" hidden>
+                            <div class="col-md-3 col-6 mb-2">
+                                <label class="small mb-1" for="alb_subidaDesde">Subida de fotos: abre</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="alb_subidaDesde">
+                            </div>
+                            <div class="col-md-3 col-6 mb-2">
+                                <label class="small mb-1" for="alb_subidaHasta">Subida de fotos: cierra</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="alb_subidaHasta">
+                            </div>
+                            <div class="col-md-3 col-6 mb-2">
+                                <label class="small mb-1" for="alb_votacionDesde">Votación: abre</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="alb_votacionDesde">
+                            </div>
+                            <div class="col-md-3 col-6 mb-2">
+                                <label class="small mb-1" for="alb_votacionHasta">Votación: cierra</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="alb_votacionHasta">
+                            </div>
+                        </div>
+
                         <!-- Fotos de invitados de oktoberMESS (sólo lectura en messbook) -->
-                        <div class="custom-control custom-checkbox mb-2">
+                        <div class="custom-control custom-checkbox mb-2" id="alb_filaInvitados">
                             <input type="checkbox" class="custom-control-input" id="alb_conInvitados">
                             <label class="custom-control-label small" for="alb_conInvitados">Incluir las fotos de los invitados (app de oktoberMESS)</label>
                         </div>
@@ -118,6 +145,7 @@ if (empty($adminAlbum)) return;
                 <p class="small text-muted mb-2">
                     En cada momento sólo un álbum recibe fotos: el de <strong>evento</strong> en su día (a cualquier hora, <?php echo MB_EVENTO_HORAS; ?> horas
                     desde las 00:00) y, fuera de los eventos, el <strong>general</strong> en su periodo (de 12:00 a 15:00 y de 18:00 a 06:00).
+                    El <strong>concurso</strong> recibe aparte, en su propia subida, y no le quita fotos a los demás.
                     El que está recibiendo ahora va marcado con <i class="fas fa-circle text-success" style="font-size:.6rem;"></i>.
                 </p>
 
@@ -180,22 +208,42 @@ if (empty($adminAlbum)) return;
         var p = String(f || '').split('-');
         return p.length === 3 ? parseInt(p[2], 10) + ' ' + m[parseInt(p[1], 10) - 1] + ' ' + p[0] : '';
     }
+    /** "2026-10-26T08:00" → "26 oct 2026 08:00". */
+    function fechaHora(f) {
+        var p = String(f || '').split('T');
+        return p.length === 2 ? fecha(p[0]) + ' ' + p[1].slice(0, 5) : '';
+    }
     function nombreSede(s) { return s === SIN_SEDE ? 'Sin sede (registrados antes)' : s; }
 
+    var TIPOS = { evento: 'Evento', general: 'General', concurso: 'Concurso' };
+
     // ── Formulario ───────────────────────────────────────────────────────
-    function tipoElegido() { return $a('alb_tipoGeneral').checked ? 'general' : 'evento'; }
+    function tipoElegido() {
+        var r = document.querySelector('input[name="alb_tipo"]:checked');
+        return r ? r.value : 'evento';
+    }
 
     function pintarTipo() {
-        var general = tipoElegido() === 'general';
-        $a('alb_cajaDia').hidden   = general;
-        $a('alb_cajaDesde').hidden = !general;
-        $a('alb_cajaHasta').hidden = !general;
-        $a('alb_ayudaTipo').textContent = general
-            ? 'Recibe fotos en su periodo, de 12:00 a 15:00 y de 18:00 a 06:00, menos los días de evento.'
-            : 'Recibe fotos a cualquier hora durante <?php echo MB_EVENTO_HORAS; ?> horas, desde las 00:00 de su día.';
+        var tipo = tipoElegido(), concurso = tipo === 'concurso';
+        $a('alb_cajaDia').hidden   = tipo !== 'evento';
+        $a('alb_cajaDesde').hidden = tipo === 'evento';
+        $a('alb_cajaHasta').hidden = tipo === 'evento';
+        $a('alb_lblDesde').textContent = concurso ? 'Vigencia: desde' : 'Desde';
+        $a('alb_lblHasta').textContent = concurso ? 'Vigencia: hasta' : 'Hasta';
+        $a('alb_cajaConcurso').hidden = !concurso;
+        // El concurso es sólo de empleados: sin fotos de invitados.
+        $a('alb_filaInvitados').hidden = concurso;
+        $a('alb_cajaInvitados').hidden = concurso || !$a('alb_conInvitados').checked;
+        $a('alb_ayudaTipo').textContent = {
+            general:  'Recibe fotos en su periodo, de 12:00 a 15:00 y de 18:00 a 06:00, menos los días de evento.',
+            evento:   'Recibe fotos a cualquier hora durante <?php echo MB_EVENTO_HORAS; ?> horas, desde las 00:00 de su día.',
+            concurso: 'Cada empleado sube <?php echo MB_CONCURSO_FOTOS; ?> foto y tiene <?php echo MB_CONCURSO_VOTOS; ?> likes para las de los demás. '
+                    + 'La subida y la votación van dentro de la vigencia; los likes se ven al cerrar la votación.'
+        }[tipo];
     }
-    $a('alb_tipoEvento').addEventListener('change', pintarTipo);
-    $a('alb_tipoGeneral').addEventListener('change', pintarTipo);
+    ['alb_tipoEvento', 'alb_tipoGeneral', 'alb_tipoConcurso'].forEach(function (id) {
+        $a(id).addEventListener('change', pintarTipo);
+    });
 
     $a('alb_conInvitados').addEventListener('change', function () {
         $a('alb_cajaInvitados').hidden = !this.checked;
@@ -287,6 +335,7 @@ if (empty($adminAlbum)) return;
         $a('alb_titulo').value = '';
         $a('alb_tipoEvento').checked = true;
         $a('alb_dia').value = ''; $a('alb_desde').value = ''; $a('alb_hasta').value = '';
+        ['alb_subidaDesde', 'alb_subidaHasta', 'alb_votacionDesde', 'alb_votacionHasta'].forEach(function (id) { $a(id).value = ''; });
         $a('alb_visible').checked = true;
         $a('alb_conInvitados').checked = false;
         $a('alb_cajaInvitados').hidden = true;
@@ -304,10 +353,14 @@ if (empty($adminAlbum)) return;
         $a('alb_id').value = a.id;
         $a('alb_tituloForm').textContent = 'Editar «' + a.titulo + '»';
         $a('alb_titulo').value = a.titulo;
-        $a(a.tipo === 'general' ? 'alb_tipoGeneral' : 'alb_tipoEvento').checked = true;
+        $a('alb_tipo' + (TIPOS[a.tipo] || 'Evento')).checked = true;
         $a('alb_dia').value   = a.tipo === 'evento' ? a.desde : '';
-        $a('alb_desde').value = a.tipo === 'general' ? a.desde : '';
-        $a('alb_hasta').value = a.tipo === 'general' ? a.hasta : '';
+        $a('alb_desde').value = a.tipo !== 'evento' ? a.desde : '';
+        $a('alb_hasta').value = a.tipo !== 'evento' ? a.hasta : '';
+        $a('alb_subidaDesde').value   = a.subida_desde;
+        $a('alb_subidaHasta').value   = a.subida_hasta;
+        $a('alb_votacionDesde').value = a.votacion_desde;
+        $a('alb_votacionHasta').value = a.votacion_hasta;
         $a('alb_visible').checked = a.visible;
         $a('alb_conInvitados').checked = !!a.invitados;
         $a('alb_cajaInvitados').hidden = !a.invitados;
@@ -321,14 +374,19 @@ if (empty($adminAlbum)) return;
 
     $a('alb_btnGuardar').addEventListener('click', function () {
         var boton = this;
-        var conInv = $a('alb_conInvitados').checked;
+        var tipo = tipoElegido();
+        var conInv = tipo !== 'concurso' && $a('alb_conInvitados').checked;
         var datos = {
             id:      $a('alb_id').value || 0,
             titulo:  $a('alb_titulo').value.trim(),
-            tipo:    tipoElegido(),
+            tipo:    tipo,
             dia:     $a('alb_dia').value,
             desde:   $a('alb_desde').value,
             hasta:   $a('alb_hasta').value,
+            subida_desde:   $a('alb_subidaDesde').value,
+            subida_hasta:   $a('alb_subidaHasta').value,
+            votacion_desde: $a('alb_votacionDesde').value,
+            votacion_hasta: $a('alb_votacionHasta').value,
             visible: $a('alb_visible').checked ? 1 : 0,
             invitados: conInv ? $a('alb_invitados').value.trim() : '',
             sedes:   conInv ? Array.prototype.map.call(document.querySelectorAll('.alb-sede:checked'), function (c) { return c.value; }) : []
@@ -349,25 +407,35 @@ if (empty($adminAlbum)) return;
 
     // ── Lista ────────────────────────────────────────────────────────────
     function fila(a) {
-        var fechas = a.tipo === 'evento' ? fecha(a.desde) : fecha(a.desde) + ' → ' + fecha(a.hasta);
+        var concurso = a.tipo === 'concurso';
+        var fechas = esc(a.tipo === 'evento' ? fecha(a.desde) : fecha(a.desde) + ' → ' + fecha(a.hasta));
+        if (concurso) {
+            fechas += '<br><span class="text-muted">Subida: ' + esc(fechaHora(a.subida_desde) + ' → ' + fechaHora(a.subida_hasta)) + '</span>'
+                    + '<br><span class="text-muted">Votación: ' + esc(fechaHora(a.votacion_desde) + ' → ' + fechaHora(a.votacion_hasta)) + '</span>';
+        }
         var inv = a.invitados
             ? esc(a.invitados) + '<br><span class="text-muted">' + esc(a.sedes.length ? a.sedes.map(nombreSede).join(', ') : 'todas las sedes') + '</span>'
             : '<span class="text-muted">—</span>';
         var borrar = a.fotos > 0
             ? '<button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Tiene fotos: sólo se puede ocultar"><i class="fas fa-trash"></i></button>'
             : '<button type="button" class="btn btn-sm btn-outline-danger" data-borrar="' + a.id + '" title="Borrar"><i class="fas fa-trash"></i></button>';
+        var ranking = concurso
+            ? '<button type="button" class="btn btn-sm btn-outline-warning mr-1" data-ranking="' + a.id + '" title="Ranking"><i class="fas fa-trophy"></i></button>'
+            : '';
         return '<tr' + (a.visible ? '' : ' class="text-muted"') + '>'
             + '<td>' + (a.activo ? '<i class="fas fa-circle text-success mr-1" style="font-size:.6rem;" title="Recibiendo fotos ahora"></i>' : '')
             + (a.portada ? '<img class="alb-mini mr-2" src="' + esc(a.portada) + '" alt="" title="Con portada propia">' : '')
             + '<strong>' + esc(a.titulo) + '</strong></td>'
-            + '<td class="small">' + (a.tipo === 'evento' ? 'Evento' : 'General') + '</td>'
-            + '<td class="small text-nowrap">' + esc(fechas) + '</td>'
+            + '<td class="small">' + esc(TIPOS[a.tipo] || a.tipo) + '</td>'
+            + '<td class="small text-nowrap">' + fechas + '</td>'
             + '<td class="small">' + inv + '</td>'
-            + '<td class="text-center">' + a.fotos + '</td>'
+            + '<td class="text-center">' + a.fotos
+            + (concurso ? '<br><span class="small text-muted" title="Likes"><i class="fas fa-heart"></i> ' + a.likes + '</span>' : '') + '</td>'
             + '<td class="text-center"><div class="custom-control custom-switch d-inline-block">'
             + '<input type="checkbox" class="custom-control-input" id="alb_vis' + a.id + '" data-visible="' + a.id + '"' + (a.visible ? ' checked' : '') + '>'
             + '<label class="custom-control-label" for="alb_vis' + a.id + '"><span class="sr-only">Visible</span></label></div></td>'
-            + '<td class="text-nowrap"><button type="button" class="btn btn-sm btn-outline-primary mr-1" data-editar="' + a.id + '" title="Editar"><i class="fas fa-pen"></i></button>'
+            + '<td class="text-nowrap">' + ranking
+            + '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-editar="' + a.id + '" title="Editar"><i class="fas fa-pen"></i></button>'
             + borrar + '</td></tr>';
     }
 
@@ -389,6 +457,16 @@ if (empty($adminAlbum)) return;
     $a('alb_tabla').addEventListener('click', function (e) {
         var ed = e.target.closest('[data-editar]');
         if (ed) { editar(parseInt(ed.dataset.editar, 10)); return; }
+        // El ranking es otro modal (inicio.php): primero se cierra éste, para
+        // no encimar dos modales de Bootstrap.
+        var rk = e.target.closest('[data-ranking]');
+        if (rk) {
+            var idRanking = parseInt(rk.dataset.ranking, 10);
+            $('#modalAlbumes').one('hidden.bs.modal', function () {
+                document.dispatchEvent(new CustomEvent('mb:ranking', { detail: { id: idRanking } }));
+            }).modal('hide');
+            return;
+        }
         var br = e.target.closest('[data-borrar]');
         if (br) {
             var id = parseInt(br.dataset.borrar, 10);

@@ -2008,13 +2008,14 @@ footer.sticky-footer .fb-footer-logo {
    asi que no alcanzaba a la nueva ubicación; se repite aquí. Sin filtro:
    el logo de aquí (img/B1_blanco.png) ya es claro y la columna es azul en los
    dos temas. */
+/* 10 % más chico que el ancho de la columna (2026-10-22). */
 .perfil-footer .fb-footer-logo {
-    max-height: 66px !important;
+    max-height: 59px !important;
     filter: none !important;
     opacity: 0.95;
     display: block;
     margin: 0 auto 3px;
-    max-width: 100%;
+    max-width: 90%;
 }
 
 .perfil-footer {
@@ -2029,15 +2030,10 @@ footer.sticky-footer .fb-footer-logo {
     filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
-/* El de temporada ($logoTemporada) ya trae sus colores: sin el invert. Ocupa
-   la misma caja de 83 px de alto que el de siempre, para que el botón del
-   menú (encabezado.php, top:38px) siga centrado con él, y no pasa de 220 px de
-   ancho para no meterse debajo de ese botón. */
+/* El de temporada (includes/temporada.php) ya trae sus colores: sin el invert.
+   Su imagen tiene la proporción del de siempre, así que con las mismas medidas
+   ocupa lo mismo (200 × 83 px) y el botón del menú sigue centrado con él. */
 .logo-encabezado--temporada {
-    max-width: 220px;
-    width: 90%;
-    height: 83px;
-    object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
@@ -2595,6 +2591,113 @@ body.album-sin-scroll { overflow: hidden; }
     font-weight: 600;
     color: var(--accent);
 }
+
+/* ══ Concurso (álbum tipo 'concurso': 1 foto por persona, 3 likes) ═════════
+   includes/album.php; la barra y los corazones los pinta inicio.php
+   (pintarConcurso, likeHtml). */
+
+/* Barra sobre el muro: la votación y los likes que le quedan */
+.album-concurso {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    margin-bottom: 1rem;
+    padding: .75rem 1rem;
+    border-left: 4px solid #e11d48;
+    border-radius: 8px;
+    background: var(--card-soft);
+    color: var(--text);
+    font-size: .9rem;
+}
+.album-concurso[hidden] { display: none; }
+.album-concurso__texto { flex: 1 1 16rem; min-width: 0; }
+.album-concurso__texto .fa-heart { color: #e11d48; }
+.album-concurso__texto .fa-trophy { color: #d4a017; }
+.album-concurso__ayuda { display: block; margin-top: .2rem; color: var(--text-muted); font-size: .78rem; }
+.album-concurso__ranking { flex: none; }
+
+/* Foto del concurso: la caja lleva la foto y, junto, su corazón (un botón no
+   puede ir dentro de otro). */
+.album-foto-caja { position: relative; }
+
+/* El corazón: sólo con la votación abierta (.es-votando en el muro) */
+.album-like {
+    position: absolute;
+    top: .4rem;
+    right: .4rem;
+    z-index: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform .15s, background-color .15s, opacity .15s;
+}
+.album-muro.es-votando .album-like { display: inline-flex; }
+.album-like:hover,
+.album-like:focus-visible { transform: scale(1.1); background: rgba(0, 0, 0, .75); }
+.album-like.es-votado { border-color: transparent; background: #e11d48; }
+.album-like.es-votado:hover,
+.album-like.es-votado:focus-visible { background: #be123c; }
+/* Sin likes disponibles: los que faltan, apagados (al tocarlos, el servidor
+   avisa que hay que quitar uno primero) */
+.album-muro.sin-likes .album-like:not(.es-votado) { opacity: .45; }
+/* Mientras va un like al servidor */
+.album-muro.es-pidiendo .album-like { pointer-events: none; opacity: .7; }
+
+/* Votación cerrada: los likes que juntó cada foto */
+.album-foto__votos {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: #e11d48;
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+
+/* Like en el visor, y lo que responde el servidor */
+.album-visor__like {
+    border: 1px solid rgba(255, 255, 255, .35);
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+.album-visor__like:hover,
+.album-visor__like:focus-visible { background: rgba(255, 255, 255, .22); color: #fff; }
+.album-visor__like.es-votado { border-color: transparent; background: #e11d48; }
+.album-visor__like small { opacity: .8; }
+.album-visor__nota {
+    max-width: 30rem;
+    margin: 0;
+    padding: .4rem .9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    font-size: .85rem;
+    text-align: center;
+}
+.album-visor__nota[hidden] { display: none; }
+
+/* Ranking (modalRanking en inicio.php): miniatura y medallas */
+.album-ranking__mini { width: 3.5rem; height: 3.5rem; object-fit: cover; border-radius: 8px; }
+.album-ranking__medalla--1 { color: #eab308; }
+.album-ranking__medalla--2 { color: #9ca3af; }
+.album-ranking__medalla--3 { color: #b45309; }
 
 /* ══ Avisos (pestaña AVISOS, pop-up "NUEVO AVISO"; js/avisos.js) ══════════
    Cada aviso lleva a la izquierda la barra del color de su área
