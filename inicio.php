@@ -14,11 +14,11 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 // llama), así que para liberarlo basta con poner true aquí.
 $mostrarMessbookID = false;
 
-// Logo de temporada sobre la tarjeta del usuario (Día de Muertos): se ve hasta
-// el 6 de noviembre de 2026 inclusive y el 7 a las 00:00 (hora de CDMX) vuelve
-// solo el de siempre, sin tener que desplegar nada.
-$zonaMx        = new DateTimeZone('America/Mexico_City');
-$logoTemporada = new DateTimeImmutable('now', $zonaMx) < new DateTimeImmutable('2026-11-07 00:00', $zonaMx);
+// Logo de temporada sobre la tarjeta del usuario (Día de Muertos): hasta el 6
+// de noviembre de 2026 inclusive; después vuelve solo el de siempre
+// (includes/temporada.php, el mismo corte que el login).
+require_once __DIR__ . '/includes/temporada.php';
+$logoTemporada = mbHayLogoTemporada();
 
 // Acceso especial a la pestaña KPI's (tabla accesos_especiales, gestionada desde modalAccesosEspeciales.php).
 // El campo inf_adicional guarda el pk (contraseña) que se inyecta al iframe de KPIs.
@@ -138,12 +138,24 @@ $tieneAlbum = !empty($_COOKIE['noEmpleadoL']);
 // vista elige el activo y prende o apaga el botón (pintarSubida), así cambia
 // solo a las 12:00 o a medianoche aunque la página se haya abierto antes.
 $albumesSubida = [];
-$adminAlbum    = false;   // engrane "Administrar álbumes" (modalAlbumes.php): de momento, BI
+$adminAlbum    = false;   // engrane "Administrar álbumes" (modalAlbumes.php): acceso especial album/administrarAlbumes
+$verRanking    = false;   // ranking de los concursos (modalRanking, abajo): BI y RRHH
+// Concursos con algo por hacer para este empleado (subir su foto o votar): se
+// recuerdan en "Encuestas / Votaciones" de Mi Espacio (cargarMisEncuestas).
+$concursosPendientes = [];
 if ($tieneAlbum) {
     require_once __DIR__ . '/includes/album.php';
     try {
-        $adminAlbum = mbPuedeAdministrar($conn, (string)$_COOKIE['noEmpleadoL']);
+        $noEmpAlb   = (string)$_COOKIE['noEmpleadoL'];
+        $adminAlbum = mbPuedeAdministrar($conn, $noEmpAlb);
+        $verRanking = mbPuedeVerRanking($conn, $noEmpAlb);
         foreach (mbEventosAlbum($conn) as $idAlb => $evAlb) {
+            // El concurso recibe aparte: el botón de la tarjeta no sube a él.
+            if (mbEsConcurso($evAlb)) {
+                $pendiente = mbPendienteConcurso($conn, $evAlb, $noEmpAlb, time());
+                if ($pendiente) $concursosPendientes[] = $pendiente;
+                continue;
+            }
             if (!mbAlbumVigente($evAlb['ventanas'], time())) continue;
             $albumesSubida[] = [
                 'id'       => $idAlb,
@@ -343,7 +355,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                  El de temporada sale mientras $logoTemporada (arriba). -->
                             <div class="text-center pt-3 pb-2">
                                 <?php if ($logoTemporada): ?>
-                                <img src="../loginMaster/img/temporada/messbook_dia_de_muertos.png" alt="Messbook" class="logo-encabezado logo-encabezado--temporada">
+                                <img src="../loginMaster/<?php echo MB_LOGO_TEMPORADA; ?>" alt="Messbook" class="logo-encabezado logo-encabezado--temporada">
                                 <?php else: ?>
                                 <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook" class="logo-encabezado">
                                 <?php endif; ?>
@@ -1257,7 +1269,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <h4 class="mb-1" style="color: var(--accent);">Fotos de los eventos</h4>
                                                 <?php if ($adminAlbum): ?>
-                                                <!-- Crear / editar / ocultar álbumes: modalAlbumes.php (de momento, BI) -->
+                                                <!-- Crear / editar / ocultar álbumes: modalAlbumes.php (acceso especial, $adminAlbum) -->
                                                 <button type="button" class="btn btn-link album-admin" data-toggle="modal" data-target="#modalAlbumes"
                                                         title="Administrar álbumes" aria-label="Administrar álbumes">
                                                     <i class="fas fa-cog"></i>
@@ -1291,12 +1303,23 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                  cuándo se reabre. Lo llena pintarSubida(). -->
                                             <div class="album-horario" id="albumHorario" role="status" hidden></div>
 
+                                            <!-- Concurso: la votación y los likes que le quedan a cada quien.
+                                                 Lo llena pintarConcurso(). El ranking, sólo BI y RRHH. -->
+                                            <div class="album-concurso" id="albumConcurso" hidden>
+                                                <div class="album-concurso__texto" id="albumConcursoTexto" role="status"></div>
+                                                <?php if ($verRanking): ?>
+                                                <button class="btn btn-sm btn-outline-warning album-concurso__ranking" type="button" id="albumRanking">
+                                                    <i class="fas fa-trophy"></i> Ranking
+                                                </button>
+                                                <?php endif; ?>
+                                            </div>
+
                                             <!-- Subir: toda la caja es el label, para que el dedo tenga dónde caer -->
                                             <label class="album-subir" id="albumZona" hidden>
                                                 <input type="file" accept="image/*" id="albumArchivo">
                                                 <i class="fas fa-cloud-upload-alt"></i>
-                                                <strong>Toma o elige una foto</strong>
-                                                <span class="small">Se publica al instante y la ven todos los empleados</span>
+                                                <strong id="albumZonaTitulo">Toma o elige una foto</strong>
+                                                <span class="small" id="albumZonaAyuda">Se publica al instante y la ven todos los empleados</span>
                                             </label>
 
                                             <!-- Vista previa antes de publicar -->
@@ -1892,9 +1915,50 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         <div class="album-visor__pie">
             <span class="album-visor__contador" id="albumVisorContador"></span>
             <span id="albumVisorAutor"></span>
+            <!-- Concurso: dar o quitar el like (pintarLikeVisor) -->
+            <button class="btn btn-sm album-visor__like" type="button" id="albumVisorLike" aria-pressed="false" hidden>
+                <i class="far fa-heart"></i> <span>Dar like</span>
+            </button>
             <button class="btn btn-danger btn-sm" type="button" id="albumVisorBorrar" hidden>
                 <i class="fas fa-trash"></i> Borrar mi foto
             </button>
+        </div>
+        <!-- Lo que responde el servidor a un like, dentro del visor: el aviso del
+             muro queda tapado mientras está abierto. -->
+        <p class="album-visor__nota" id="albumVisorNota" role="status" hidden></p>
+    </div>
+    <?php endif; ?>
+
+    <!-- Ranking de un concurso: sólo BI y RRHH ($verRanking). Lo abren el botón
+         del muro del concurso y el 🏆 del modal de álbumes (evento mb:ranking);
+         lo llena abrirRanking() con la acción `ranking` de acciones_album.php. -->
+    <?php if ($tieneAlbum && $verRanking): ?>
+    <div class="modal fade" id="modalRanking" tabindex="-1" role="dialog" aria-labelledby="rankingTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content border-left-warning shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="rankingTitulo"><i class="fas fa-trophy mr-2"></i>Ranking</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2" id="rankingResumen"></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0 album-ranking">
+                            <thead class="thead-light small text-uppercase">
+                                <tr>
+                                    <th class="text-center">Lugar</th>
+                                    <th>Foto</th>
+                                    <th>Empleado</th>
+                                    <th class="text-center">Likes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankingTabla"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <?php endif; ?>
@@ -2569,9 +2633,44 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             calendarVacaciones.render();
         }
 
+        // Concursos de la pestaña Fotos con algo por hacer (includes/album.php,
+        // mbPendienteConcurso): subir la foto o votar. Van arriba de las
+        // encuestas y, al tocarlos, abren ese álbum (evento mb:abrir-album).
+        var CONCURSOS_PENDIENTES = <?php echo json_encode($concursosPendientes, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); ?>;
+
+        function concursosPendientesHtml() {
+            return CONCURSOS_PENDIENTES.map(function (c) {
+                var completo = c.fase === 'votacion' && c.restantes === 0;
+                var titulo = c.fase === 'votacion'
+                    ? (completo ? 'Ya diste tus ' + c.votos_max + ' likes en «' + c.titulo + '»' : 'Vota en «' + c.titulo + '»')
+                    : 'Sube tu foto a «' + c.titulo + '»';
+                var detalle = c.fase === 'votacion'
+                    ? (completo ? 'Puedes cambiarlos hasta que cierre ' : 'Te quedan ' + c.restantes + ' de ' + c.votos_max + ' likes · cierra ') + c.cierra
+                    : 'Una foto por persona · se reciben hasta ' + c.cierra;
+                return '<div class="mb-2">'
+                    + '<a type="button" onClick="abrirConcursoPendiente(' + Number(c.id) + ')" class="btn btn-white btn-block text-left shadow-sm py-2 '
+                    + (completo ? 'border-left-success' : 'border-left-primary') + ' card-btn-pendiente">'
+                    + '<div class="d-flex justify-content-between align-items-center">'
+                    + '<span class="' + (completo ? 'text-success' : 'text-primary') + ' font-weight-bold small">'
+                    + '<i class="fas ' + (c.fase === 'votacion' ? (completo ? 'fa-check-circle' : 'fa-heart') : 'fa-camera') + ' mr-2"></i> ' + escapeHtml(titulo)
+                    + '</span><i class="fas fa-arrow-right fa-sm text-gray-400"></i></div>'
+                    + '<small class="d-block text-muted ml-4">' + escapeHtml(detalle) + '</small>'
+                    + '</a></div>';
+            }).join('');
+        }
+
+        function abrirConcursoPendiente(id) {
+            document.dispatchEvent(new CustomEvent('mb:abrir-album', { detail: { id: id } }));
+        }
+
         function cargarMisEncuestas() {
             // Usamos el ID del empleado (debería venir de tu sesión de PHP)
             const id_empleado = <?php echo $_COOKIE['noEmpleadoL']; ?>;
+
+            // Los concursos se pintan de una vez: no dependen de acciones_eventos.php.
+            const concursos = concursosPendientesHtml();
+            $('#encuestasAsigandas').html(concursos);
+            $('#cardEncuestas').prop('hidden', !concursos);
 
             $.post('acciones_eventos.php', {
                 accion: 'listar_mis_actividades_completas',
@@ -2623,8 +2722,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
                 // La tarjeta de Mi Espacio sólo se ve si hay alguna activa (el
                 // servidor ya manda sólo las que están dentro de sus fechas).
-                $('#encuestasAsigandas').html(html);
-                $('#cardEncuestas').prop('hidden', !data.length);
+                $('#encuestasAsigandas').html(concursos + html);
+                $('#cardEncuestas').prop('hidden', !(data.length || concursos));
             }, 'json');
         }
 
@@ -5397,12 +5496,20 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
         // `actual`: el álbum abierto como lo mandó el servidor (con sus `ventanas`).
         // `pidiendo`: hay una carga del muro en camino; evita pedirlo dos veces
         // cuando el botón de la tarjeta abre el álbum y luego la pestaña.
-        var fotos = { album: null, actual: null, albumes: {}, ids: {}, masNueva: null, masVieja: null, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, pidiendo: false, abierto: false };
+        // `concurso`: lo del concurso abierto que depende de quien mira (likes
+        // que le quedan, si ya subió su foto) y sus periodos; null en los demás.
+        // `fase`: la de su votación la última vez que se pintó (pintarConcurso).
+        // `pendiente`: álbum que pidió abrir Mi Espacio antes de tener portadas.
+        var fotos = { album: null, actual: null, albumes: {}, ids: {}, masNueva: null, masVieja: null, blob: null, previaUrl: null, sondeo: null, visor: null, cargadas: false, pidiendo: false, abierto: false, concurso: null, fase: null, pendiente: null, votando: false };
 
         // Los álbumes que todavía reciben fotos, con sus ventanas. En cada
         // momento a lo más uno está abierto (albumActivo): a ése sube el botón
         // de la tarjeta. Lo arma inicio.php con includes/album.php.
         var ALBUMES_SUBIDA = <?php echo json_encode($albumesSubida, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); ?>;
+
+        // Ranking de los concursos: BI y RRHH (mbPuedeVerRanking). El servidor
+        // lo vuelve a revisar en la acción `ranking`.
+        var VER_RANKING = <?php echo $verRanking ? 'true' : 'false'; ?>;
 
         /* ── Horario de subida ──────────────────────────────────────────────
            Las ventanas llegan del servidor como pares [inicio, fin) en segundos
@@ -5425,33 +5532,57 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             return 'el ' + new Date(ts * 1000).toLocaleDateString('es-MX', { timeZone: ZONA, weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '') + ' ' + hora;
         }
 
-        /** { abierta, texto } del álbum `a` en este momento. */
+        /** { abierta, texto } del álbum `a` en este momento. El concurso tiene
+            una sola ventana (su subida) y sus propias palabras. */
         function estadoSubida(a) {
             var v = (a && a.ventanas) || [], t = ahoraSeg(), i;
-            if (!v.length) return { abierta: false, texto: 'Este álbum no recibe fotos.' };
+            var concurso = !!(a && a.concurso);
+            if (!v.length) return { abierta: false, texto: concurso ? 'El concurso no recibe fotos.' : 'Este álbum no recibe fotos.' };
             for (i = 0; i < v.length; i++) {
                 if (t >= v[i][0] && t < v[i][1]) {
                     // El día del evento la ventana dura más de un día: "hasta
                     // mañana a las 15:00" o "hasta el sábado 10 de octubre…".
-                    return { abierta: true, texto: 'Puedes subir fotos hasta ' + (diaMx(v[i][1]) === diaMx(t) ? 'las ' + horaMx(v[i][1]) : cuando(v[i][1], t)) + '.' };
+                    var hasta = diaMx(v[i][1]) === diaMx(t) ? 'las ' + horaMx(v[i][1]) : cuando(v[i][1], t);
+                    return { abierta: true, texto: (concurso ? 'Puedes subir tu foto al concurso hasta ' : 'Puedes subir fotos hasta ') + hasta + '.' };
                 }
             }
             for (i = 0; i < v.length; i++) {
                 if (v[i][0] > t) {
-                    return { abierta: false, texto: t < v[0][0]
-                        ? '¡Prepara tu cámara! Podrás subir fotos a este álbum ' + cuando(v[i][0], t) + '.'
-                        : 'La subida de fotos está en pausa. Se vuelve a abrir ' + cuando(v[i][0], t) + '.' };
+                    return { abierta: false, texto: concurso
+                        ? '¡Prepárate! Podrás subir tu foto al concurso ' + cuando(v[i][0], t) + '.'
+                        : (t < v[0][0]
+                            ? '¡Prepara tu cámara! Podrás subir fotos a este álbum ' + cuando(v[i][0], t) + '.'
+                            : 'La subida de fotos está en pausa. Se vuelve a abrir ' + cuando(v[i][0], t) + '.') };
                 }
             }
-            return { abierta: false, texto: 'Este álbum ya no recibe fotos. Las fotos se siguen viendo.' };
+            return { abierta: false, texto: concurso ? 'El concurso ya no recibe fotos.' : 'Este álbum ya no recibe fotos. Las fotos se siguen viendo.' };
         }
 
-        /** El álbum que recibe fotos en este momento, o null. */
+        /** El álbum que recibe fotos en este momento, o null. El concurso
+            recibe aparte: nunca es éste (includes/album.php, mbAlbumActivo). */
         function albumActivo() {
             for (var i = 0; i < ALBUMES_SUBIDA.length; i++) {
+                if (ALBUMES_SUBIDA[i].concurso) continue;
                 if (estadoSubida(ALBUMES_SUBIDA[i]).abierta) return ALBUMES_SUBIDA[i];
             }
             return null;
+        }
+
+        /** Fase de la votación de un concurso: 'antes' | 'votando' | 'cerrada';
+            null si no tiene votación. `c`: el estado del concurso (fotos.concurso). */
+        function faseVotacion(c) {
+            var v = c && c.votacion, t = ahoraSeg();
+            if (!v) return null;
+            return t < v[0] ? 'antes' : (t < v[1] ? 'votando' : 'cerrada');
+        }
+        /** Ya abrió la votación: la foto del concurso ya no se borra. */
+        function votacionEmpezo(c) {
+            var f = faseVotacion(c);
+            return f === 'votando' || f === 'cerrada';
+        }
+        /** El estado del concurso si el álbum abierto es uno; null si no. */
+        function concursoAbierto() {
+            return fotos.actual && fotos.actual.concurso ? fotos.concurso : null;
         }
 
         /** Caja de subir, aviso de horario, marca en las portadas y botón de la
@@ -5462,15 +5593,22 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             var activo = albumActivo();
             var e = fotos.actual ? estadoSubida(fotos.actual) : null;
             var listo = !!e && fotos.cargadas;
+            var concurso = concursoAbierto();
+            // Concurso: 1 foto por persona. Si ya subió la suya, no hay caja.
+            var participa = !!(concurso && concurso.mi_foto);
             // Si éste no recibe pero otro sí, se manda para allá (y se dice
             // cuándo abre éste, p. ej. el álbum del evento antes de su día).
-            var texto = e && !e.abierta && activo && activo.id !== fotos.album
+            // El concurso no: recibe aparte.
+            var texto = e && !e.abierta && activo && activo.id !== fotos.album && !concurso
                 ? 'Ahora las fotos se suben al álbum «' + activo.titulo + '». ' + e.texto
                 : (e ? e.texto : '');
-            $id('albumZona').hidden = !(listo && e.abierta && !fotos.blob);
+            if (participa && e && e.abierta) {
+                texto = 'Ya participas con tu foto.' + (votacionEmpezo(concurso) ? '' : ' Si quieres cambiarla, ábrela y bórrala antes de que abra la votación.');
+            }
+            $id('albumZona').hidden = !(listo && e.abierta && !fotos.blob && !participa);
             $id('albumHorario').hidden = !listo;
             $id('albumHorario').textContent = listo ? texto : '';
-            $id('albumHorario').classList.toggle('es-abierta', listo && e.abierta);
+            $id('albumHorario').classList.toggle('es-abierta', listo && e.abierta && !participa);
 
             Array.prototype.forEach.call($id('albumPortadas').querySelectorAll('[data-album]'), function (b) {
                 b.classList.toggle('es-activa', !!activo && String(activo.id) === b.dataset.album);
@@ -5478,6 +5616,51 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
 
             // El de la tarjeta, sólo mientras algún álbum recibe fotos.
             if ($id('btnSubirFotos')) $id('btnSubirFotos').hidden = !activo;
+
+            pintarConcurso();
+        }
+
+        /**
+         * Barra del concurso: cuándo abre o cierra la votación y cuántos likes
+         * le quedan a quien mira. También prende los corazones del muro
+         * (.es-votando). Si la fase cambia con la página abierta (abre o cierra
+         * la votación), recarga el muro: los conteos llegan del servidor sólo
+         * cuando ya cerró.
+         */
+        function pintarConcurso() {
+            var c = concursoAbierto();
+            var fase = c && fotos.cargadas ? faseVotacion(c) : null;
+            $id('albumConcurso').hidden = !fase;
+            $id('albumMuro').classList.toggle('es-votando', fase === 'votando');
+            $id('albumMuro').classList.toggle('sin-likes', fase === 'votando' && c.restantes === 0);
+            if (!fase) { fotos.fase = null; return; }
+
+            var t = ahoraSeg(), v = c.votacion, html;
+            if (fase === 'antes') {
+                html = '<i class="fas fa-heart"></i> La votación abre ' + esc(cuando(v[0], t)) + '. Cada quien tendrá <strong>'
+                     + c.votos_max + ' likes</strong> para las fotos de los demás.';
+            } else if (fase === 'votando') {
+                html = '<i class="fas fa-heart"></i> Te quedan <strong>' + c.restantes + ' de ' + c.votos_max + ' likes</strong>. La votación cierra '
+                     + esc(cuando(v[1], t)) + '.'
+                     + '<span class="album-concurso__ayuda">Toca el corazón de una foto para darle like y vuelve a tocarlo para quitárselo. A la tuya no se le puede dar.</span>';
+            } else {
+                html = '<i class="fas fa-trophy"></i> La votación cerró. Así quedaron los likes.';
+            }
+            $id('albumConcursoTexto').innerHTML = html;
+
+            var cambio = fotos.fase !== null && fotos.fase !== fase;
+            fotos.fase = fase;
+            if (cambio) recargarMuro();
+        }
+
+        /** El mismo álbum, desde cero (p. ej. al cerrar la votación). */
+        function recargarMuro() {
+            var a = fotos.actual;
+            if (!a) return;
+            reiniciarMuro();
+            fotos.album = a.id;
+            fotos.actual = a;
+            cargarFotos();
         }
         setInterval(function () { if (!document.hidden) pintarSubida(); }, 15000);
         document.addEventListener('visibilitychange', function () { if (!document.hidden) pintarSubida(); });
@@ -5524,6 +5707,10 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                 $id('albumPortadas').innerHTML = d.albumes.map(portadaHtml).join('');
                 pintarSubida();
                 if (!d.albumes.length) aviso('info', 'Todavía no hay álbumes abiertos.');
+                // Lo pidió Mi Espacio antes de que hubiera portadas (mb:abrir-album).
+                var pendiente = fotos.pendiente && fotos.albumes[fotos.pendiente];
+                fotos.pendiente = null;
+                if (pendiente) abrirAlbum(pendiente);
             }).catch(function () { $id('albumListaCargando').hidden = true; aviso('peligro', SIN_RED); });
         }
 
@@ -5546,9 +5733,16 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             reiniciarMuro();
             fotos.album = a.id;
             fotos.actual = a;
+            // Lo del concurso, hasta que llegue el del muro (cargarFotos).
+            fotos.concurso = a.concurso || null;
+            fotos.fase = null;
             $id('albumTitulo').textContent = a.titulo;
             $id('albumSubtitulo').textContent = subtituloAlbum(a);
             $id('albumLogo').innerHTML = logoAlbumHtml(a);
+            $id('albumZonaTitulo').textContent = a.concurso ? 'Sube tu foto para el concurso' : 'Toma o elige una foto';
+            $id('albumZonaAyuda').textContent  = a.concurso
+                ? 'Una foto por persona. Se publica al instante y la ven todos los empleados'
+                : 'Se publica al instante y la ven todos los empleados';
             $id('albumLista').hidden = true;
             $id('albumDetalle').hidden = false;
             cargarFotos();
@@ -5558,6 +5752,8 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             reiniciarMuro();
             fotos.album = null;
             fotos.actual = null;
+            fotos.concurso = null;
+            fotos.fase = null;
             pintarSubida();
             aviso('', '');
             $id('albumDetalle').hidden = true;
@@ -5609,15 +5805,81 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             // Las propias llevan marca: en un muro de cientos de fotos, "Tú"
             // en letra chica al pie no basta para encontrarlas. Las de los
             // invitados (oktoberMESS) también, y ésas aquí sólo se ven.
-            return '<button class="album-foto' + (f.mia ? ' es-mia' : '') + (f.invitado ? ' es-invitado' : '') + '" type="button" data-foto="' + esc(f.clave) + '">'
+            var foto = '<button class="album-foto' + (f.mia ? ' es-mia' : '') + (f.invitado ? ' es-invitado' : '') + '" type="button" data-foto="' + esc(f.clave) + '">'
                 + '<img src="' + esc(f.url) + '" alt="Foto de ' + esc(f.autor) + '" loading="lazy">'
                 + (f.mia ? '<span class="album-foto__mia"><i class="fas fa-user"></i> Tuya</span>' : '')
                 + (f.invitado ? '<span class="album-foto__invitado"><i class="fas fa-glass-cheers"></i> Invitado</span>' : '')
+                // Concurso con la votación cerrada: los likes que juntó.
+                + (f.votos != null ? '<span class="album-foto__votos"><i class="fas fa-heart"></i> ' + f.votos + '</span>' : '')
                 // El texto del post, en una línea; completo se lee en el visor.
                 + '<span class="album-foto__autor">'
                 + (f.texto ? '<span class="album-foto__texto">' + esc(f.texto) + '</span>' : '')
                 + (f.mia ? 'Tú' : esc(f.autor)) + ' · ' + esc(f.hora) + '</span>'
                 + '</button>';
+            if (!concursoAbierto()) return foto;
+            // Concurso: el corazón va JUNTO a la foto, no adentro (un botón no
+            // puede llevar otro). Se ve sólo con la votación abierta (CSS,
+            // .album-muro.es-votando) y nunca en la propia.
+            return '<div class="album-foto-caja">' + foto + (f.mia || f.origen !== 'MB' ? '' : likeHtml(f)) + '</div>';
+        }
+
+        /** Corazón del concurso sobre una foto del muro. */
+        function likeHtml(f) {
+            return '<button class="album-like' + (f.votado ? ' es-votado' : '') + '" type="button" data-like="' + esc(f.clave) + '"'
+                + ' aria-pressed="' + (f.votado ? 'true' : 'false') + '" aria-label="' + (f.votado ? 'Quitar el like a la foto de ' : 'Dar like a la foto de ') + esc(f.autor) + '">'
+                + '<i class="' + (f.votado ? 'fas' : 'far') + ' fa-heart"></i></button>';
+        }
+
+        /** Vuelve a pintar el like de `f` en el muro y, si está abierta, en el visor. */
+        function pintarLike(f) {
+            var b = $id('albumMuro').querySelector('[data-like="' + f.clave + '"]');
+            if (b) b.outerHTML = likeHtml(f);
+            if (fotos.visor === f) pintarLikeVisor(f);
+        }
+
+        /** Lo que responde el servidor a un like: dentro del visor si está
+            abierto (lo tapa todo, también el aviso del muro); si no, en un
+            SweetAlert, porque el aviso del muro puede quedar fuera de la vista. */
+        function avisoLike(texto) {
+            if (!$id('albumVisor').hidden) {
+                $id('albumVisorNota').textContent = texto;
+                $id('albumVisorNota').hidden = false;
+            } else if (window.Swal) {
+                Swal.fire({ icon: 'info', title: texto });
+            } else {
+                aviso('peligro', texto);
+            }
+        }
+
+        /**
+         * Da o quita el like de `f`, lo contrario de lo que tiene. Las reglas
+         * (3 por persona, no a la propia, sólo con la votación abierta) las hace
+         * cumplir el servidor (acción voto); aquí sólo se pinta lo que responde.
+         * Uno a la vez: mientras va uno, los demás toques no hacen nada.
+         */
+        function votar(f) {
+            if (!f || fotos.votando) return;
+            var album = fotos.album, dar = !f.votado;
+            fotos.votando = true;
+            $id('albumMuro').classList.add('es-pidiendo');
+            pedir('voto', { album: album, id: f.id, origen: f.origen, dar: dar ? 1 : 0 }).then(function (d) {
+                fotos.votando = false;
+                $id('albumMuro').classList.remove('es-pidiendo');
+                if (album !== fotos.album) return;
+                if (fotos.concurso && typeof d.restantes === 'number') fotos.concurso.restantes = d.restantes;
+                if (d.success) {
+                    f.votado = !!d.votado;
+                    pintarLike(f);
+                } else {
+                    avisoLike(d.message);
+                    if (fotos.visor === f) pintarLikeVisor(f);
+                }
+                pintarSubida();
+            }).catch(function () {
+                fotos.votando = false;
+                $id('albumMuro').classList.remove('es-pidiendo');
+                avisoLike(SIN_RED);
+            });
         }
 
         /*
@@ -5672,6 +5934,7 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                 fotos.pidiendo = false;
                 $id('albumCargando').hidden = true;
                 if (!d.success) { aviso(d.sin_album ? 'info' : 'peligro', d.message); return; }
+                if (d.concurso) fotos.concurso = d.concurso;
                 fotos.cargadas = true;
                 pintarSubida();
                 moverOrillas(d);
@@ -5712,6 +5975,8 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                 var album = fotos.album;
                 pedir('fotos', datosMuro(cursorDatos('despues', fotos.masNueva))).then(function (d) {
                     if (album !== fotos.album || !d.success) return;
+                    // Los likes que le quedan pudieron cambiar en otra pestaña.
+                    if (d.concurso) { fotos.concurso = d.concurso; pintarSubida(); }
                     moverOrillas(d);
                     if (d.fotos.length) agregarFotos(d.fotos, true);
                 }).catch(function () {});
@@ -5726,6 +5991,64 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             if (fotos.album !== null) volverALista();
             else if (fotos.abierto) cargarAlbumes();
         });
+
+        // "Encuestas / Votaciones" de Mi Espacio (cargarMisEncuestas) pide abrir
+        // un álbum, p. ej. el concurso para votar: se va a la pestaña Fotos y se
+        // abre ese álbum, ahora o en cuanto lleguen las portadas.
+        document.addEventListener('mb:abrir-album', function (e) {
+            var id = e.detail && e.detail.id;
+            if (!id) return;
+            if (fotos.albumes[id]) {
+                if (fotos.album !== fotos.albumes[id].id) abrirAlbum(fotos.albumes[id]);
+            } else {
+                fotos.pendiente = id;
+                // Con la pestaña ya abierta nadie volvería a pedir las portadas.
+                if (fotos.abierto) { if (fotos.album !== null) volverALista(); else cargarAlbumes(); }
+            }
+            $('#tabAlbum-tab').tab('show');
+            $id('mainTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        /* ── Ranking del concurso (sólo BI y RRHH) ──────────────────────────
+           Lo piden el botón de la barra del concurso y el 🏆 del modal de
+           álbumes (mb:ranking). La acción `ranking` revisa el permiso. */
+        function filaRanking(r) {
+            // Medalla para los tres primeros lugares, si ya tienen likes.
+            var medalla = r.lugar <= 3 && r.votos > 0
+                ? '<i class="fas fa-medal album-ranking__medalla album-ranking__medalla--' + r.lugar + '" aria-hidden="true"></i> ' : '';
+            return '<tr>'
+                + '<td class="text-center align-middle font-weight-bold text-nowrap">' + medalla + r.lugar + '</td>'
+                + '<td class="align-middle">' + (r.url
+                    ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener"><img class="album-ranking__mini" src="' + esc(r.url) + '" alt="Foto de ' + esc(r.nombre) + '" loading="lazy"></a>'
+                    : '') + '</td>'
+                + '<td class="align-middle"><strong>' + esc(r.nombre) + '</strong>'
+                + '<span class="d-block small text-muted">No. ' + esc(r.noEmpleado) + (r.area ? ' · ' + esc(r.area) : '') + ' · ' + esc(r.hora) + '</span>'
+                + (r.texto ? '<span class="d-block small">' + esc(r.texto) + '</span>' : '') + '</td>'
+                + '<td class="text-center align-middle font-weight-bold">' + r.votos + '</td>'
+                + '</tr>';
+        }
+
+        function abrirRanking(id) {
+            if (!VER_RANKING || !$id('modalRanking') || !id) return;
+            $id('rankingTitulo').innerHTML = '<i class="fas fa-trophy mr-2"></i>Ranking';
+            $id('rankingResumen').textContent = 'Cargando…';
+            $id('rankingTabla').innerHTML = '';
+            $('#modalRanking').modal('show');
+            pedir('ranking', { album: id }).then(function (d) {
+                if (!d.success) { $id('rankingResumen').textContent = d.message; return; }
+                $id('rankingTitulo').innerHTML = '<i class="fas fa-trophy mr-2"></i>' + esc(d.titulo);
+                var fase = { antes: 'La votación todavía no abre.', votando: 'Votación abierta: el ranking todavía puede cambiar.', cerrada: 'Votación cerrada: resultado final.' }[faseVotacion({ votacion: d.votacion })] || '';
+                $id('rankingResumen').textContent = d.participantes + (d.participantes === 1 ? ' participante' : ' participantes') + ' · '
+                    + d.votantes + (d.votantes === 1 ? ' persona votó' : ' personas votaron') + ' · '
+                    + d.likes + (d.likes === 1 ? ' like' : ' likes') + ' en total. ' + fase;
+                $id('rankingTabla').innerHTML = d.ranking.length
+                    ? d.ranking.map(filaRanking).join('')
+                    : '<tr><td colspan="4" class="text-center text-muted small py-3">Todavía no hay fotos en el concurso.</td></tr>';
+            }).catch(function () { $id('rankingResumen').textContent = SIN_RED; });
+        }
+
+        document.addEventListener('mb:ranking', function (e) { abrirRanking(e.detail && e.detail.id); });
+        if ($id('albumRanking')) $id('albumRanking').addEventListener('click', function () { abrirRanking(fotos.album); });
 
         // Bootstrap 4 avisa de las pestañas con eventos de jQuery.
         // Al volver a la pestaña se queda en la pantalla en que estaba.
@@ -5843,7 +6166,14 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                 if (album !== fotos.album) return;
                 // Fuera de horario (la ventana cerró con la vista previa lista):
                 // se descarta la foto y la caja da paso al aviso de cuándo reabre.
-                if (!d.success) { if (d.fuera_de_horario) limpiarPrevia(); aviso('peligro', d.message); return; }
+                if (!d.success) {
+                    // Concurso: ya tenía su foto (p. ej. la subió desde otra pestaña).
+                    if (d.ya_participa && fotos.concurso) fotos.concurso.mi_foto = true;
+                    if (d.fuera_de_horario || d.ya_participa) limpiarPrevia();
+                    aviso('peligro', d.message);
+                    return;
+                }
+                if (d.concurso) fotos.concurso = d.concurso;
                 limpiarPrevia();
                 agregarFotos([d.foto], true);
                 aviso('exito', d.message);
@@ -5872,10 +6202,14 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             $id('albumVisorRota').hidden = true;
             $id('albumVisorImg').src = f.url;
             $id('albumVisorImg').alt = 'Foto de ' + (f.mia ? 'ti' : f.autor);
-            $id('albumVisorAutor').textContent = (f.mia ? 'Tu foto' : 'Foto de ' + f.autor + (f.invitado ? ' (invitado)' : '')) + ' · ' + f.hora;
+            $id('albumVisorAutor').textContent = (f.mia ? 'Tu foto' : 'Foto de ' + f.autor + (f.invitado ? ' (invitado)' : '')) + ' · ' + f.hora
+                + (f.votos != null ? ' · ' + f.votos + (f.votos === 1 ? ' like' : ' likes') : '');
             $id('albumVisorTexto').textContent = f.texto || '';
             $id('albumVisorTexto').hidden = !f.texto;
-            $id('albumVisorBorrar').hidden = !f.mia;
+            // La propia se borra; la del concurso, sólo antes de que abra la votación.
+            $id('albumVisorBorrar').hidden = !f.mia || (!!concursoAbierto() && votacionEmpezo(concursoAbierto()));
+            $id('albumVisorNota').hidden = true;
+            pintarLikeVisor(f);
 
             // El contador se recalcula cada vez: el sondeo puede meter fotos
             // nuevas arriba mientras el visor está abierto.
@@ -5887,6 +6221,21 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             $id('albumVisor').hidden = false;
             document.body.classList.add('album-sin-scroll');
         }
+
+        /** Botón de like del visor: sólo en el concurso, con la votación
+            abierta, en fotos ajenas. Sin likes disponibles igual se enseña:
+            al tocarlo, el servidor dice que hay que quitar uno primero. */
+        function pintarLikeVisor(f) {
+            var boton = $id('albumVisorLike'), c = concursoAbierto();
+            var puede = !!c && faseVotacion(c) === 'votando' && !f.mia && f.origen === 'MB';
+            boton.hidden = !puede;
+            if (!puede) return;
+            boton.classList.toggle('es-votado', !!f.votado);
+            boton.setAttribute('aria-pressed', f.votado ? 'true' : 'false');
+            boton.innerHTML = '<i class="' + (f.votado ? 'fas' : 'far') + ' fa-heart"></i> <span>' + (f.votado ? 'Quitar like' : 'Dar like') + '</span>'
+                + (f.votado ? '' : ' <small>(' + (c.restantes === 0 ? 'ya no te quedan' : c.restantes === 1 ? 'te queda 1' : 'te quedan ' + c.restantes) + ')</small>');
+        }
+        $id('albumVisorLike').addEventListener('click', function () { votar(fotos.visor); });
 
         function moverVisor(paso) {
             if (!fotos.visor) return;
@@ -5902,6 +6251,9 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
         }
 
         $id('albumMuro').addEventListener('click', function (e) {
+            // El corazón del concurso va junto a la foto: no abre el visor.
+            var l = e.target.closest('[data-like]');
+            if (l) { votar(fotos.ids[l.dataset.like]); return; }
             var b = e.target.closest('[data-foto]');
             if (b) abrirVisor(b.dataset.foto);
         });
@@ -5932,6 +6284,7 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
         function cerrarVisor() {
             $id('albumVisor').hidden = true;
             $id('albumVisorImg').removeAttribute('src');
+            $id('albumVisorNota').hidden = true;
             fotos.visor = null;
             document.body.classList.remove('album-sin-scroll');
         }
@@ -5946,16 +6299,22 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
 
         $id('albumVisorBorrar').addEventListener('click', function () {
             var f = fotos.visor;
-            if (!f || !confirm('¿Borrar tu foto? Dejará de verse para todos.')) return;
+            var pregunta = concursoAbierto()
+                ? '¿Borrar tu foto del concurso? Podrás subir otra mientras la subida siga abierta.'
+                : '¿Borrar tu foto? Dejará de verse para todos.';
+            if (!f || !confirm(pregunta)) return;
             var boton = this;
             boton.disabled = true;
             pedir('foto_borrar', { origen: f.origen, id: f.id }).then(function (d) {
                 boton.disabled = false;
                 if (!d.success) { cerrarVisor(); aviso('peligro', d.message); return; }
                 var el = $id('albumMuro').querySelector('[data-foto="' + f.clave + '"]');
-                if (el) el.remove();
+                // En el concurso la foto va dentro de su caja, junto al corazón.
+                if (el) (el.closest('.album-foto-caja') || el).remove();
                 delete fotos.ids[f.clave];
                 $id('albumVacio').hidden = Object.keys(fotos.ids).length > 0;
+                // Concurso: ya no participa, la caja de subir vuelve.
+                if (d.concurso) { fotos.concurso = d.concurso; pintarSubida(); }
                 cerrarVisor();
                 aviso('exito', d.message);
             }).catch(function () { boton.disabled = false; aviso('peligro', SIN_RED); });

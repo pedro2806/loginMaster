@@ -48,6 +48,13 @@
             filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
             display: block;
         }
+        /* Logo de temporada (includes/temporada.php): ya trae sus colores, sin
+           el filtro que blanquea al de siempre. En celular la regla de abajo
+           le quita el filtro a los dos, y ahí se ve el de siempre (<picture>). */
+        .fb-logo-picture { display: block; }
+        .fb-logo-img--temporada {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
         .fb-tagline {
             font-size: 26px;
             font-weight: normal;
@@ -191,6 +198,14 @@
             color: #166fe5;
             text-decoration: underline;
         }
+        /* Aviso de privacidad, en chico bajo los contactos de soporte */
+        .fb-support-text a.fb-privacidad {
+            display: block;
+            margin-top: 8px;
+            color: #65676b;
+            font-size: 11px;
+            font-weight: normal;
+        }
         .fb-footer {
             background: rgba(255,255,255,0.08);
             backdrop-filter: blur(12px);
@@ -208,12 +223,14 @@
             padding: 0 24px;
             text-align: center;
         }
+        /* img/B1_blanco.png, el mismo del pie de la tarjeta en inicio.php: ya es
+           claro, sin filtro sobre el fondo oscuro. */
         .fb-footer-logo {
             max-width: 350px;
             height: auto;
             margin: 8px auto;
             display: block;
-            filter: brightness(0) invert(1);
+            filter: none;
             opacity: 0.85;
         }
         .fb-footer-links {
@@ -345,10 +362,12 @@
                 width: 100%;
                 max-width: none;
             }
+            /* En celular el pie es claro: B1_blanco se invierte a gris oscuro
+               para que se lea. */
             .fb-footer-logo {
                 max-width: 300px;
-                filter: none;
-                opacity: 1;
+                filter: invert(1);
+                opacity: 0.75;
             }
             .fb-footer-links {
                 border-top: 1px solid #dadde1;

@@ -11,7 +11,8 @@
 
 /*
  * LOS ÁLBUMES viven en la BD (sql/2026-09-25_album_admin.sql) y se
- * administran desde el modal de la pestaña Fotos (modalAlbumes.php, sólo BI):
+ * administran desde el modal de la pestaña Fotos (modalAlbumes.php: quien tenga
+ * el acceso especial, ver mbPuedeAdministrar):
  * una fila de mess_rrhh.messbook_albumes por álbum, ligada 1 a 1 con su fila
  * de enc_eventos (tipo 'album', estatus 0), de donde salen las fechas.
  *
@@ -26,10 +27,22 @@
  *   fecha_fin; sólo cuenta el día) y sólo en las ventanas de MB_VENTANAS,
  *   menos los días de evento: esos, las fotos van al evento.
  *
- * Así, en cada momento a lo más un álbum recibe fotos (el "activo"), y el
- * botón de la tarjeta sube siempre a ése. El modal no deja guardar dos eventos
- * con ventanas encimadas ni dos generales con periodos encimados. Un álbum oculto
- * (visible = 0) no sale en la pestaña ni recibe fotos.
+ * Así, en cada momento a lo más un álbum de evento o general recibe fotos (el
+ * "activo"), y el botón de la tarjeta sube siempre a ése. El modal no deja
+ * guardar dos eventos con ventanas encimadas ni dos generales con periodos
+ * encimados. Un álbum oculto (visible = 0) no sale en la pestaña ni recibe fotos.
+ *
+ *   CONCURSO (decisión del 2026-10-21, disfraces) — cada empleado sube
+ *   MB_CONCURSO_FOTOS foto y reparte MB_CONCURSO_VOTOS likes entre las de los
+ *   demás (messbook_votos, sql/2026-10-21_album_concurso.sql). Tiene tres
+ *   periodos: la vigencia (fecha_inicio..fecha_fin, como los demás), que sólo
+ *   enmarca a los otros dos, porque el álbum se ve siempre; la subida
+ *   (subida_desde..subida_hasta, a cualquier hora), que es su ventana; y la
+ *   votación (votacion_desde..votacion_hasta). Recibe fotos APARTE: no es "el
+ *   activo", así que no le quita las fotos al general ni al botón de la
+ *   tarjeta. La foto se borra o se cambia sólo antes de que abra la votación;
+ *   los likes de cada foto se enseñan al cerrarla, y el ranking lo ven en vivo
+ *   BI y RRHH (mbPuedeVerRanking).
  *
  * Fotos de invitados: las de mess_oktobermess.foto_evento cuyo `evento` sea
  * invitados_evento, de las sedes de invitados_sedes (códigos de
@@ -37,6 +50,10 @@
  * el campo, cuando sólo había Bajío).
  */
 const MB_SIN_SEDE = 'SIN_SEDE';
+
+const MB_CONCURSO_FOTOS = 1;          // por empleado, en cada concurso
+const MB_CONCURSO_VOTOS = 3;          // likes por empleado, en cada concurso
+const MB_DEPTOS_RANKING = [27, 47];   // ven el ranking: BI y Recursos Humanos (usuarios.departamento)
 
 /*
  * HORARIO, en hora de la Ciudad de México. Una ventana cuyo fin es menor que
@@ -69,16 +86,24 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
         $GLOBALS['mb_albumes_sucio'] = false;
         $cache = [];
         $res = $conn->query("SELECT e.id_evento, e.nombre, e.fecha_inicio, e.fecha_fin,
-                                    a.titulo, a.tipo, a.invitados_evento, a.invitados_sedes, a.portada, a.visible
+                                    a.titulo, a.tipo, a.invitados_evento, a.invitados_sedes, a.portada, a.visible,
+                                    a.subida_desde, a.subida_hasta, a.votacion_desde, a.votacion_hasta
                                FROM messbook_albumes a
                                JOIN enc_eventos e ON e.id_evento = a.id_evento
                               ORDER BY e.fecha_inicio, e.id_evento");
         foreach ($res->fetch_all(MYSQLI_ASSOC) as $e) {
+            $esConcurso = $e['tipo'] === 'concurso';
             $e['cfg'] = [
                 'titulo'    => (string)$e['titulo'],
                 'dia'       => $e['tipo'] === 'evento' ? substr((string)$e['fecha_inicio'], 0, 10) : null,
-                'invitados' => $e['invitados_evento'] !== null && $e['invitados_evento'] !== ''
+                // Un concurso es sólo de empleados: nunca trae fotos de invitados.
+                'invitados' => !$esConcurso && $e['invitados_evento'] !== null && $e['invitados_evento'] !== ''
                     ? ['evento' => (string)$e['invitados_evento'], 'sedes' => mbSedesDeTexto($e['invitados_sedes'])]
+                    : null,
+                // [inicio, fin) en Unix de la subida y de la votación; null si no es concurso.
+                'concurso'  => $esConcurso
+                    ? ['subida'   => mbTramo($e['subida_desde'], $e['subida_hasta']),
+                       'votacion' => mbTramo($e['votacion_desde'], $e['votacion_hasta'])]
                     : null,
             ];
             $e['ventanas'] = [];
@@ -94,6 +119,13 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
         }
         foreach ($cache as $id => $e) {
             if (!$e['visible']) continue;
+            if (mbEsConcurso($e)) {
+                // A cualquier hora dentro de su subida, sin descontar los días
+                // de evento: recibe aparte de los demás.
+                $s = $e['cfg']['concurso']['subida'];
+                $cache[$id]['ventanas'] = $s ? [$s] : [];
+                continue;
+            }
             $d = mbVentanaEvento($e);
             $cache[$id]['ventanas'] = $d ? [$d] : mbRestar(mbVentanasPeriodo($e), $diasEvento);
         }
@@ -119,19 +151,126 @@ function mbSedesDeTexto(?string $texto): ?array {
                      array_values(array_filter(array_map('trim', explode(',', $texto)), 'strlen')));
 }
 
+/*
+ * Quién administra los álbumes (decisión del 2026-10-22): SÓLO quien tenga en
+ * mess_rrhh.accesos_especiales una fila con este sistema y esta opción, que se
+ * da y se quita desde el modal de Accesos Especiales. Ya no va por
+ * departamento: BI también necesita su fila. inf_adicional no se usa.
+ */
+const MB_ACCESO_SISTEMA = 'album';
+const MB_ACCESO_OPCION  = 'administrarAlbumes';
+
 /**
- * ¿Puede administrar los álbumes? De momento, BI (usuarios.departamento = 27),
- * la misma regla que hoy enseña la pestaña. Se revisa en el servidor en cada
- * acción del modal; OJO: se basa en la cookie noEmpleadoL, que no va firmada.
+ * ¿Puede administrar los álbumes? Quien tenga el acceso especial
+ * MB_ACCESO_SISTEMA / MB_ACCESO_OPCION y siga activo. Se revisa en el servidor
+ * en cada acción del modal; OJO: se basa en la cookie noEmpleadoL, que no va
+ * firmada.
  */
 function mbPuedeAdministrar(mysqli $conn, string $noEmpleado): bool {
     if (!preg_match('/^\d{1,11}$/', $noEmpleado)) return false;
-    $stmt = $conn->prepare('SELECT 1 FROM mess_rrhh.usuarios WHERE noEmpleado = ? AND estatus = 1 AND departamento = 27 LIMIT 1');
-    $stmt->bind_param('s', $noEmpleado);
+    $sistema = MB_ACCESO_SISTEMA;
+    $opcion  = MB_ACCESO_OPCION;
+    // accesos_especiales.noEmpleado es INT y usuarios.noEmpleado VARCHAR: se
+    // comparan como número.
+    $stmt = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios u
+                             WHERE u.noEmpleado = ? AND u.estatus = 1
+                               AND EXISTS (SELECT 1 FROM mess_rrhh.accesos_especiales ae
+                                            WHERE ae.noEmpleado = u.noEmpleado AND ae.sistema = ? AND ae.opcion = ? AND ae.estatus = 1)
+                             LIMIT 1");
+    $stmt->bind_param('sss', $noEmpleado, $sistema, $opcion);
     $stmt->execute();
     $si = (bool)$stmt->get_result()->fetch_row();
     $stmt->close();
     return $si;
+}
+
+/**
+ * ¿Puede ver el ranking de un concurso? BI y RRHH (MB_DEPTOS_RANKING), en vivo,
+ * aunque la votación siga abierta: los demás sólo ven los likes al cerrar.
+ * También quien administra los álbumes (mbPuedeAdministrar): abre el ranking
+ * desde el modal. Mismas reservas: se basa en la cookie noEmpleadoL.
+ */
+function mbPuedeVerRanking(mysqli $conn, string $noEmpleado): bool {
+    if (!preg_match('/^\d{1,11}$/', $noEmpleado)) return false;
+    $deptos = implode(',', array_map('intval', MB_DEPTOS_RANKING));
+    $stmt = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios WHERE noEmpleado = ? AND estatus = 1 AND departamento IN ($deptos) LIMIT 1");
+    $stmt->bind_param('s', $noEmpleado);
+    $stmt->execute();
+    $si = (bool)$stmt->get_result()->fetch_row();
+    $stmt->close();
+    return $si || mbPuedeAdministrar($conn, $noEmpleado);
+}
+
+/** ¿Es un concurso? (tipo 'concurso', ver CONCURSO arriba) */
+function mbEsConcurso(array $evento): bool {
+    return ($evento['tipo'] ?? '') === 'concurso';
+}
+
+/** Dos DATETIME en hora de MB_ZONA → [inicio, fin) en Unix. null si falta uno
+    o si el fin no es posterior al inicio. */
+function mbTramo(?string $desde, ?string $hasta): ?array {
+    $zona = new DateTimeZone(MB_ZONA);
+    $d = $desde ? DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $desde, $zona) : false;
+    $h = $hasta ? DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $hasta, $zona) : false;
+    if (!$d || !$h || $h <= $d) return null;
+    return [$d->getTimestamp(), $h->getTimestamp()];
+}
+
+/** La votación de un concurso, [inicio, fin) en Unix; null si no es concurso
+    o no tiene fechas válidas (entonces nunca se vota). */
+function mbVotacion(array $evento): ?array {
+    return $evento['cfg']['concurso']['votacion'] ?? null;
+}
+
+/** Se pueden dar y quitar likes en este momento. */
+function mbVotacionAbierta(array $evento, int $ahora): bool {
+    $v = mbVotacion($evento);
+    return $v !== null && $ahora >= $v[0] && $ahora < $v[1];
+}
+
+/** Ya abrió la votación: desde entonces la foto del concurso ya no se borra. */
+function mbVotacionEmpezo(array $evento, int $ahora): bool {
+    $v = mbVotacion($evento);
+    return $v !== null && $ahora >= $v[0];
+}
+
+/** Ya cerró: los likes de cada foto se enseñan a todos. */
+function mbVotacionCerrada(array $evento, int $ahora): bool {
+    $v = mbVotacion($evento);
+    return $v !== null && $ahora >= $v[1];
+}
+
+/**
+ * Lo que el concurso le pide hoy a `$noEmpleado`, para recordárselo en Mi
+ * Espacio (inicio.php, "Encuestas / Votaciones"): votar mientras la votación
+ * está abierta, o subir su foto si la subida está abierta y no ha subido.
+ * null si no hay nada que hacer.
+ */
+function mbPendienteConcurso(mysqli $conn, array $evento, string $noEmpleado, int $ahora): ?array {
+    $c = $evento['cfg']['concurso'] ?? null;
+    if (!$c) return null;
+    $id = (int)$evento['id_evento'];
+    if (mbVotacionAbierta($evento, $ahora)) {
+        $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_votos WHERE id_evento = ? AND noEmpleado = ?');
+        $stmt->bind_param('is', $id, $noEmpleado);
+        $stmt->execute();
+        $dados = (int)$stmt->get_result()->fetch_row()[0];
+        $stmt->close();
+        return ['id' => $id, 'titulo' => mbTituloAlbum($evento), 'fase' => 'votacion',
+                'restantes' => max(0, MB_CONCURSO_VOTOS - $dados), 'votos_max' => MB_CONCURSO_VOTOS,
+                'cierra' => mbCuando($c['votacion'][1], $ahora)];
+    }
+    if ($c['subida'] && mbSubidaAbierta([$c['subida']], $ahora)) {
+        $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ? AND noEmpleado = ?');
+        $stmt->bind_param('is', $id, $noEmpleado);
+        $stmt->execute();
+        $mias = (int)$stmt->get_result()->fetch_row()[0];
+        $stmt->close();
+        if ($mias >= MB_CONCURSO_FOTOS) return null;
+        return ['id' => $id, 'titulo' => mbTituloAlbum($evento), 'fase' => 'subida',
+                'cierra' => mbCuando($c['subida'][1], $ahora)];
+    }
+    return null;
 }
 
 /** Lo que se lee en la portada: el `titulo` o el nombre del evento. */
@@ -218,9 +357,11 @@ function mbSubidaAbierta(array $ventanas, int $ahora): bool {
     return false;
 }
 
-/** id del álbum que recibe fotos en este momento, o null si ninguno. */
+/** id del álbum que recibe fotos en este momento, o null si ninguno. El
+    concurso no cuenta: recibe aparte (ver CONCURSO arriba). */
 function mbAlbumActivo(array $eventos, int $ahora): ?int {
     foreach ($eventos as $id => $e) {
+        if (mbEsConcurso($e)) continue;
         if (mbSubidaAbierta($e['ventanas'], $ahora)) return $id;
     }
     return null;
@@ -256,6 +397,13 @@ function mbCuando(int $ts, int $ahora): string {
  * empleado. Si otro álbum está recibiendo fotos, se le manda para allá.
  */
 function mbMotivoCerrada(int $album, array $eventos, int $ahora): string {
+    // El concurso tiene su propia subida: no se manda al álbum activo.
+    if (mbEsConcurso($eventos[$album] ?? [])) {
+        $s = $eventos[$album]['cfg']['concurso']['subida'];
+        return $s && $ahora < $s[0]
+            ? 'Todavía no se pueden subir fotos al concurso: abre ' . mbCuando($s[0], $ahora) . '.'
+            : 'El concurso ya no recibe fotos.';
+    }
     $activo = mbAlbumActivo($eventos, $ahora);
     if ($activo !== null && $activo !== $album) {
         return 'Ahora las fotos se suben al álbum «' . mbTituloAlbum($eventos[$activo]) . '».';
