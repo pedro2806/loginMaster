@@ -859,6 +859,19 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- TRACE -->
+                                        <div class="col-md-3 mb-3" id="divTrace" style="display:none">
+                                            <div class="card card-action shadow-sm">
+                                                <div class="card-body text-center">
+                                                    <form id="formTrace" method="POST" action="../trace/index.php">                                                        
+                                                        <button type="submit" class="btn btn-outline-primary btn-block">
+                                                            <i class="fas fa-map-marked-alt fa-lg d-block mb-2"></i> Trace
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 

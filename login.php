@@ -60,6 +60,7 @@ if ($accion == 'Ingresar') {
             $_SESSION['usuario'] = $row['usuario'];
             $_SESSION['nombre'] = $row['nombre'];
             $_SESSION['rol'] = $row['rol'];
+            $_SESSION['noEmpleado'] = (string)$row['noEmpleado'];
 
             registrarAcceso($conn, 'exito', null, $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
 
@@ -91,6 +92,7 @@ if ($accion == 'Ingresar') {
             $_SESSION['usuario'] = $row['usuario'];
             $_SESSION['nombre'] = $row['nombre'];
             $_SESSION['rol'] = $row['rol'];
+            $_SESSION['noEmpleado'] = (string)$row['noEmpleado'];
 
             registrarAcceso($conn, 'exito', null, $emailValido, $row['id_usuario'], $row['usuario'], $row['noEmpleado'], 'inicio_sesion');
 
