@@ -22,7 +22,8 @@
  * El CONCURSO recibe aparte y no choca con nadie. Lleva vigencia (fecha_inicio..
  * fecha_fin) y, dentro de ella, la subida y la votación (fecha y hora); la
  * votación no abre antes que la subida ni la subida cierra después que la
- * votación. Un álbum con fotos no se vuelve concurso ni deja de serlo.
+ * votación. Un álbum con fotos no se vuelve concurso ni deja de serlo, ni
+ * cambia quién sube las fotos (`sube_rrhh`).
  */
 
 if (!isset($conn, $noEmpleado, $accion)) exit;   // sólo vía acciones_album.php
@@ -146,6 +147,7 @@ if ($accion === 'adm_listar') {
                 'subida_hasta'   => mbAdmLocal($e['subida_hasta']),
                 'votacion_desde' => mbAdmLocal($e['votacion_desde']),
                 'votacion_hasta' => mbAdmLocal($e['votacion_hasta']),
+                'sube_rrhh'      => mbSubeRrhh($e),
             ];
         }
 
@@ -173,8 +175,10 @@ if ($accion === 'adm_guardar') {
     $titulo = trim((string)preg_replace('/[\p{Cc}\s]+/u', ' ', (string)($_POST['titulo'] ?? '')));
     $tipo   = (string)($_POST['tipo'] ?? '');
     $visible = (int)!empty($_POST['visible']);
+    // Concurso cuyas fotos sube RRHH (includes/album.php, CONCURSO). Sólo en concursos.
+    $subeRrhh = (int)($tipo === 'concurso' && !empty($_POST['sube_rrhh']));
 
-    if ($titulo === '')                            mbResponder(false, 'Escribe el nombre del álbum.');
+    if ($titulo === '')                           mbResponder(false, 'Escribe el nombre del álbum.');
     if (mb_strlen($titulo, 'UTF-8') > 80)          mbResponder(false, 'El nombre es muy largo: máximo 80 caracteres.');
     if (!in_array($tipo, ['evento', 'general', 'concurso'], true)) mbResponder(false, 'Elige si es un evento, un álbum general o un concurso.');
 
@@ -260,6 +264,10 @@ if ($accion === 'adm_guardar') {
                 ? 'Este álbum ya tiene fotos: no se puede convertir en concurso. Crea uno nuevo.'
                 : 'Este concurso ya tiene fotos: no se puede cambiar a otro tipo.');
         }
+        // Ni quién las sube: las que subió RRHH no son de quien las subió.
+        if ($album && $tipo === 'concurso' && (int)$album['sube_rrhh'] !== $subeRrhh && mbAdmFotos($conn, $id) > 0) {
+            mbResponder(false, 'Este concurso ya tiene fotos: ya no se puede cambiar quién las sube.');
+        }
         if ($visible) {
             $choque = mbAdmConflicto($conn, $id, $tipo, $desde, $hasta);
             if ($choque !== '') mbResponder(false, $choque);
@@ -301,11 +309,11 @@ if ($accion === 'adm_guardar') {
                 $stmt->execute();
                 $stmt->close();
                 $stmt = $conn->prepare('UPDATE messbook_albumes SET titulo = ?, tipo = ?, invitados_evento = ?, invitados_sedes = ?, portada = ?, visible = ?,
-                                               subida_desde = ?, subida_hasta = ?, votacion_desde = ?, votacion_hasta = ?, actualizado_por = ?
+                                               subida_desde = ?, subida_hasta = ?, votacion_desde = ?, votacion_hasta = ?, sube_rrhh = ?, actualizado_por = ?
                                          WHERE id_evento = ?');
-                $stmt->bind_param('sssssisssssi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
+                $stmt->bind_param('sssssissssisi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
                                   $periodos['subida_desde'], $periodos['subida_hasta'], $periodos['votacion_desde'], $periodos['votacion_hasta'],
-                                  $noEmpleado, $id);
+                                  $subeRrhh, $noEmpleado, $id);
                 $stmt->execute();
                 $stmt->close();
             } else {
@@ -316,11 +324,11 @@ if ($accion === 'adm_guardar') {
                 $id = (int)$conn->insert_id;
                 $stmt->close();
                 $stmt = $conn->prepare('INSERT INTO messbook_albumes (id_evento, titulo, tipo, invitados_evento, invitados_sedes, portada, visible,
-                                                                     subida_desde, subida_hasta, votacion_desde, votacion_hasta, actualizado_por)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-                $stmt->bind_param('isssssisssss', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
+                                                                     subida_desde, subida_hasta, votacion_desde, votacion_hasta, sube_rrhh, actualizado_por)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->bind_param('isssssissssis', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
                                   $periodos['subida_desde'], $periodos['subida_hasta'], $periodos['votacion_desde'], $periodos['votacion_hasta'],
-                                  $noEmpleado);
+                                  $subeRrhh, $noEmpleado);
                 $stmt->execute();
                 $stmt->close();
             }

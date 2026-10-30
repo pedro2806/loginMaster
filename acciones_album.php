@@ -18,10 +18,12 @@
  * su dueño por origen + id_usr. Si no, el empleado 42 sería dueño de la foto
  * del invitado 42.
  *
- * CONCURSO (tipo de álbum, includes/album.php): 1 foto por empleado y 3 likes
- * para repartir entre las de los demás (messbook_votos). Las reglas se cuidan
- * aquí: foto_subir (tope de 1), foto_borrar (sólo antes de la votación), voto
- * (dar / quitar like) y ranking (sólo BI y RRHH).
+ * CONCURSO (tipo de álbum, includes/album.php): 1 foto por empleado y
+ * MB_CONCURSO_VOTOS likes para las de los demás (messbook_votos). Las reglas se
+ * cuidan aquí: foto_subir (tope de 1), foto_borrar (sólo antes de la votación),
+ * voto (dar / quitar like) y ranking (sólo BI y RRHH). En un concurso
+ * `sube_rrhh` las fotos las sube RRHH, con el nombre del participante en el
+ * texto: sin tope de 1 y sin la regla de "no a la propia".
  *
  * CREDENCIAL: la cookie noEmpleadoL, como el resto del portal (decisión del
  * 2026-09-23). OJO: esa cookie no va firmada, así que quien la cambie a mano
@@ -53,6 +55,7 @@ require_once __DIR__ . '/includes/imagen.php';
 require_once __DIR__ . '/includes/album.php';
 
 const MB_MAX_FOTOS        = 30;    // por empleado, en cada álbum
+const MB_MAX_FOTOS_RRHH   = 300;   // ídem, quien sube en un concurso `sube_rrhh` (una por participante)
 const MB_TEXTO_MAX        = 140;   // caracteres del texto del post (messbook_fotos.texto)
 const MB_FOTO_LADO        = 1600;  // px del lado largo al guardar
 const MB_PORTADA_LADO     = 1200;  // ídem, la portada que se elige en el modal
@@ -157,6 +160,9 @@ function mbFotoSalida(array $f, string $noEmpleado): array {
         // Dueño por origen + id_usr: el invitado 42 no es el empleado 42. Las
         // del staff tampoco son "mías" aquí: se borran desde la app del evento.
         'mia'      => $f['origen'] === 'MB' && (string)$f['id_usr'] === $noEmpleado,
+        // Quien la subió la puede borrar. Casi siempre es `mia`; en un concurso
+        // `sube_rrhh` no (mbConLikes): RRHH borra la que subió, pero no es suya.
+        'borrable' => $f['origen'] === 'MB' && (string)$f['id_usr'] === $noEmpleado,
         // Posición en el muro, para pedir "más viejas / más nuevas que ésta".
         'cursor'   => [(string)$f['fecha'], (string)$f['origen'], (int)$f['id']],
     ];
@@ -410,8 +416,9 @@ function mbBloquearConcurso(mysqli $conn, int $idEvento): void {
 
 /**
  * Lo del concurso que depende de quién pregunta: los likes que le quedan y si
- * ya subió su foto. Va con las portadas y con cada página del muro, junto con
- * los periodos (Unix), para que la vista decida qué enseñar con su reloj.
+ * ya subió su foto (o, si las sube RRHH, si él puede subirlas). Va con las
+ * portadas y con cada página del muro, junto con los periodos (Unix), para que
+ * la vista decida qué enseñar con su reloj.
  */
 function mbEstadoConcurso(mysqli $conn, array $evento, string $noEmpleado): array {
     $id = (int)$evento['id_evento'];
@@ -420,12 +427,15 @@ function mbEstadoConcurso(mysqli $conn, array $evento, string $noEmpleado): arra
     $stmt->execute();
     $dados = (int)$stmt->get_result()->fetch_row()[0];
     $stmt->close();
+    $rrhh = mbSubeRrhh($evento);
     return [
-        'subida'    => $evento['cfg']['concurso']['subida'],
-        'votacion'  => $evento['cfg']['concurso']['votacion'],
-        'votos_max' => MB_CONCURSO_VOTOS,
-        'restantes' => max(0, MB_CONCURSO_VOTOS - $dados),
-        'mi_foto'   => mbFotosDe($conn, $id, $noEmpleado) >= MB_CONCURSO_FOTOS,
+        'subida'      => $evento['cfg']['concurso']['subida'],
+        'votacion'    => $evento['cfg']['concurso']['votacion'],
+        'votos_max'   => MB_CONCURSO_VOTOS,
+        'restantes'   => max(0, MB_CONCURSO_VOTOS - $dados),
+        'rrhh'        => $rrhh,
+        'puede_subir' => !$rrhh || mbPuedeSubirRrhh($conn, $noEmpleado),
+        'mi_foto'     => !$rrhh && mbFotosDe($conn, $id, $noEmpleado) >= MB_CONCURSO_FOTOS,
     ];
 }
 
@@ -434,6 +444,10 @@ function mbEstadoConcurso(mysqli $conn, array $evento, string $noEmpleado): arra
  * pregunta ya le dio like, y `votos`, cuántos lleva. `votos` es null mientras
  * la votación no cierra (decisión del 2026-10-21): así nadie vota por la que
  * va ganando. El ranking en vivo es aparte, sólo para BI y RRHH.
+ *
+ * En un concurso `sube_rrhh` la foto es del participante que dice su texto, no
+ * de quien la subió: ése es el `autor` (y el texto ya no se repite debajo), y
+ * para quien la subió no es `mia`, así que también puede darle like.
  */
 function mbConLikes(mysqli $conn, array $evento, array $fotos, string $noEmpleado): array {
     $ids = [];
@@ -450,11 +464,17 @@ function mbConLikes(mysqli $conn, array $evento, array $fotos, string $noEmplead
         $stmt->close();
     }
     $cerrada = mbVotacionCerrada($evento, time());
-    return array_map(function ($f) use ($likes, $cerrada) {
+    $rrhh    = mbSubeRrhh($evento);
+    return array_map(function ($f) use ($likes, $cerrada, $rrhh) {
         if ($f['origen'] !== 'MB') return $f;
         [$n, $mio] = $likes[$f['id']] ?? [0, false];
         $f['votado'] = $mio;
         $f['votos']  = $cerrada ? $n : null;
+        if ($rrhh) {
+            $f['autor'] = $f['texto'] !== '' ? $f['texto'] : 'Participante';
+            $f['texto'] = '';
+            $f['mia']   = false;
+        }
         return $f;
     }, $fotos);
 }
@@ -535,19 +555,24 @@ if ($accion === 'ranking') {
         $stmt->close();
 
         // Los empates comparten lugar y el siguiente salta: 1, 1, 3.
+        // Si las fotos las sube RRHH, el participante es el texto de la foto y
+        // el empleado de la fila es quien la subió (`subio`).
+        $rrhh    = mbSubeRrhh($todos[$album]);
         $ranking = [];
         $lugar   = 0;
         $previo  = null;
         foreach ($filas as $i => $f) {
             if ((int)$f['votos'] !== $previo) { $lugar = $i + 1; $previo = (int)$f['votos']; }
+            $texto = (string)($f['texto'] ?? '');
             $ranking[] = [
                 'lugar'      => $lugar,
                 'id'         => (int)$f['id'],
                 'url'        => mbUrlPublica(['origen' => 'MB', 'url' => $f['url']]),
-                'nombre'     => mbNombreCompleto($f),
-                'noEmpleado' => (string)$f['noEmpleado'],
-                'area'       => (string)($f['area'] ?? ''),
-                'texto'      => (string)($f['texto'] ?? ''),
+                'nombre'     => $rrhh ? ($texto !== '' ? $texto : 'Participante') : mbNombreCompleto($f),
+                'noEmpleado' => $rrhh ? '' : (string)$f['noEmpleado'],
+                'area'       => $rrhh ? '' : (string)($f['area'] ?? ''),
+                'texto'      => $rrhh ? '' : $texto,
+                'subio'      => $rrhh ? mbNombreCompleto($f) : '',
                 'votos'      => (int)$f['votos'],
                 'hora'       => date('d/m H:i', strtotime((string)$f['fecha'])),
             ];
@@ -731,15 +756,23 @@ if ($accion === 'foto_subir') {
         if ($motivo !== '') mbResponder(false, $motivo);
 
         $evento     = $album;
-        $esConcurso = mbEsConcurso($eventos[$album]);
+        $deRrhh     = mbSubeRrhh($eventos[$album]);
+        // Concurso que sube RRHH: una foto por participante, sin tope de 1, y
+        // el texto es su nombre (lo que se lee en el muro y en el ranking).
+        $esConcurso = mbEsConcurso($eventos[$album]) && !$deRrhh;
+        if ($deRrhh) {
+            if (!mbPuedeSubirRrhh($conn, $noEmpleado)) mbResponder(false, 'Las fotos de este concurso las sube Recursos Humanos.');
+            if ($texto === null) mbResponder(false, 'Escribe el nombre del participante o del equipo.');
+        }
         // Aviso temprano, antes de gastar en guardar la imagen. En el concurso
         // se vuelve a contar abajo, con la fila bloqueada.
-        $ya = mbFotosDe($conn, $evento, $noEmpleado);
+        $ya   = mbFotosDe($conn, $evento, $noEmpleado);
+        $tope = $deRrhh ? MB_MAX_FOTOS_RRHH : MB_MAX_FOTOS;
         if ($esConcurso && $ya >= MB_CONCURSO_FOTOS) {
             mbResponder(false, mbYaParticipas($eventos[$album], $ahora), ['ya_participa' => true]);
         }
-        if ($ya >= MB_MAX_FOTOS) {
-            mbResponder(false, 'Llegaste al máximo de ' . MB_MAX_FOTOS . ' fotos en este álbum. Borra alguna para subir otra.');
+        if ($ya >= $tope) {
+            mbResponder(false, 'Llegaste al máximo de ' . $tope . ' fotos en este álbum. Borra alguna para subir otra.');
         }
 
         $dir = __DIR__ . '/' . MB_CARPETA;
@@ -790,8 +823,8 @@ if ($accion === 'foto_subir') {
         $stmt->close();
 
         $salida = mbFotoSalida($nueva, $noEmpleado);
-        if ($esConcurso) {
-            mbResponder(true, '¡Ya participas en el concurso!', [
+        if ($esConcurso || $deRrhh) {
+            mbResponder(true, $deRrhh ? 'Foto publicada en el concurso.' : '¡Ya participas en el concurso!', [
                 'foto'     => mbConLikes($conn, $eventos[$album], [$salida], $noEmpleado)[0],
                 'concurso' => mbEstadoConcurso($conn, $eventos[$album], $noEmpleado),
             ]);
@@ -853,7 +886,8 @@ if ($accion === 'foto_borrar') {
 // Dar (dar=1) o quitar (dar=0) un like en el concurso. Idempotente: dar uno que
 // ya está o quitar uno que no está no cambia nada, así un doble toque no lo
 // revierte. Reglas (decisión del 2026-10-21): sólo con la votación abierta, a lo
-// más MB_CONCURSO_VOTOS por persona, uno por foto y nunca a la propia.
+// más MB_CONCURSO_VOTOS por persona, uno por foto y nunca a la propia (salvo
+// si las sube RRHH: quien la subió no es el participante).
 if ($accion === 'voto') {
     $album  = mbAlbumPedido($eventos);
     $ev     = $eventos[$album];
@@ -882,7 +916,7 @@ if ($accion === 'voto') {
         $foto = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         $error = !$foto ? 'Esa foto ya no está en el concurso.'
-               : ((string)$foto['noEmpleado'] === $noEmpleado ? 'No puedes darle like a tu propia foto.' : '');
+               : ((string)$foto['noEmpleado'] === $noEmpleado && !mbSubeRrhh($ev) ? 'No puedes darle like a tu propia foto.' : '');
         if ($error !== '') {
             $conn->rollback();
             mbResponder(false, $error);
@@ -899,7 +933,9 @@ if ($accion === 'voto') {
         if ($dar && !$ya) {
             if (count($mios) >= MB_CONCURSO_VOTOS) {
                 $conn->rollback();
-                mbResponder(false, 'Ya usaste tus ' . MB_CONCURSO_VOTOS . ' likes. Quita uno para dárselo a otra foto.', ['restantes' => 0]);
+                mbResponder(false, MB_CONCURSO_VOTOS === 1
+                    ? 'Ya diste tu like. Quítaselo a la otra foto para dárselo a ésta.'
+                    : 'Ya usaste tus ' . MB_CONCURSO_VOTOS . ' likes. Quita uno para dárselo a otra foto.', ['restantes' => 0]);
             }
             $stmt = $conn->prepare('INSERT INTO messbook_votos (id_evento, id_foto, noEmpleado, fecha) VALUES (?, ?, ?, NOW())');
             $stmt->bind_param('iis', $album, $idFoto, $noEmpleado);

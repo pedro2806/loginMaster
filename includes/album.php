@@ -44,6 +44,12 @@
  *   los likes de cada foto se enseñan al cerrarla, y el ranking lo ven en vivo
  *   BI y RRHH (mbPuedeVerRanking).
  *
+ *   Un concurso con `sube_rrhh` (decisión del 2026-10-30: DISFRACES 2026 y
+ *   DISEÑO DE CALAVERAS) no lo llenan los empleados: las fotos las suben RRHH
+ *   y quien administra los álbumes (mbPuedeSubirRrhh), sin tope de 1, con el
+ *   nombre del participante o del equipo en el texto. Todos votan, también
+ *   quien subió la foto: no es "la suya" (sql/2026-10-30_album_concurso_rrhh.sql).
+ *
  * Fotos de invitados: las de mess_oktobermess.foto_evento cuyo `evento` sea
  * invitados_evento, de las sedes de invitados_sedes (códigos de
  * invitados.sede; MB_SIN_SEDE = invitados registrados antes de que existiera
@@ -52,8 +58,9 @@
 const MB_SIN_SEDE = 'SIN_SEDE';
 
 const MB_CONCURSO_FOTOS = 1;          // por empleado, en cada concurso
-const MB_CONCURSO_VOTOS = 3;          // likes por empleado, en cada concurso
+const MB_CONCURSO_VOTOS = 1;          // likes por empleado, en cada concurso (eran 3 hasta el 2026-10-30)
 const MB_DEPTOS_RANKING = [27, 47];   // ven el ranking: BI y Recursos Humanos (usuarios.departamento)
+const MB_DEPTOS_SUBEN   = [47];       // suben las fotos de un concurso `sube_rrhh`: Recursos Humanos
 
 /*
  * HORARIO, en hora de la Ciudad de México. Una ventana cuyo fin es menor que
@@ -87,7 +94,7 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
         $cache = [];
         $res = $conn->query("SELECT e.id_evento, e.nombre, e.fecha_inicio, e.fecha_fin,
                                     a.titulo, a.tipo, a.invitados_evento, a.invitados_sedes, a.portada, a.visible,
-                                    a.subida_desde, a.subida_hasta, a.votacion_desde, a.votacion_hasta
+                                    a.subida_desde, a.subida_hasta, a.votacion_desde, a.votacion_hasta, a.sube_rrhh
                                FROM messbook_albumes a
                                JOIN enc_eventos e ON e.id_evento = a.id_evento
                               ORDER BY e.fecha_inicio, e.id_evento");
@@ -100,10 +107,12 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
                 'invitados' => !$esConcurso && $e['invitados_evento'] !== null && $e['invitados_evento'] !== ''
                     ? ['evento' => (string)$e['invitados_evento'], 'sedes' => mbSedesDeTexto($e['invitados_sedes'])]
                     : null,
-                // [inicio, fin) en Unix de la subida y de la votación; null si no es concurso.
+                // [inicio, fin) en Unix de la subida y de la votación, y si las
+                // fotos las sube RRHH; null si no es concurso.
                 'concurso'  => $esConcurso
                     ? ['subida'   => mbTramo($e['subida_desde'], $e['subida_hasta']),
-                       'votacion' => mbTramo($e['votacion_desde'], $e['votacion_hasta'])]
+                       'votacion' => mbTramo($e['votacion_desde'], $e['votacion_hasta']),
+                       'rrhh'     => !empty($e['sube_rrhh'])]
                     : null,
             ];
             $e['ventanas'] = [];
@@ -201,9 +210,33 @@ function mbPuedeVerRanking(mysqli $conn, string $noEmpleado): bool {
     return $si || mbPuedeAdministrar($conn, $noEmpleado);
 }
 
+/**
+ * ¿Puede subir fotos a un concurso `sube_rrhh`? Recursos Humanos
+ * (MB_DEPTOS_SUBEN) y quien administra los álbumes (mbPuedeAdministrar). Se
+ * consulta una vez por petición. Mismas reservas: se basa en la cookie
+ * noEmpleadoL.
+ */
+function mbPuedeSubirRrhh(mysqli $conn, string $noEmpleado): bool {
+    static $cache = [];
+    if (isset($cache[$noEmpleado])) return $cache[$noEmpleado];
+    if (!preg_match('/^\d{1,11}$/', $noEmpleado)) return false;
+    $deptos = implode(',', array_map('intval', MB_DEPTOS_SUBEN));
+    $stmt = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios WHERE noEmpleado = ? AND estatus = 1 AND departamento IN ($deptos) LIMIT 1");
+    $stmt->bind_param('s', $noEmpleado);
+    $stmt->execute();
+    $si = (bool)$stmt->get_result()->fetch_row();
+    $stmt->close();
+    return $cache[$noEmpleado] = $si || mbPuedeAdministrar($conn, $noEmpleado);
+}
+
 /** ¿Es un concurso? (tipo 'concurso', ver CONCURSO arriba) */
 function mbEsConcurso(array $evento): bool {
     return ($evento['tipo'] ?? '') === 'concurso';
+}
+
+/** ¿Es un concurso cuyas fotos sube RRHH? (`sube_rrhh`, ver CONCURSO arriba) */
+function mbSubeRrhh(array $evento): bool {
+    return !empty($evento['cfg']['concurso']['rrhh']);
 }
 
 /** Dos DATETIME en hora de MB_ZONA → [inicio, fin) en Unix. null si falta uno
@@ -243,8 +276,9 @@ function mbVotacionCerrada(array $evento, int $ahora): bool {
 /**
  * Lo que el concurso le pide hoy a `$noEmpleado`, para recordárselo en Mi
  * Espacio (inicio.php, "Encuestas / Votaciones"): votar mientras la votación
- * está abierta, o subir su foto si la subida está abierta y no ha subido.
- * null si no hay nada que hacer.
+ * está abierta, o subir su foto si la subida está abierta y no ha subido (no
+ * en un concurso `sube_rrhh`: ahí nadie sube la suya). null si no hay nada que
+ * hacer.
  */
 function mbPendienteConcurso(mysqli $conn, array $evento, string $noEmpleado, int $ahora): ?array {
     $c = $evento['cfg']['concurso'] ?? null;
@@ -260,7 +294,7 @@ function mbPendienteConcurso(mysqli $conn, array $evento, string $noEmpleado, in
                 'restantes' => max(0, MB_CONCURSO_VOTOS - $dados), 'votos_max' => MB_CONCURSO_VOTOS,
                 'cierra' => mbCuando($c['votacion'][1], $ahora)];
     }
-    if ($c['subida'] && mbSubidaAbierta([$c['subida']], $ahora)) {
+    if (!$c['rrhh'] && $c['subida'] && mbSubidaAbierta([$c['subida']], $ahora)) {
         $stmt = $conn->prepare('SELECT COUNT(*) FROM messbook_fotos WHERE id_evento = ? AND noEmpleado = ?');
         $stmt->bind_param('is', $id, $noEmpleado);
         $stmt->execute();

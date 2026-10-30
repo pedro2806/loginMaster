@@ -98,6 +98,13 @@ if (empty($adminAlbum)) return;
                                 <label class="small mb-1" for="alb_votacionHasta">Votación: cierra</label>
                                 <input type="datetime-local" class="form-control form-control-sm" id="alb_votacionHasta">
                             </div>
+                            <div class="col-12 mb-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="alb_subeRrhh">
+                                    <label class="custom-control-label small" for="alb_subeRrhh">Las fotos las sube RRHH</label>
+                                </div>
+                                <small class="text-muted d-block">Los empleados no suben la suya, sólo votan. Las suben RRHH y quien administra los álbumes, con el nombre del participante o del equipo.</small>
+                            </div>
                         </div>
 
                         <!-- Fotos de invitados de oktoberMESS (sólo lectura en messbook) -->
@@ -237,11 +244,13 @@ if (empty($adminAlbum)) return;
         $a('alb_ayudaTipo').textContent = {
             general:  'Recibe fotos en su periodo, de 12:00 a 15:00 y de 18:00 a 06:00, menos los días de evento.',
             evento:   'Recibe fotos a cualquier hora durante <?php echo MB_EVENTO_HORAS; ?> horas, desde las 00:00 de su día.',
-            concurso: 'Cada empleado sube <?php echo MB_CONCURSO_FOTOS; ?> foto y tiene <?php echo MB_CONCURSO_VOTOS; ?> likes para las de los demás. '
+            concurso: ($a('alb_subeRrhh').checked
+                        ? 'RRHH sube una foto por participante y cada empleado tiene <?php echo MB_CONCURSO_VOTOS . (MB_CONCURSO_VOTOS === 1 ? ' like' : ' likes'); ?>. '
+                        : 'Cada empleado sube <?php echo MB_CONCURSO_FOTOS; ?> foto y tiene <?php echo MB_CONCURSO_VOTOS . (MB_CONCURSO_VOTOS === 1 ? ' like' : ' likes'); ?> para las de los demás. ')
                     + 'La subida y la votación van dentro de la vigencia; los likes se ven al cerrar la votación.'
         }[tipo];
     }
-    ['alb_tipoEvento', 'alb_tipoGeneral', 'alb_tipoConcurso'].forEach(function (id) {
+    ['alb_tipoEvento', 'alb_tipoGeneral', 'alb_tipoConcurso', 'alb_subeRrhh'].forEach(function (id) {
         $a(id).addEventListener('change', pintarTipo);
     });
 
@@ -336,6 +345,7 @@ if (empty($adminAlbum)) return;
         $a('alb_tipoEvento').checked = true;
         $a('alb_dia').value = ''; $a('alb_desde').value = ''; $a('alb_hasta').value = '';
         ['alb_subidaDesde', 'alb_subidaHasta', 'alb_votacionDesde', 'alb_votacionHasta'].forEach(function (id) { $a(id).value = ''; });
+        $a('alb_subeRrhh').checked = false;
         $a('alb_visible').checked = true;
         $a('alb_conInvitados').checked = false;
         $a('alb_cajaInvitados').hidden = true;
@@ -361,6 +371,7 @@ if (empty($adminAlbum)) return;
         $a('alb_subidaHasta').value   = a.subida_hasta;
         $a('alb_votacionDesde').value = a.votacion_desde;
         $a('alb_votacionHasta').value = a.votacion_hasta;
+        $a('alb_subeRrhh').checked = !!a.sube_rrhh;
         $a('alb_visible').checked = a.visible;
         $a('alb_conInvitados').checked = !!a.invitados;
         $a('alb_cajaInvitados').hidden = !a.invitados;
@@ -387,6 +398,7 @@ if (empty($adminAlbum)) return;
             subida_hasta:   $a('alb_subidaHasta').value,
             votacion_desde: $a('alb_votacionDesde').value,
             votacion_hasta: $a('alb_votacionHasta').value,
+            sube_rrhh: tipo === 'concurso' && $a('alb_subeRrhh').checked ? 1 : 0,
             visible: $a('alb_visible').checked ? 1 : 0,
             invitados: conInv ? $a('alb_invitados').value.trim() : '',
             sedes:   conInv ? Array.prototype.map.call(document.querySelectorAll('.alb-sede:checked'), function (c) { return c.value; }) : []
@@ -426,7 +438,7 @@ if (empty($adminAlbum)) return;
             + '<td>' + (a.activo ? '<i class="fas fa-circle text-success mr-1" style="font-size:.6rem;" title="Recibiendo fotos ahora"></i>' : '')
             + (a.portada ? '<img class="alb-mini mr-2" src="' + esc(a.portada) + '" alt="" title="Con portada propia">' : '')
             + '<strong>' + esc(a.titulo) + '</strong></td>'
-            + '<td class="small">' + esc(TIPOS[a.tipo] || a.tipo) + '</td>'
+            + '<td class="small">' + esc(TIPOS[a.tipo] || a.tipo) + (a.sube_rrhh ? '<br><span class="text-muted">Sube RRHH</span>' : '') + '</td>'
             + '<td class="small text-nowrap">' + fechas + '</td>'
             + '<td class="small">' + inv + '</td>'
             + '<td class="text-center">' + a.fotos
