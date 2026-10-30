@@ -18,10 +18,10 @@
  * su dueño por origen + id_usr. Si no, el empleado 42 sería dueño de la foto
  * del invitado 42.
  *
- * CONCURSO (tipo de álbum, includes/album.php): 1 foto por empleado y
- * MB_CONCURSO_VOTOS likes para las de los demás (messbook_votos). Las reglas se
- * cuidan aquí: foto_subir (tope de 1), foto_borrar (sólo antes de la votación),
- * voto (dar / quitar like) y ranking (sólo BI y RRHH). En un concurso
+ * CONCURSO (tipo de álbum, includes/album.php): 1 foto por empleado y los likes
+ * que diga el concurso (mbVotosConcurso) para las de los demás (messbook_votos).
+ * Las reglas se cuidan aquí: foto_subir (tope de 1), foto_borrar (sólo antes de
+ * la votación), voto (dar / quitar like) y ranking (sólo BI y RRHH). En un concurso
  * `sube_rrhh` las fotos las sube RRHH, con el nombre del participante en el
  * texto: sin tope de 1 y sin la regla de "no a la propia".
  *
@@ -431,8 +431,8 @@ function mbEstadoConcurso(mysqli $conn, array $evento, string $noEmpleado): arra
     return [
         'subida'      => $evento['cfg']['concurso']['subida'],
         'votacion'    => $evento['cfg']['concurso']['votacion'],
-        'votos_max'   => MB_CONCURSO_VOTOS,
-        'restantes'   => max(0, MB_CONCURSO_VOTOS - $dados),
+        'votos_max'   => mbVotosConcurso($evento),
+        'restantes'   => max(0, mbVotosConcurso($evento) - $dados),
         'rrhh'        => $rrhh,
         'puede_subir' => !$rrhh || mbPuedeSubirRrhh($conn, $noEmpleado),
         'mi_foto'     => !$rrhh && mbFotosDe($conn, $id, $noEmpleado) >= MB_CONCURSO_FOTOS,
@@ -886,8 +886,8 @@ if ($accion === 'foto_borrar') {
 // Dar (dar=1) o quitar (dar=0) un like en el concurso. Idempotente: dar uno que
 // ya está o quitar uno que no está no cambia nada, así un doble toque no lo
 // revierte. Reglas (decisión del 2026-10-21): sólo con la votación abierta, a lo
-// más MB_CONCURSO_VOTOS por persona, uno por foto y nunca a la propia (salvo
-// si las sube RRHH: quien la subió no es el participante).
+// más los likes del concurso por persona (mbVotosConcurso), uno por foto y
+// nunca a la propia (salvo si las sube RRHH: quien la subió no es el participante).
 if ($accion === 'voto') {
     $album  = mbAlbumPedido($eventos);
     $ev     = $eventos[$album];
@@ -930,12 +930,13 @@ if ($accion === 'voto') {
         $stmt->close();
         $ya = in_array($idFoto, $mios, true);
 
+        $max = mbVotosConcurso($ev);
         if ($dar && !$ya) {
-            if (count($mios) >= MB_CONCURSO_VOTOS) {
+            if (count($mios) >= $max) {
                 $conn->rollback();
-                mbResponder(false, MB_CONCURSO_VOTOS === 1
+                mbResponder(false, $max === 1
                     ? 'Ya diste tu like. Quítaselo a la otra foto para dárselo a ésta.'
-                    : 'Ya usaste tus ' . MB_CONCURSO_VOTOS . ' likes. Quita uno para dárselo a otra foto.', ['restantes' => 0]);
+                    : 'Ya usaste tus ' . $max . ' likes. Quita uno para dárselo a otra foto.', ['restantes' => 0]);
             }
             $stmt = $conn->prepare('INSERT INTO messbook_votos (id_evento, id_foto, noEmpleado, fecha) VALUES (?, ?, ?, NOW())');
             $stmt->bind_param('iis', $album, $idFoto, $noEmpleado);
@@ -951,7 +952,7 @@ if ($accion === 'voto') {
         }
         $conn->commit();
 
-        mbResponder(true, '', ['id' => $idFoto, 'votado' => $dar, 'restantes' => max(0, MB_CONCURSO_VOTOS - count($mios))]);
+        mbResponder(true, '', ['id' => $idFoto, 'votado' => $dar, 'restantes' => max(0, $max - count($mios))]);
     } catch (Throwable $e) {
         $conn->rollback();
         mbFallo('No pudimos registrar tu like. Inténtalo de nuevo.', $e);
