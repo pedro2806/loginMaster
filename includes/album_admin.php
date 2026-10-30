@@ -23,7 +23,8 @@
  * fecha_fin) y, dentro de ella, la subida y la votación (fecha y hora); la
  * votación no abre antes que la subida ni la subida cierra después que la
  * votación. Un álbum con fotos no se vuelve concurso ni deja de serlo, ni
- * cambia quién sube las fotos (`sube_rrhh`).
+ * cambia quién sube las fotos (`sube_rrhh`). Los likes por empleado
+ * (`votos_max`) se pueden subir siempre, pero no bajar de los que alguien ya dio.
  */
 
 if (!isset($conn, $noEmpleado, $accion)) exit;   // sólo vía acciones_album.php
@@ -97,6 +98,16 @@ function mbAdmFotos(mysqli $conn, int $id): int {
     return $n;
 }
 
+/** Más likes que ha dado un mismo empleado en un concurso (0 si nadie ha votado). */
+function mbAdmMasLikes(mysqli $conn, int $id): int {
+    $stmt = $conn->prepare('SELECT COUNT(*) AS n FROM messbook_votos WHERE id_evento = ? GROUP BY noEmpleado ORDER BY n DESC LIMIT 1');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $fila = $stmt->get_result()->fetch_row();
+    $stmt->close();
+    return $fila ? (int)$fila[0] : 0;
+}
+
 /** Fila de messbook_albumes + fechas, o null. */
 function mbAdmAlbum(mysqli $conn, int $id): ?array {
     $stmt = $conn->prepare('SELECT a.*, DATE(e.fecha_inicio) AS desde, DATE(e.fecha_fin) AS hasta
@@ -148,6 +159,7 @@ if ($accion === 'adm_listar') {
                 'votacion_desde' => mbAdmLocal($e['votacion_desde']),
                 'votacion_hasta' => mbAdmLocal($e['votacion_hasta']),
                 'sube_rrhh'      => mbSubeRrhh($e),
+                'votos_max'      => max(1, (int)$e['votos_max']),
             ];
         }
 
@@ -175,12 +187,18 @@ if ($accion === 'adm_guardar') {
     $titulo = trim((string)preg_replace('/[\p{Cc}\s]+/u', ' ', (string)($_POST['titulo'] ?? '')));
     $tipo   = (string)($_POST['tipo'] ?? '');
     $visible = (int)!empty($_POST['visible']);
-    // Concurso cuyas fotos sube RRHH (includes/album.php, CONCURSO). Sólo en concursos.
+    // Concurso: quién sube las fotos (cada empleado o RRHH) y cuántos likes
+    // tiene cada empleado (includes/album.php, CONCURSO). En los demás tipos no
+    // cuentan: se guardan 0 y el valor por omisión.
     $subeRrhh = (int)($tipo === 'concurso' && !empty($_POST['sube_rrhh']));
+    $votosMax = $tipo === 'concurso' ? (int)($_POST['votos_max'] ?? 0) : MB_CONCURSO_VOTOS;
 
     if ($titulo === '')                           mbResponder(false, 'Escribe el nombre del álbum.');
     if (mb_strlen($titulo, 'UTF-8') > 80)          mbResponder(false, 'El nombre es muy largo: máximo 80 caracteres.');
     if (!in_array($tipo, ['evento', 'general', 'concurso'], true)) mbResponder(false, 'Elige si es un evento, un álbum general o un concurso.');
+    if ($votosMax < 1 || $votosMax > MB_CONCURSO_VOTOS_MAX) {
+        mbResponder(false, 'Los likes por empleado van de 1 a ' . MB_CONCURSO_VOTOS_MAX . '.');
+    }
 
     if ($tipo === 'evento') {
         $desde = mbAdmFecha((string)($_POST['dia'] ?? ''));
@@ -268,6 +286,13 @@ if ($accion === 'adm_guardar') {
         if ($album && $tipo === 'concurso' && (int)$album['sube_rrhh'] !== $subeRrhh && mbAdmFotos($conn, $id) > 0) {
             mbResponder(false, 'Este concurso ya tiene fotos: ya no se puede cambiar quién las sube.');
         }
+        // Bajar los likes dejaría a alguien con más de los permitidos.
+        if ($album && $tipo === 'concurso') {
+            $dados = mbAdmMasLikes($conn, $id);
+            if ($votosMax < $dados) {
+                mbResponder(false, 'Ya hay quien dio ' . $dados . ' likes en este concurso: no se puede bajar a menos de ' . $dados . '.');
+            }
+        }
         if ($visible) {
             $choque = mbAdmConflicto($conn, $id, $tipo, $desde, $hasta);
             if ($choque !== '') mbResponder(false, $choque);
@@ -309,11 +334,12 @@ if ($accion === 'adm_guardar') {
                 $stmt->execute();
                 $stmt->close();
                 $stmt = $conn->prepare('UPDATE messbook_albumes SET titulo = ?, tipo = ?, invitados_evento = ?, invitados_sedes = ?, portada = ?, visible = ?,
-                                               subida_desde = ?, subida_hasta = ?, votacion_desde = ?, votacion_hasta = ?, sube_rrhh = ?, actualizado_por = ?
+                                               subida_desde = ?, subida_hasta = ?, votacion_desde = ?, votacion_hasta = ?, sube_rrhh = ?, votos_max = ?,
+                                               actualizado_por = ?
                                          WHERE id_evento = ?');
-                $stmt->bind_param('sssssissssisi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
+                $stmt->bind_param('sssssissssiisi', $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
                                   $periodos['subida_desde'], $periodos['subida_hasta'], $periodos['votacion_desde'], $periodos['votacion_hasta'],
-                                  $subeRrhh, $noEmpleado, $id);
+                                  $subeRrhh, $votosMax, $noEmpleado, $id);
                 $stmt->execute();
                 $stmt->close();
             } else {
@@ -324,11 +350,11 @@ if ($accion === 'adm_guardar') {
                 $id = (int)$conn->insert_id;
                 $stmt->close();
                 $stmt = $conn->prepare('INSERT INTO messbook_albumes (id_evento, titulo, tipo, invitados_evento, invitados_sedes, portada, visible,
-                                                                     subida_desde, subida_hasta, votacion_desde, votacion_hasta, sube_rrhh, actualizado_por)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-                $stmt->bind_param('isssssissssis', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
+                                                                     subida_desde, subida_hasta, votacion_desde, votacion_hasta, sube_rrhh, votos_max, actualizado_por)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->bind_param('isssssissssiis', $id, $titulo, $tipo, $invEvento, $invSedes, $portada, $visible,
                                   $periodos['subida_desde'], $periodos['subida_hasta'], $periodos['votacion_desde'], $periodos['votacion_hasta'],
-                                  $subeRrhh, $noEmpleado);
+                                  $subeRrhh, $votosMax, $noEmpleado);
                 $stmt->execute();
                 $stmt->close();
             }

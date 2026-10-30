@@ -2660,7 +2660,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     : 'Sube tu foto a «' + c.titulo + '»';
                 var detalle = c.fase === 'votacion'
                     ? (completo ? (uno ? 'Puedes cambiarlo' : 'Puedes cambiarlos') + ' hasta que cierre '
-                                : (uno ? 'Tienes 1 like' : 'Te quedan ' + c.restantes + ' de ' + c.votos_max + ' likes') + ' · cierra ') + c.cierra
+                                : (uno ? 'Tienes 1 like' : (c.restantes === 1 ? 'Te queda 1' : 'Te quedan ' + c.restantes) + ' de ' + c.votos_max + ' likes') + ' · cierra ') + c.cierra
                     : 'Una foto por persona · se reciben hasta ' + c.cierra;
                 return '<div class="mb-2">'
                     + '<a type="button" onClick="abrirConcursoPendiente(' + Number(c.id) + ')" class="btn btn-white btn-block text-left shadow-sm py-2 '
@@ -5666,7 +5666,7 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             } else if (fase === 'votando') {
                 var quedan = c.restantes === 0
                     ? (uno ? 'Ya diste tu like' : 'Ya diste tus <strong>' + c.votos_max + ' likes</strong>')
-                    : (uno ? 'Tienes <strong>1 like</strong>' : 'Te quedan <strong>' + c.restantes + ' de ' + c.votos_max + ' likes</strong>');
+                    : (uno ? 'Tienes <strong>1 like</strong>' : (c.restantes === 1 ? 'Te queda' : 'Te quedan') + ' <strong>' + c.restantes + ' de ' + c.votos_max + ' likes</strong>');
                 html = '<i class="fas fa-heart"></i> ' + quedan + '. La votación cierra ' + esc(cuando(v[1], t)) + '.'
                      + '<span class="album-concurso__ayuda">Toca el corazón de una foto para darle like y vuelve a tocarlo para quitárselo.'
                      + (c.rrhh ? '' : ' A la tuya no se le puede dar.') + '</span>';

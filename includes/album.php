@@ -33,8 +33,10 @@
  * encimados. Un álbum oculto (visible = 0) no sale en la pestaña ni recibe fotos.
  *
  *   CONCURSO (decisión del 2026-10-21, disfraces) — cada empleado sube
- *   MB_CONCURSO_FOTOS foto y reparte MB_CONCURSO_VOTOS likes entre las de los
- *   demás (messbook_votos, sql/2026-10-21_album_concurso.sql). Tiene tres
+ *   MB_CONCURSO_FOTOS foto y reparte sus likes entre las de los demás
+ *   (messbook_votos, sql/2026-10-21_album_concurso.sql). Cuántos likes tiene
+ *   cada quien lo dice el concurso (`votos_max`, se elige en el modal;
+ *   decisión del 2026-10-30: calaveras lleva 2, los demás 1). Tiene tres
  *   periodos: la vigencia (fecha_inicio..fecha_fin, como los demás), que sólo
  *   enmarca a los otros dos, porque el álbum se ve siempre; la subida
  *   (subida_desde..subida_hasta, a cualquier hora), que es su ventana; y la
@@ -58,7 +60,8 @@
 const MB_SIN_SEDE = 'SIN_SEDE';
 
 const MB_CONCURSO_FOTOS = 1;          // por empleado, en cada concurso
-const MB_CONCURSO_VOTOS = 1;          // likes por empleado, en cada concurso (eran 3 hasta el 2026-10-30)
+const MB_CONCURSO_VOTOS = 1;          // likes por empleado de un concurso nuevo; cada uno trae los suyos (votos_max)
+const MB_CONCURSO_VOTOS_MAX = 10;     // tope de likes por empleado que deja elegir el modal
 const MB_DEPTOS_RANKING = [27, 47];   // ven el ranking: BI y Recursos Humanos (usuarios.departamento)
 const MB_DEPTOS_SUBEN   = [47];       // suben las fotos de un concurso `sube_rrhh`: Recursos Humanos
 
@@ -94,7 +97,7 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
         $cache = [];
         $res = $conn->query("SELECT e.id_evento, e.nombre, e.fecha_inicio, e.fecha_fin,
                                     a.titulo, a.tipo, a.invitados_evento, a.invitados_sedes, a.portada, a.visible,
-                                    a.subida_desde, a.subida_hasta, a.votacion_desde, a.votacion_hasta, a.sube_rrhh
+                                    a.subida_desde, a.subida_hasta, a.votacion_desde, a.votacion_hasta, a.sube_rrhh, a.votos_max
                                FROM messbook_albumes a
                                JOIN enc_eventos e ON e.id_evento = a.id_evento
                               ORDER BY e.fecha_inicio, e.id_evento");
@@ -107,12 +110,13 @@ function mbEventosAlbum(mysqli $conn, bool $conOcultos = false): array {
                 'invitados' => !$esConcurso && $e['invitados_evento'] !== null && $e['invitados_evento'] !== ''
                     ? ['evento' => (string)$e['invitados_evento'], 'sedes' => mbSedesDeTexto($e['invitados_sedes'])]
                     : null,
-                // [inicio, fin) en Unix de la subida y de la votación, y si las
-                // fotos las sube RRHH; null si no es concurso.
+                // [inicio, fin) en Unix de la subida y de la votación, si las
+                // fotos las sube RRHH y los likes por empleado; null si no es concurso.
                 'concurso'  => $esConcurso
                     ? ['subida'   => mbTramo($e['subida_desde'], $e['subida_hasta']),
                        'votacion' => mbTramo($e['votacion_desde'], $e['votacion_hasta']),
-                       'rrhh'     => !empty($e['sube_rrhh'])]
+                       'rrhh'     => !empty($e['sube_rrhh']),
+                       'votos'    => max(1, (int)$e['votos_max'])]
                     : null,
             ];
             $e['ventanas'] = [];
@@ -239,6 +243,11 @@ function mbSubeRrhh(array $evento): bool {
     return !empty($evento['cfg']['concurso']['rrhh']);
 }
 
+/** Likes que tiene cada empleado en este concurso (`votos_max`, ver CONCURSO arriba). */
+function mbVotosConcurso(array $evento): int {
+    return $evento['cfg']['concurso']['votos'] ?? MB_CONCURSO_VOTOS;
+}
+
 /** Dos DATETIME en hora de MB_ZONA → [inicio, fin) en Unix. null si falta uno
     o si el fin no es posterior al inicio. */
 function mbTramo(?string $desde, ?string $hasta): ?array {
@@ -291,7 +300,7 @@ function mbPendienteConcurso(mysqli $conn, array $evento, string $noEmpleado, in
         $dados = (int)$stmt->get_result()->fetch_row()[0];
         $stmt->close();
         return ['id' => $id, 'titulo' => mbTituloAlbum($evento), 'fase' => 'votacion',
-                'restantes' => max(0, MB_CONCURSO_VOTOS - $dados), 'votos_max' => MB_CONCURSO_VOTOS,
+                'restantes' => max(0, mbVotosConcurso($evento) - $dados), 'votos_max' => mbVotosConcurso($evento),
                 'cierra' => mbCuando($c['votacion'][1], $ahora)];
     }
     if (!$c['rrhh'] && $c['subida'] && mbSubidaAbierta([$c['subida']], $ahora)) {
