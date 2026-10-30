@@ -2654,11 +2654,13 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         function concursosPendientesHtml() {
             return CONCURSOS_PENDIENTES.map(function (c) {
                 var completo = c.fase === 'votacion' && c.restantes === 0;
+                var uno = c.votos_max === 1;
                 var titulo = c.fase === 'votacion'
-                    ? (completo ? 'Ya diste tus ' + c.votos_max + ' likes en «' + c.titulo + '»' : 'Vota en «' + c.titulo + '»')
+                    ? (completo ? (uno ? 'Ya diste tu like' : 'Ya diste tus ' + c.votos_max + ' likes') + ' en «' + c.titulo + '»' : 'Vota en «' + c.titulo + '»')
                     : 'Sube tu foto a «' + c.titulo + '»';
                 var detalle = c.fase === 'votacion'
-                    ? (completo ? 'Puedes cambiarlos hasta que cierre ' : 'Te quedan ' + c.restantes + ' de ' + c.votos_max + ' likes · cierra ') + c.cierra
+                    ? (completo ? (uno ? 'Puedes cambiarlo' : 'Puedes cambiarlos') + ' hasta que cierre '
+                                : (uno ? 'Tienes 1 like' : 'Te quedan ' + c.restantes + ' de ' + c.votos_max + ' likes') + ' · cierra ') + c.cierra
                     : 'Una foto por persona · se reciben hasta ' + c.cierra;
                 return '<div class="mb-2">'
                     + '<a type="button" onClick="abrirConcursoPendiente(' + Number(c.id) + ')" class="btn btn-white btn-block text-left shadow-sm py-2 '
@@ -5546,23 +5548,31 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
         }
 
         /** { abierta, texto } del álbum `a` en este momento. El concurso tiene
-            una sola ventana (su subida) y sus propias palabras. */
+            una sola ventana (su subida) y sus propias palabras; si las fotos
+            las sube RRHH, quien no puede subir sólo ve las de los participantes. */
         function estadoSubida(a) {
             var v = (a && a.ventanas) || [], t = ahoraSeg(), i;
             var concurso = !!(a && a.concurso);
+            var deRrhh = concurso && !!a.concurso.rrhh;
+            var queSube = deRrhh ? 'las fotos de los participantes' : 'tu foto al concurso';
             if (!v.length) return { abierta: false, texto: concurso ? 'El concurso no recibe fotos.' : 'Este álbum no recibe fotos.' };
+            if (deRrhh && !a.concurso.puede_subir) {
+                return { abierta: false, texto: t < v[v.length - 1][1]
+                    ? 'Recursos Humanos sube las fotos de los participantes. Tú sólo votas.'
+                    : 'El concurso ya no recibe fotos.' };
+            }
             for (i = 0; i < v.length; i++) {
                 if (t >= v[i][0] && t < v[i][1]) {
                     // El día del evento la ventana dura más de un día: "hasta
                     // mañana a las 15:00" o "hasta el sábado 10 de octubre…".
                     var hasta = diaMx(v[i][1]) === diaMx(t) ? 'las ' + horaMx(v[i][1]) : cuando(v[i][1], t);
-                    return { abierta: true, texto: (concurso ? 'Puedes subir tu foto al concurso hasta ' : 'Puedes subir fotos hasta ') + hasta + '.' };
+                    return { abierta: true, texto: (concurso ? 'Puedes subir ' + queSube + ' hasta ' : 'Puedes subir fotos hasta ') + hasta + '.' };
                 }
             }
             for (i = 0; i < v.length; i++) {
                 if (v[i][0] > t) {
                     return { abierta: false, texto: concurso
-                        ? '¡Prepárate! Podrás subir tu foto al concurso ' + cuando(v[i][0], t) + '.'
+                        ? '¡Prepárate! Podrás subir ' + queSube + ' ' + cuando(v[i][0], t) + '.'
                         : (t < v[0][0]
                             ? '¡Prepara tu cámara! Podrás subir fotos a este álbum ' + cuando(v[i][0], t) + '.'
                             : 'La subida de fotos está en pausa. Se vuelve a abrir ' + cuando(v[i][0], t) + '.') };
@@ -5649,13 +5659,17 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             if (!fase) { fotos.fase = null; return; }
 
             var t = ahoraSeg(), v = c.votacion, html;
+            var uno = c.votos_max === 1;
             if (fase === 'antes') {
                 html = '<i class="fas fa-heart"></i> La votación abre ' + esc(cuando(v[0], t)) + '. Cada quien tendrá <strong>'
-                     + c.votos_max + ' likes</strong> para las fotos de los demás.';
+                     + c.votos_max + (uno ? ' like' : ' likes') + '</strong>' + (c.rrhh ? '.' : ' para las fotos de los demás.');
             } else if (fase === 'votando') {
-                html = '<i class="fas fa-heart"></i> Te quedan <strong>' + c.restantes + ' de ' + c.votos_max + ' likes</strong>. La votación cierra '
-                     + esc(cuando(v[1], t)) + '.'
-                     + '<span class="album-concurso__ayuda">Toca el corazón de una foto para darle like y vuelve a tocarlo para quitárselo. A la tuya no se le puede dar.</span>';
+                var quedan = c.restantes === 0
+                    ? (uno ? 'Ya diste tu like' : 'Ya diste tus <strong>' + c.votos_max + ' likes</strong>')
+                    : (uno ? 'Tienes <strong>1 like</strong>' : 'Te quedan <strong>' + c.restantes + ' de ' + c.votos_max + ' likes</strong>');
+                html = '<i class="fas fa-heart"></i> ' + quedan + '. La votación cierra ' + esc(cuando(v[1], t)) + '.'
+                     + '<span class="album-concurso__ayuda">Toca el corazón de una foto para darle like y vuelve a tocarlo para quitárselo.'
+                     + (c.rrhh ? '' : ' A la tuya no se le puede dar.') + '</span>';
             } else {
                 html = '<i class="fas fa-trophy"></i> La votación cerró. Así quedaron los likes.';
             }
@@ -5752,10 +5766,16 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             $id('albumTitulo').textContent = a.titulo;
             $id('albumSubtitulo').textContent = subtituloAlbum(a);
             $id('albumLogo').innerHTML = logoAlbumHtml(a);
-            $id('albumZonaTitulo').textContent = a.concurso ? 'Sube tu foto para el concurso' : 'Toma o elige una foto';
-            $id('albumZonaAyuda').textContent  = a.concurso
-                ? 'Una foto por persona. Se publica al instante y la ven todos los empleados'
-                : 'Se publica al instante y la ven todos los empleados';
+            // Concurso que sube RRHH: una foto por participante, con su nombre
+            // en el texto (el servidor no la acepta sin él).
+            var deRrhh = !!(a.concurso && a.concurso.rrhh);
+            $id('albumZonaTitulo').textContent = deRrhh ? 'Sube la foto de un participante' : (a.concurso ? 'Sube tu foto para el concurso' : 'Toma o elige una foto');
+            $id('albumZonaAyuda').textContent  = deRrhh
+                ? 'Una foto por participante o equipo. Se publica al instante y la ven todos los empleados'
+                : (a.concurso
+                    ? 'Una foto por persona. Se publica al instante y la ven todos los empleados'
+                    : 'Se publica al instante y la ven todos los empleados');
+            $id('albumTexto').placeholder = deRrhh ? 'Nombre del participante o del equipo (obligatorio)' : 'Escribe algo sobre tu foto (opcional)';
             $id('albumLista').hidden = true;
             $id('albumDetalle').hidden = false;
             cargarFotos();
@@ -5866,7 +5886,7 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
 
         /**
          * Da o quita el like de `f`, lo contrario de lo que tiene. Las reglas
-         * (3 por persona, no a la propia, sólo con la votación abierta) las hace
+         * (cuántos por persona, no a la propia, sólo con la votación abierta) las hace
          * cumplir el servidor (acción voto); aquí sólo se pinta lo que responde.
          * Uno a la vez: mientras va uno, los demás toques no hacen nada.
          */
@@ -6035,7 +6055,10 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                     ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener"><img class="album-ranking__mini" src="' + esc(r.url) + '" alt="Foto de ' + esc(r.nombre) + '" loading="lazy"></a>'
                     : '') + '</td>'
                 + '<td class="align-middle"><strong>' + esc(r.nombre) + '</strong>'
-                + '<span class="d-block small text-muted">No. ' + esc(r.noEmpleado) + (r.area ? ' · ' + esc(r.area) : '') + ' · ' + esc(r.hora) + '</span>'
+                // Concurso que sube RRHH: el nombre es el del participante; aquí, quién la subió.
+                + '<span class="d-block small text-muted">' + (r.subio
+                    ? 'Subió ' + esc(r.subio)
+                    : 'No. ' + esc(r.noEmpleado) + (r.area ? ' · ' + esc(r.area) : '')) + ' · ' + esc(r.hora) + '</span>'
                 + (r.texto ? '<span class="d-block small">' + esc(r.texto) + '</span>' : '') + '</td>'
                 + '<td class="text-center align-middle font-weight-bold">' + r.votos + '</td>'
                 + '</tr>';
@@ -6219,8 +6242,8 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                 + (f.votos != null ? ' · ' + f.votos + (f.votos === 1 ? ' like' : ' likes') : '');
             $id('albumVisorTexto').textContent = f.texto || '';
             $id('albumVisorTexto').hidden = !f.texto;
-            // La propia se borra; la del concurso, sólo antes de que abra la votación.
-            $id('albumVisorBorrar').hidden = !f.mia || (!!concursoAbierto() && votacionEmpezo(concursoAbierto()));
+            // La que subió cada quien se borra; la del concurso, sólo antes de que abra la votación.
+            $id('albumVisorBorrar').hidden = !f.borrable || (!!concursoAbierto() && votacionEmpezo(concursoAbierto()));
             $id('albumVisorNota').hidden = true;
             pintarLikeVisor(f);
 
@@ -6312,7 +6335,9 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
 
         $id('albumVisorBorrar').addEventListener('click', function () {
             var f = fotos.visor;
-            var pregunta = concursoAbierto()
+            var pregunta = concursoAbierto() && concursoAbierto().rrhh
+                ? '¿Borrar la foto de ' + (f ? f.autor : '') + ' del concurso? Sus likes se pierden.'
+                : concursoAbierto()
                 ? '¿Borrar tu foto del concurso? Podrás subir otra mientras la subida siga abierta.'
                 : '¿Borrar tu foto? Dejará de verse para todos.';
             if (!f || !confirm(pregunta)) return;
