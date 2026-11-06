@@ -1139,7 +1139,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                                 <div class="btn-group btn-group-sm" role="group">
                                                                     <button type="button" class="btn btn-success" onclick="registraTallas()">Actualizar</button>
                                                                     <?php
-                                                                    $usuariosRegistran = array(183, 276, 523, 403);
+                                                                    $usuariosRegistran = array(183, 276, 523, 403, 569);
                                                                     if (in_array($_COOKIE['noEmpleadoL'], $usuariosRegistran)) {
                                                                         echo '<button onclick="VerTallas()" type="button" class="btn btn-info" data-toggle="modal" data-target="#modalResultadosTallas">Ver Tallas</button>';
                                                                     }
@@ -1616,6 +1616,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         <th>No. Empleado</th>
                                         <th>Talla</th>
                                         <th>Sexo</th>
+                                        <th>Fecha Actualización</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -4376,7 +4377,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         var tablaBody = $('#TotalTallas tbody');
                         tablaBody.empty();
                         response.tallas.forEach(function(t) {
-                            tablaBody.append('<tr><td>' + t.noEmpleado + '-' + t.nombre + '</td><td>' + t.talla + '</td><td>' + t.sexo + '</td></tr>');
+                            tablaBody.append('<tr><td>' + t.noEmpleado + '-' + t.nombre + '</td><td>' + t.talla + '</td><td>' + t.sexo + '</td><td>' + t.fecha_captura + '</td></tr>');
                         });
                         $('#modalResultadosTallas').modal('show');
                     } else {
