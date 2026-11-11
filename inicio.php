@@ -543,6 +543,14 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
+                                <?php if ($tieneCotizador): ?>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="tabCotizaciones-tab" data-toggle="tab" data-target="#tabCotizaciones" type="button" role="tab" title="Cotizaciones" aria-label="Cotizaciones">
+                                        <i class="fas fa-file-invoice-dollar"></i><span class="tab-label"> Cotizaciones</span>
+                                        <span class="tab-badge"></span>
+                                    </button>
+                                </li>
+                                <?php endif; ?>
                                 <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
@@ -1428,6 +1436,43 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- ===== TAB: COTIZACIONES (embebido vía iframe a /agentesIA/) =====
+                                     Solicitudes de cotización que toma el agente B1 (MUSE). Todo vive
+                                     en el repo agentesIA; aquí solo van las sub-pestañas y los iframes.
+                                     $tieneCotizador (accesos divCotizadorIA) decide si se dibuja, y los
+                                     embeds lo vuelven a validar en su backend. Mismo patrón que Tickets:
+                                     scrolling="auto" por Safari, ver el comentario de #iframeTicketsNuevo. -->
+                                <?php if ($tieneCotizador): ?>
+                                <div class="tab-pane fade" id="tabCotizaciones" role="tabpanel">
+                                    <ul class="nav nav-tabs" id="subTabsCotizaciones" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="subTabCotNueva-tab" data-toggle="tab" data-target="#subTabCotNueva" type="button" role="tab">
+                                                <i class="fas fa-plus-circle mr-1"></i> Nueva solicitud
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="subTabCotMis-tab" data-toggle="tab" data-target="#subTabCotMis" type="button" role="tab">
+                                                <i class="fas fa-list mr-1"></i> Mis solicitudes
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content pt-2" id="subTabsCotizacionesContent">
+                                        <div class="tab-pane fade show active" id="subTabCotNueva" role="tabpanel">
+                                            <iframe id="iframeCotNueva"
+                                                    data-src="../agentesIA/embed_nueva_solicitud.php"
+                                                    scrolling="auto" title="Nueva solicitud de cotización"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
+                                        </div>
+                                        <div class="tab-pane fade" id="subTabCotMis" role="tabpanel">
+                                            <iframe id="iframeCotMis"
+                                                    data-src="../agentesIA/embed_mis_solicitudes.php"
+                                                    scrolling="auto" title="Mis solicitudes de cotización"
+                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -2284,6 +2329,19 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 // Si ya estaba cargado, refresca la tabla recargando el iframe
                 var $f = $('#iframeTicketsMis');
                 if ($f.attr('src')) $f.attr('src', $f.attr('src'));
+            });
+
+            // Cotizaciones (agentesIA): mismo lazy-load que Tickets. "Mis solicitudes"
+            // se recarga al volver para que aparezca la que se acaba de levantar y el
+            // avance del agente (no hay correo: el aviso es solo en esa lista).
+            $('#tabCotizaciones-tab').on('shown.bs.tab', function() {
+                cargarIframeTickets($('#subTabsCotizacionesContent .tab-pane.active iframe'));
+            });
+            $('#subTabCotNueva-tab').on('shown.bs.tab', function() { cargarIframeTickets('#iframeCotNueva'); });
+            $('#subTabCotMis-tab').on('shown.bs.tab', function() {
+                var $f = $('#iframeCotMis');
+                if ($f.attr('src')) $f.attr('src', $f.attr('src'));
+                else cargarIframeTickets($f);
             });
 
             // NEST: lazy-load del iframe al mostrar la pestaña y al cambiar de sub-pestaña
