@@ -1061,6 +1061,19 @@ body.sidebar-hidden .nav-tabs-main {
     font-size: .85em;
 }
 
+/* Directorio → Agentes: etiqueta junto al nombre (cuentas tipo_usr = 'AGENTE') */
+.directorio-card .dir-agente-badge {
+    display: inline-block;
+    margin-left: .25rem;
+    padding: .05rem .5rem;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: .7rem;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
 .directorio-card .dir-meta {
     font-size: .82rem;
     color: var(--text-muted);
@@ -2837,6 +2850,21 @@ body.album-sin-scroll { overflow: hidden; }
 }
 .aviso-pdf:hover { color: #c62828; }
 .aviso-tarjeta .aviso-pdf { font-size: 2.6rem; }
+/* El mismo hueco, cuando el adjunto es la imagen PNG (sólo en la tarjeta) */
+.aviso-pdf--imagen { color: var(--accent); }
+.aviso-pdf--imagen:hover { color: var(--accent-dark, var(--accent)); }
+
+/* Imagen PNG del aviso: completa dentro del pop-up y del "ver más" */
+.aviso-imagen { display: block; margin-top: .75rem; }
+.aviso-imagen img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 70vh;
+    margin: 0 auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
 
 /* Modales de avisos: encabezado azul marino como la propuesta */
 .aviso-modal .modal-content {
@@ -2927,6 +2955,7 @@ body.album-sin-scroll { overflow: hidden; }
 .aviso-drop.tiene-archivo { background: var(--accent-soft); color: var(--text); }
 .aviso-pdf-actual { margin-top: .5rem; font-size: .9rem; }
 .aviso-pdf-actual .fa-file-pdf { color: #e53935; margin-right: .35rem; }
+.aviso-pdf-actual .fa-file-image { color: var(--accent); margin-right: .35rem; }
 .aviso-editor-simple { min-height: 12rem; height: auto; overflow-y: auto; }
 
 /* Logo con megáfono: uno por tema (includes/avisos.php, avLogosHtml) */

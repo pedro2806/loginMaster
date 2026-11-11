@@ -10,7 +10,7 @@
  *   ver        — uno completo (vencido: igual que en listar)
  *   pendientes — vigentes que este empleado no ha aceptado: el pop-up
  *   aceptar    — "Aceptar" del pop-up
- *   guardar    — crear o editar (con PDF opcional); al crear, notifica a todos
+ *   guardar    — crear o editar (con un adjunto opcional: PDF o PNG); al crear, notifica a todos
  *                en la campana del portal (avNotificar)
  *   ocultar    — deja de verse; no se borra
  *   quienes    — quién aceptó y quién falta (autor o admin)
@@ -86,14 +86,27 @@ function avAviso(mysqli $conn, int $id, bool $soloVisibles = true): ?array {
     return $fila ?: null;
 }
 
-/** Empleados activos (usuarios es MyISAM y noEmpleado se repite: se cuentan distintos). */
+/** Empleados activos, sin agentes (usuarios es MyISAM y noEmpleado se repite: se cuentan distintos). */
 function avTotalEmpleados(mysqli $conn): int {
-    return (int)$conn->query('SELECT COUNT(DISTINCT noEmpleado) FROM mess_rrhh.usuarios WHERE estatus = 1')->fetch_row()[0];
+    return (int)$conn->query('SELECT COUNT(DISTINCT u.noEmpleado) FROM mess_rrhh.usuarios u
+                               WHERE u.estatus = 1 AND ' . AV_SQL_U_NO_AGENTE)->fetch_row()[0];
+}
+
+/** Cuántos aceptaron el aviso, sin contar a los agentes (como avTotalEmpleados). */
+function avAceptados(mysqli $conn, int $idAviso): int {
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM mess_rrhh.messbook_avisos_aceptados ac
+                             WHERE ac.id_aviso = ? AND ' . AV_SQL_AC_NO_AGENTE);
+    $stmt->bind_param('i', $idAviso);
+    $stmt->execute();
+    $n = (int)$stmt->get_result()->fetch_row()[0];
+    $stmt->close();
+    return $n;
 }
 
 /**
  * Campana del portal (mess_rrhh.notificacion_historial, la que leen todos los
- * sistemas): una notificación por empleado activo, menos el autor. Va aparte
+ * sistemas): una notificación por empleado activo, menos el autor y los
+ * agentes (AV_SQL_U_NO_AGENTE). Va aparte
  * del pop-up: aceptar el aviso no la marca leída ni al revés. Si falla, el
  * aviso ya quedó publicado: se registra en el log y se sigue.
  * El REGEXP deja fuera los noEmpleado vacíos o con letras, que en modo
@@ -107,8 +120,9 @@ function avNotificar(mysqli $conn, int $idAviso, string $autor, string $area, st
                                        (id_usuario_actualiza, id_usuario_destino, accion, sistema, archivo,
                                         id_registro_referencia, fecha_creacion, fecha_atencion, recordar, estatus)
                                 SELECT ?, u.noEmpleado, 'NuevoAviso', 'avisos', 'aviso', ?, NOW(), NULL, ?, 'NoLeida'
-                                  FROM (SELECT DISTINCT noEmpleado FROM mess_rrhh.usuarios
-                                         WHERE estatus = 1 AND noEmpleado REGEXP '^[0-9]+$' AND noEmpleado <> ?) u");
+                                  FROM (SELECT DISTINCT u.noEmpleado FROM mess_rrhh.usuarios u
+                                         WHERE u.estatus = 1 AND u.noEmpleado REGEXP '^[0-9]+$' AND u.noEmpleado <> ?
+                                           AND " . AV_SQL_U_NO_AGENTE . ") u");
         $stmt->bind_param('iiss', $autorInt, $idAviso, $texto, $autor);
         $stmt->execute();
         $stmt->close();
@@ -119,7 +133,10 @@ function avNotificar(mysqli $conn, int $idAviso, string $autor, string $area, st
 
 /** El aviso tal como lo consume la vista. `$completo`: con el HTML. */
 function avSalida(array $a, array $perm, string $noEmpleado, bool $completo): array {
-    $editar = avPuedeEditar($a, $perm, $noEmpleado);
+    $editar  = avPuedeEditar($a, $perm, $noEmpleado);
+    // El adjunto va en `pdf` o en `imagen` según lo que sea (la columna es una).
+    $adjunto = avRutaPdf((string)$a['pdf']) !== null ? (string)$a['pdf'] : null;
+    $esPng   = $adjunto !== null && avEsImagen($adjunto);
     $salida = [
         'id'        => (int)$a['id'],
         'id_area'   => (int)$a['id_area'],
@@ -127,7 +144,8 @@ function avSalida(array $a, array $perm, string $noEmpleado, bool $completo): ar
         'color'     => (string)$a['color'],
         'titulo'    => (string)$a['titulo'],
         'subtitulo' => (string)$a['subtitulo'],
-        'pdf'       => avRutaPdf((string)$a['pdf']) !== null ? (string)$a['pdf'] : null,
+        'pdf'       => $esPng ? null : $adjunto,
+        'imagen'    => $esPng ? $adjunto : null,
         'fecha'     => avFecha((string)$a['publicado_el']),
         'vigencia'  => avFecha((string)$a['vigencia_hasta']),
         // Para el <input type="datetime-local"> del modal de edición.
@@ -176,7 +194,8 @@ if ($accion === 'listar') {
         $res = $conn->query('SELECT a.id, a.id_area, a.titulo, a.subtitulo, a.contenido_html, a.pdf,
                                     a.vigencia_hasta, a.publicado_por, a.publicado_el,
                                     ar.nombre AS area, ar.color, ' . AV_VIGENTE . ' AS vigente,
-                                    (SELECT COUNT(*) FROM mess_rrhh.messbook_avisos_aceptados ac WHERE ac.id_aviso = a.id) AS aceptados
+                                    (SELECT COUNT(*) FROM mess_rrhh.messbook_avisos_aceptados ac
+                                      WHERE ac.id_aviso = a.id AND ' . AV_SQL_AC_NO_AGENTE . ') AS aceptados
                                FROM mess_rrhh.messbook_avisos a
                                JOIN mess_rrhh.messbook_avisos_areas ar ON ar.id = a.id_area
                               WHERE a.estatus = 1
@@ -209,11 +228,7 @@ if ($accion === 'ver') {
         if (!$a || (!$a['vigente'] && !avPuedeEditar($a, $perm, $noEmpleado))) avResponder(false, 'Ese aviso ya no está disponible.');
         $salida = avSalida($a, $perm, $noEmpleado, true);
         if ($salida['editar']) {
-            $stmt = $conn->prepare('SELECT COUNT(*) FROM mess_rrhh.messbook_avisos_aceptados WHERE id_aviso = ?');
-            $stmt->bind_param('i', $salida['id']);
-            $stmt->execute();
-            $salida['aceptados'] = (int)$stmt->get_result()->fetch_row()[0];
-            $stmt->close();
+            $salida['aceptados'] = avAceptados($conn, $salida['id']);
             $salida['total_empleados'] = avTotalEmpleados($conn);
         }
         avResponder(true, '', ['aviso' => $salida]);
@@ -225,9 +240,11 @@ if ($accion === 'ver') {
 
 // ── pendientes ───────────────────────────────────────────────────────────────
 // El pop-up de inicio.php: los vigentes que no ha aceptado, del más viejo al
-// más nuevo (así se leen en el orden en que se publicaron).
+// más nuevo (así se leen en el orden en que se publicaron). A los agentes no
+// les sale: no son empleados para los avisos (AV_SQL_U_NO_AGENTE).
 if ($accion === 'pendientes') {
     try {
+        if (avEsAgente($conn, $noEmpleado)) avResponder(true, '', ['avisos' => []]);
         $stmt = $conn->prepare('SELECT a.*, ar.nombre AS area, ar.color, 1 AS vigente
                                   FROM mess_rrhh.messbook_avisos a
                                   JOIN mess_rrhh.messbook_avisos_areas ar ON ar.id = a.id_area
@@ -269,8 +286,9 @@ if ($accion === 'aceptar') {
 
 // ── guardar ──────────────────────────────────────────────────────────────────
 // Crear (id = 0) o editar. Editar no vuelve a sacar el pop-up a quien ya lo
-// aceptó. PDF: uno nuevo reemplaza al anterior; `quitar_pdf` lo quita; sin
-// ninguno de los dos, se queda el que tenía.
+// aceptó. Adjunto (PDF o PNG, uno solo): uno nuevo reemplaza al anterior, sea
+// del tipo que sea; `quitar_pdf` lo quita; sin ninguno de los dos, se queda el
+// que tenía. Con PNG el contenido es opcional (un aviso puede ser sólo el flyer).
 if ($accion === 'guardar') {
     if (!$perm['crear']) avResponder(false, 'No tienes permiso para publicar avisos. Solicítalo al área de BI.');
 
@@ -287,23 +305,36 @@ if ($accion === 'guardar') {
     if (mb_strlen($subtitulo, 'UTF-8') > AV_SUBTITULO_MAX)      avResponder(false, 'El subtítulo es muy largo: máximo ' . AV_SUBTITULO_MAX . ' caracteres.');
     if (!$vigencia || $vigencia->format('Y-m-d\TH:i') !== (string)$_POST['vigencia']) avResponder(false, 'Elige hasta cuándo es vigente el aviso.');
 
+    // Vacío ('') es válido aquí: con imagen el contenido es opcional. Se revisa
+    // más abajo, cuando ya se sabe con qué adjunto queda el aviso.
     $html = mbHtmlLimpio((string)($_POST['contenido'] ?? ''));
-    if ($html === '')                                           avResponder(false, 'Escribe el contenido del aviso.');
     if (mb_strlen($html, 'UTF-8') > AV_HTML_MAX)                avResponder(false, 'El contenido es muy largo. Adjunta el detalle en el PDF.');
 
-    // PDF (opcional). Se valida por la FIRMA ("%PDF-"), no por la extensión ni
-    // por lo que diga el navegador, igual que el mural (subir_mural).
+    // Adjunto (opcional): PDF o PNG. Se valida por la FIRMA del archivo ("%PDF-"
+    // o la del PNG), no por la extensión ni por lo que diga el navegador, igual
+    // que el mural (subir_mural). La extensión con que se guarda sale de la firma.
     $archivo = $_FILES['pdf'] ?? null;
     $errPdf  = is_array($archivo) ? (int)$archivo['error'] : UPLOAD_ERR_NO_FILE;
-    if ($errPdf === UPLOAD_ERR_INI_SIZE || $errPdf === UPLOAD_ERR_FORM_SIZE) avResponder(false, 'El PDF es demasiado pesado: máximo 20 MB.');
-    if ($errPdf !== UPLOAD_ERR_OK && $errPdf !== UPLOAD_ERR_NO_FILE)         avResponder(false, 'No recibimos el PDF. Inténtalo de nuevo.');
+    if ($errPdf === UPLOAD_ERR_INI_SIZE || $errPdf === UPLOAD_ERR_FORM_SIZE) avResponder(false, 'El archivo es demasiado pesado: el PDF hasta 20 MB y el PNG hasta 5 MB.');
+    if ($errPdf !== UPLOAD_ERR_OK && $errPdf !== UPLOAD_ERR_NO_FILE)         avResponder(false, 'No recibimos el archivo. Inténtalo de nuevo.');
     $conPdf = $errPdf === UPLOAD_ERR_OK && is_uploaded_file((string)$archivo['tmp_name']);
+    $extNuevo = null;                                       // 'pdf' | 'png'
     if ($conPdf) {
-        if ((int)$archivo['size'] > AV_PDF_MAX) avResponder(false, 'El PDF es demasiado pesado: máximo 20 MB.');
         $fh = @fopen((string)$archivo['tmp_name'], 'rb');
-        $firma = $fh ? fread($fh, 5) : '';
+        $firma = $fh ? (string)fread($fh, 8) : '';
         if ($fh) fclose($fh);
-        if ($firma !== '%PDF-') avResponder(false, 'Ese archivo no es un PDF.');
+        if (strncmp($firma, '%PDF-', 5) === 0) {
+            if ((int)$archivo['size'] > AV_PDF_MAX) avResponder(false, 'El PDF es demasiado pesado: máximo 20 MB.');
+            $extNuevo = 'pdf';
+        } elseif ($firma === "\x89PNG\r\n\x1a\n") {
+            if ((int)$archivo['size'] > AV_PNG_MAX) avResponder(false, 'La imagen es demasiado pesada: máximo 5 MB.');
+            // Además de la firma, que sea una imagen que se pueda abrir.
+            $info = @getimagesize((string)$archivo['tmp_name']);
+            if (!$info || (int)$info[2] !== IMAGETYPE_PNG) avResponder(false, 'Esa imagen está dañada o no es un PNG.');
+            $extNuevo = 'png';
+        } else {
+            avResponder(false, 'Sólo se puede adjuntar un PDF o una imagen PNG.');
+        }
     }
 
     try {
@@ -323,17 +354,23 @@ if ($accion === 'guardar') {
         if (!isset($areas[$idArea])) avResponder(false, 'Elige el área que publica el aviso.');
 
         $pdf   = !empty($_POST['quitar_pdf']) ? null : $anterior;
+
+        // Sin contenido sólo si el aviso queda con imagen (la nueva o la que ya tenía).
+        // Antes de mover el archivo, para no dejarlo huérfano si se rechaza.
+        $conImagen = $conPdf ? $extNuevo === 'png' : ($pdf !== null && avEsImagen($pdf));
+        if ($html === '' && !$conImagen) avResponder(false, 'Escribe el contenido del aviso o adjunta una imagen PNG.');
+
         $nuevo = null;
         if ($conPdf) {
             $dir = __DIR__ . '/' . AV_CARPETA;
             if (!is_dir($dir)) @mkdir($dir, 0775, true);
             if (!is_dir($dir) || !is_writable($dir)) {
                 error_log('messbook acciones_avisos: la carpeta ' . AV_CARPETA . '/ no existe o no tiene permiso de escritura.');
-                avResponder(false, 'Los PDF no están disponibles en este momento. Avísale a BI.');
+                avResponder(false, 'Los adjuntos no están disponibles en este momento. Avísale a BI.');
             }
-            $nuevo = AV_CARPETA . '/' . bin2hex(random_bytes(12)) . '.pdf';
+            $nuevo = AV_CARPETA . '/' . bin2hex(random_bytes(12)) . '.' . $extNuevo;
             if (!move_uploaded_file((string)$archivo['tmp_name'], avRutaPdf($nuevo))) {
-                avResponder(false, 'No pudimos guardar el PDF. Inténtalo de nuevo.');
+                avResponder(false, 'No pudimos guardar el archivo. Inténtalo de nuevo.');
             }
             $pdf = $nuevo;
         }
@@ -366,7 +403,7 @@ if ($accion === 'guardar') {
             if ($nuevo !== null) @unlink(avRutaPdf($nuevo));      // sin fila, el archivo sobra
             throw $e;
         }
-        // El PDF que se reemplazó o se quitó ya no lo usa nadie.
+        // El adjunto que se reemplazó o se quitó ya no lo usa nadie.
         if ($anterior !== null && $anterior !== $pdf) @unlink(avRutaPdf($anterior));
 
         // Sólo al publicarlo: editarlo no vuelve a notificar.
@@ -414,7 +451,7 @@ if ($accion === 'quienes') {
                   FROM mess_rrhh.usuarios u
                   LEFT JOIN mess_rrhh.messbook_avisos_aceptados ac
                          ON ac.id_aviso = ? AND ac.noEmpleado = CONVERT(u.noEmpleado USING utf8mb4) COLLATE utf8mb4_spanish_ci
-                 WHERE u.estatus = 1
+                 WHERE u.estatus = 1 AND " . AV_SQL_U_NO_AGENTE . "
                  GROUP BY 1
                  ORDER BY nombre";
         $stmt = $conn->prepare($sql);
