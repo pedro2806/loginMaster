@@ -16,9 +16,23 @@
 // área sin permiso especial y pueden editar u ocultar los de todos.
 const AV_ADMINS = [276, 403, 569, 523, 183];
 
-// PDF adjunto: uploads/avisos/<24 hex>.pdf. /uploads está en el .gitignore.
+// Adjunto del aviso: UNO, PDF o PNG, en uploads/avisos/<24 hex>.pdf|.png (la
+// columna sigue llamándose `pdf`). El PNG se ve dentro del aviso; el PDF, como
+// ícono que lo abre. /uploads está en el .gitignore.
 const AV_CARPETA = 'uploads/avisos';
 const AV_PDF_MAX = 20 * 1024 * 1024;     // igual que el mural (acciones_inicio.php, subir_mural)
+const AV_PNG_MAX = 5 * 1024 * 1024;      // sale en el pop-up de todos, también en el teléfono
+
+// Las cuentas de los agentes de IA (usuarios.tipo_usr = 'AGENTE', ver la
+// sub-pestaña "Agentes" del Directorio) no son empleados para los avisos: no
+// les sale el pop-up, no se les notifica y no cuentan en "Leído por X de N"
+// ni en "Quién lo leyó". Un fragmento para `usuarios u` y otro para
+// `messbook_avisos_aceptados ac` (usuarios.noEmpleado es latin1 y la de
+// avisos utf8mb4: se convierte, como en `quienes`).
+const AV_SQL_U_NO_AGENTE  = "(u.tipo_usr IS NULL OR UPPER(TRIM(u.tipo_usr)) <> 'AGENTE')";
+const AV_SQL_AC_NO_AGENTE = "NOT EXISTS (SELECT 1 FROM mess_rrhh.usuarios ag
+                                          WHERE CONVERT(ag.noEmpleado USING utf8mb4) COLLATE utf8mb4_spanish_ci = ac.noEmpleado
+                                            AND UPPER(TRIM(ag.tipo_usr)) = 'AGENTE')";
 
 // Logo de messbook con el megáfono, uno por tema (la vista enseña el que toca
 // con CSS). Si falta un archivo, el logo de siempre.
@@ -56,6 +70,17 @@ function avPermiso(mysqli $conn, string $noEmpleado): array {
     return ['crear' => true, 'admin' => false, 'area' => ctype_digit($inf) ? (int)$inf : null];
 }
 
+/** ¿Es la cuenta de un agente de IA (tipo_usr = 'AGENTE')? */
+function avEsAgente(mysqli $conn, string $noEmpleado): bool {
+    $stmt = $conn->prepare("SELECT 1 FROM mess_rrhh.usuarios
+                             WHERE noEmpleado = ? AND estatus = 1 AND UPPER(TRIM(tipo_usr)) = 'AGENTE' LIMIT 1");
+    $stmt->bind_param('s', $noEmpleado);
+    $stmt->execute();
+    $es = (bool)$stmt->get_result()->fetch_row();
+    $stmt->close();
+    return $es;
+}
+
 /** Las áreas, en su orden: [id => ['id', 'nombre', 'color']]. */
 function avAreas(mysqli $conn): array {
     $areas = [];
@@ -66,10 +91,15 @@ function avAreas(mysqli $conn): array {
     return $areas;
 }
 
-/** Ruta en disco del PDF de un aviso. null si la url no es de las nuestras. */
+/** Ruta en disco del adjunto (PDF o PNG) de un aviso. null si la url no es de las nuestras. */
 function avRutaPdf(string $url): ?string {
-    if (!preg_match('~^' . AV_CARPETA . '/[a-f0-9]{24}\.pdf$~', $url)) return null;
+    if (!preg_match('~^' . AV_CARPETA . '/[a-f0-9]{24}\.(pdf|png)$~', $url)) return null;
     return dirname(__DIR__) . '/' . $url;
+}
+
+/** ¿El adjunto (ya validado con avRutaPdf) es la imagen PNG? */
+function avEsImagen(string $url): bool {
+    return substr($url, -4) === '.png';
 }
 
 /**

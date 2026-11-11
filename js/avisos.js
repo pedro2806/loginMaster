@@ -4,7 +4,8 @@
  *   1. Pop-up "NUEVO AVISO" al entrar: los avisos vigentes que el empleado no
  *      ha aceptado, uno tras otro. Sólo se cierra con "Aceptar".
  *   2. Pestaña Avisos: tarjetas con buscador; "ver más" abre el aviso completo.
- *   3. Crear / editar (sólo con permiso): modal con editor (Summernote) y PDF.
+ *   3. Crear / editar (sólo con permiso): modal con editor (Summernote) y un
+ *      adjunto, PDF o PNG. El PNG se ve dentro del aviso; el PDF, como ícono.
  *
  * Todo pasa por acciones_avisos.php. El HTML de los avisos llega ya limpio del
  * servidor (includes/html_limpio.php) y se pinta tal cual; el resto del texto
@@ -15,7 +16,8 @@
     'use strict';
 
     var URL_AV  = 'acciones_avisos.php';
-    var PDF_MAX = 20 * 1024 * 1024;                 // igual que el servidor
+    var PDF_MAX = 20 * 1024 * 1024;                 // igual que el servidor (AV_PDF_MAX)
+    var PNG_MAX = 5 * 1024 * 1024;                  // igual que el servidor (AV_PNG_MAX)
     var CFG     = window.MB_AVISOS || { logo: '', puedeCrear: false };
 
     var estado = {
@@ -74,14 +76,28 @@
             : '';
     }
 
-    /** Barra de color + título + subtítulo + contenido (+ PDF). Pop-up y "ver más". */
+    /** Tarjeta de la lista: el PNG va como ícono (no se descarga la imagen por cada tarjeta). */
+    function iconoAdjunto(a) {
+        if (a.imagen) {
+            return '<a class="aviso-pdf aviso-pdf--imagen" href="' + esc(a.imagen) + '" target="_blank" rel="noopener" title="Abrir imagen" aria-label="Abrir imagen">'
+                + '<i class="fas fa-file-image"></i></a>';
+        }
+        return iconoPdf(a);
+    }
+
+    /** Barra de color + título + subtítulo + contenido (+ imagen o PDF). Pop-up y "ver más". */
     function cuerpoHtml(a) {
         return '<div class="aviso-cuerpo" style="--aviso-color:' + color(a.color) + '">'
             +   '<div class="aviso-cuerpo__texto">'
             +     '<div class="aviso-titulo">' + esc(a.titulo) + '</div>'
             +     (a.subtitulo ? '<div class="aviso-subtitulo">' + esc(a.subtitulo) + '</div>' : '')
             // a.html viene limpio del servidor (lista blanca): se pinta tal cual.
-            +     '<div class="aviso-html">' + (a.html || '') + '</div>'
+            +     (a.html ? '<div class="aviso-html">' + a.html + '</div>' : '')
+            // El PNG se ve completo dentro del aviso; tocarlo lo abre en grande.
+            +     (a.imagen
+                    ? '<a class="aviso-imagen" href="' + esc(a.imagen) + '" target="_blank" rel="noopener" title="Abrir imagen">'
+                      + '<img src="' + esc(a.imagen) + '" alt="' + esc(a.titulo) + '"></a>'
+                    : '')
             +   '</div>'
             +   iconoPdf(a)
             + '</div>';
@@ -163,8 +179,9 @@
             +   '</div>'
             +   (a.subtitulo ? '<div class="aviso-subtitulo">' + esc(a.subtitulo) + '</div>' : '')
             +   '<div class="aviso-tarjeta__cuerpo">'
-            +     '<p class="aviso-extracto">' + esc(a.texto) + '</p>'
-            +     iconoPdf(a)
+            +     '<p class="aviso-extracto">' + (a.texto ? esc(a.texto)
+                                                   : (a.imagen ? '<span class="text-muted">Aviso con imagen.</span>' : '')) + '</p>'
+            +     iconoAdjunto(a)
             +   '</div>'
             +   '<div class="aviso-tarjeta__pie">'
             +     '<button type="button" class="btn btn-link aviso-vermas" data-ver="' + a.id + '">ver más</button>'
@@ -302,13 +319,24 @@
             return f.getFullYear() + '-' + d2(f.getMonth() + 1) + '-' + d2(f.getDate()) + 'T' + d2(f.getHours()) + ':' + d2(f.getMinutes());
         }
 
+        /** ¿Es PNG? Por tipo o extensión (el servidor revisa la firma de todos modos). */
+        function esPng(nombre, tipo) { return tipo === 'image/png' || /\.png$/i.test(nombre || ''); }
+
         function pintarPdf(actual) {
-            $('#avDropTexto').text(estado.pdf ? estado.pdf.name : 'Arrastra o selecciona un PDF');
+            $('#avDropTexto').text(estado.pdf ? estado.pdf.name : 'Arrastra o selecciona un PDF o una imagen PNG');
             $('#avDrop').toggleClass('tiene-archivo', !!estado.pdf);
             var hay = !!estado.pdf || (!!actual && !estado.quitarPdf);
             $('#avPdfActual').prop('hidden', !hay);
+            var png = estado.pdf ? esPng(estado.pdf.name, estado.pdf.type) : esPng(actual);
+            $('#avPdfActualIcono').attr('class', png ? 'fas fa-file-image' : 'fas fa-file-pdf');
             if (estado.pdf)  $('#avPdfActualLink').text(estado.pdf.name).removeAttr('href');
-            else if (actual) $('#avPdfActualLink').text('PDF adjunto').attr('href', actual);
+            else if (actual) $('#avPdfActualLink').text(png ? 'Imagen adjunta' : 'PDF adjunto').attr('href', actual);
+        }
+
+        /** ¿El aviso va a quedar con imagen? (con imagen, el contenido es opcional) */
+        function quedaConImagen() {
+            if (estado.pdf) return esPng(estado.pdf.name, estado.pdf.type);
+            return !!estado.pdfActual && !estado.quitarPdf && esPng(estado.pdfActual);
         }
 
         function abrirForm(a) {
@@ -341,7 +369,7 @@
             }
 
             estado.pdf = null; estado.quitarPdf = false;
-            estado.pdfActual = esNuevo ? null : a.pdf;
+            estado.pdfActual = esNuevo ? null : (a.pdf || a.imagen);
             $('#avPdf').val('');
             pintarPdf(estado.pdfActual);
 
@@ -350,8 +378,10 @@
 
         function elegirPdf(archivo) {
             if (!archivo) return;
-            if (archivo.type !== 'application/pdf' && !/\.pdf$/i.test(archivo.name)) { error('Sólo se puede adjuntar un PDF.'); return; }
-            if (archivo.size > PDF_MAX) { error('El PDF no debe pasar de 20 MB.'); return; }
+            var png = esPng(archivo.name, archivo.type);
+            if (!png && archivo.type !== 'application/pdf' && !/\.pdf$/i.test(archivo.name)) { error('Sólo se puede adjuntar un PDF o una imagen PNG.'); return; }
+            if (png  && archivo.size > PNG_MAX) { error('La imagen no debe pasar de 5 MB.'); return; }
+            if (!png && archivo.size > PDF_MAX) { error('El PDF no debe pasar de 20 MB.'); return; }
             estado.pdf = archivo;
             pintarPdf(estado.pdfActual);
         }
@@ -386,7 +416,9 @@
             var boton = this;
             var html  = contenido();
             if (!$('#avTitulo').val().trim())                     { error('Escribe el título del aviso.'); return; }
-            if (!$('<div>').html(html).text().trim())             { error('Escribe el contenido del aviso.'); return; }
+            var sinTexto = !$('<div>').html(html).text().trim();
+            if (sinTexto && !quedaConImagen())                    { error('Escribe el contenido del aviso o adjunta una imagen PNG.'); return; }
+            if (sinTexto) html = '';                              // sólo la imagen: no guardar un "<p><br></p>"
             if (!$('#avVigencia').val())                          { error('Elige hasta cuándo es vigente el aviso.'); return; }
 
             var fd = new FormData();

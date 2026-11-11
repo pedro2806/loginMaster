@@ -109,7 +109,7 @@ if (!isset($puedeCrearAviso) || !function_exists('avLogosHtml')) return;
                 <div class="form-group">
                     <label for="avContenido">Contenido</label>
                     <div id="avContenido"></div>
-                    <small class="text-muted">Puedes pegar el texto del correo: se conservan negritas, subrayado, listas y enlaces.</small>
+                    <small class="text-muted">Puedes pegar el texto del correo: se conservan negritas, subrayado, listas y enlaces. Si adjuntas una imagen PNG, el contenido es opcional.</small>
                 </div>
                 <div class="form-group">
                     <label for="avVigencia">Vigencia del aviso</label>
@@ -117,14 +117,15 @@ if (!isset($puedeCrearAviso) || !function_exists('avLogosHtml')) return;
                     <small class="text-muted">Hasta esta fecha sale como pop-up al entrar a messbook y se ve en Avisos. Después deja de verse; tú lo sigues viendo como vencido para extender la fecha.</small>
                 </div>
                 <div class="form-group">
-                    <label for="avPdf">Adjuntar PDF</label>
+                    <label for="avPdf">Adjuntar PDF o imagen (PNG)</label>
                     <label class="aviso-drop" id="avDrop" for="avPdf">
                         <i class="fas fa-cloud-upload-alt"></i>
-                        <span id="avDropTexto">Arrastra o selecciona un PDF</span>
+                        <span id="avDropTexto">Arrastra o selecciona un PDF o una imagen PNG</span>
                     </label>
-                    <input type="file" id="avPdf" accept="application/pdf" hidden>
+                    <input type="file" id="avPdf" accept="application/pdf,image/png" hidden>
+                    <small class="text-muted">Uno solo. La imagen se ve dentro del aviso (máx. 5 MB); el PDF, como ícono para abrirlo (máx. 20 MB).</small>
                     <div class="aviso-pdf-actual" id="avPdfActual" hidden>
-                        <i class="fas fa-file-pdf"></i>
+                        <i class="fas fa-file-pdf" id="avPdfActualIcono"></i>
                         <a href="#" target="_blank" rel="noopener" id="avPdfActualLink">PDF adjunto</a>
                         <button type="button" class="btn btn-link btn-sm text-danger p-0 ml-2" id="avPdfQuitar">Quitar</button>
                     </div>

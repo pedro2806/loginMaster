@@ -1375,8 +1375,25 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                 </div>
                                 <?php endif; ?>
 
-                                <!-- ===== TAB 7: DIRECTORIO ===== -->
+                                <!-- ===== TAB 7: DIRECTORIO =====
+                                     Dos sub-pestañas con la misma lista de getInfoLoginMaster.php
+                                     (listarEmpleados): "Empleados" y "Agentes". Las cuentas con
+                                     tipo_usr = 'AGENTE' (es_agente) van sólo en "Agentes". -->
                                 <div class="tab-pane fade" id="tabDirectorio" role="tabpanel">
+                                    <ul class="nav nav-tabs" id="subTabsDirectorio" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="subTabDirEmpleados-tab" data-toggle="tab" data-target="#subTabDirEmpleados" type="button" role="tab">
+                                                <i class="fas fa-users mr-1"></i> Empleados
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="subTabDirAgentes-tab" data-toggle="tab" data-target="#subTabDirAgentes" type="button" role="tab">
+                                                <i class="fas fa-robot mr-1"></i> Agentes
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content pt-3" id="subTabsDirectorioContent">
+                                    <div class="tab-pane fade show active" id="subTabDirEmpleados" role="tabpanel">
                                     <div class="directorio-header">
                                         <div>
                                             <h4 class="mb-1" style="color: var(--accent);">Directorio</h4>
@@ -1401,6 +1418,28 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         </div>
                                     </div>
                                     <div id="directorioPaginacion" class="dir-paginacion"></div>
+                                    </div>
+
+                                    <!-- Agentes de IA: pocas cuentas, sin paginación ni botones de plantas -->
+                                    <div class="tab-pane fade" id="subTabDirAgentes" role="tabpanel">
+                                        <div class="directorio-header">
+                                            <div>
+                                                <h4 class="mb-1" style="color: var(--accent);">Directorio de agentes</h4>
+                                                <p class="text-muted mb-0 small">Los agentes de IA que ya trabajan en messbook.</p>
+                                            </div>
+                                            <div class="directorio-search">
+                                                <i class="fas fa-search"></i>
+                                                <input type="text" id="agentesBuscar" class="form-control form-control-sm" placeholder="Buscar agente..." autocomplete="off">
+                                            </div>
+                                        </div>
+                                        <div id="agentesGrid" class="row">
+                                            <div class="col-12 empty-state">
+                                                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                                <p class="mb-0">Cargando agentes...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </div>
                                 </div>
 
                                 <!-- ===== TAB 8: TICKETS (embebido vía iframe a /Tickets/) ===== -->
@@ -4561,7 +4600,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         }
 
         // ===== Directorio =====
-        var directorioCache = null;       // lista completa devuelta por el backend
+        var directorioCache = null;       // empleados (sin agentes) devueltos por el backend
+        var agentesCache = [];            // cuentas con es_agente = 1 (sub-pestaña "Agentes")
         var directorioVista = [];         // subset visible (filtrado por buscador o no)
         var directorioPagina = 1;
         var DIR_PAGE_SIZE = 10;
@@ -4598,19 +4638,65 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 try {
                     var data = typeof resp === 'string' ? JSON.parse(resp) : resp;
                     if (data && data.status === 'success' && Array.isArray(data.info)) {
-                        directorioCache = data.info;
+                        // Los agentes (tipo_usr = 'AGENTE') no salen entre los empleados.
+                        directorioCache = data.info.filter(function (e) { return String(e.es_agente) !== '1'; });
+                        agentesCache    = data.info.filter(function (e) { return String(e.es_agente) === '1'; });
                         renderDirectorio(directorioCache);
+                        pintarAgentes(agentesCache);
                     } else {
                         directorioCache = [];
                         $('#directorioGrid').html('<div class="col-12 empty-state">No hay empleados activos para mostrar.</div>');
+                        pintarAgentes([]);
                     }
                 } catch (e) {
-                    $('#directorioGrid').html('<div class="col-12 empty-state text-danger">Error al procesar el directorio.</div>');
+                    $('#directorioGrid, #agentesGrid').html('<div class="col-12 empty-state text-danger">Error al procesar el directorio.</div>');
                 }
             }).fail(function () {
-                $('#directorioGrid').html('<div class="col-12 empty-state text-danger">No se pudo conectar al servidor.</div>');
+                $('#directorioGrid, #agentesGrid').html('<div class="col-12 empty-state text-danger">No se pudo conectar al servidor.</div>');
             });
         }
+
+        // Agentes: la misma tarjeta que un empleado, sin paginación (son pocos)
+        // ni botones de accesos a plantas. El clic abre el mismo modal de detalle.
+        function pintarAgentes(lista) {
+            if (!lista.length) {
+                $('#agentesGrid').html('<div class="col-12 empty-state">'
+                    + (agentesCache.length ? 'No se encontraron resultados.' : 'Todavía no hay agentes registrados.')
+                    + '</div>');
+                return;
+            }
+            $('#agentesGrid').html(lista.map(function (e) {
+                var ini    = dirIniciales(e.nombre);
+                var col    = dirColor(e.nombre);
+                var area   = dirEscape(e.area   || '—');
+                var puesto = dirEscape(e.puesto || '—');
+                var correo = dirEscape(e.correo || '');
+                var avatar = e.foto
+                    ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
+                    : '<div class="dir-avatar" style="background:' + col + '"><i class="fas fa-robot"></i></div>';
+                return '<div class="col-md-6 mb-3">'
+                    +   '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
+                    +     avatar
+                    +     '<div class="dir-info">'
+                    +       '<div class="dir-name">' + dirEscape(e.nombre || 'Sin nombre')
+                    +         ' <span class="dir-agente-badge"><i class="fas fa-robot"></i> Agente</span></div>'
+                    +       '<div class="dir-meta">' + area + ' - ' + puesto + '</div>'
+                    +       (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
+                    +     '</div>'
+                    +   '</div>'
+                    + '</div>';
+            }).join(''));
+        }
+
+        $(document).on('input', '#agentesBuscar', function () {
+            var q = $(this).val().toLowerCase().trim();
+            pintarAgentes(!q ? agentesCache : agentesCache.filter(function (e) {
+                return (e.nombre || '').toLowerCase().indexOf(q) !== -1
+                    || (e.area   || '').toLowerCase().indexOf(q) !== -1
+                    || (e.puesto || '').toLowerCase().indexOf(q) !== -1
+                    || (e.correo || '').toLowerCase().indexOf(q) !== -1;
+            }));
+        });
 
         function renderDirectorio(lista) {
             directorioVista = lista || [];
@@ -5473,8 +5559,9 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
         function abrirModalDirectorio(noEmp) {
             if (!directorioCache) return;
             var emp = null;
-            for (var i = 0; i < directorioCache.length; i++) {
-                if (String(directorioCache[i].noEmpleado) === String(noEmp)) { emp = directorioCache[i]; break; }
+            var todos = directorioCache.concat(agentesCache);    // la tarjeta puede ser de un agente
+            for (var i = 0; i < todos.length; i++) {
+                if (String(todos[i].noEmpleado) === String(noEmp)) { emp = todos[i]; break; }
             }
             if (!emp) return;
             var ini = dirIniciales(emp.nombre);
