@@ -1481,7 +1481,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                      en el repo agentesIA; aquí solo van las sub-pestañas y los iframes.
                                      $tieneCotizador (accesos divCotizadorIA) decide si se dibuja, y los
                                      embeds lo vuelven a validar en su backend. Mismo patrón que Tickets:
-                                     scrolling="auto" por Safari, ver el comentario de #iframeTicketsNuevo. -->
+                                     scrolling="auto" por Safari, ver el comentario de #iframeTicketsNuevo.
+                                     Rutas RELATIVAS (../agentesIA/) a propósito: un iframe a la IP interna
+                                     de MESSIAS (http://192.168.2.x) queda en blanco en https (contenido
+                                     mixto), no llega desde fuera de la red y no comparte la sesión. -->
                                 <?php if ($tieneCotizador): ?>
                                 <div class="tab-pane fade" id="tabCotizaciones" role="tabpanel">
                                     <ul class="nav nav-tabs" id="subTabsCotizaciones" role="tablist">
