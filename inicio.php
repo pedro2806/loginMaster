@@ -98,8 +98,10 @@ if ($tieneKpis) {
     }
 }
 
-// Acceso a la pestaña Cotizador IA (tabla accesos, sistema = 'divCotizadorIA',
-// gestionada desde el modal "ACCESOS" → modalAccesoSistemas.php).
+// Acceso al botón "Cotizador IA" de Sistemas, que abre MessIAs (tabla accesos,
+// sistema = 'divCotizadorIA', gestionada desde el modal "ACCESOS" →
+// modalAccesoSistemas.php). La pestaña Cotizaciones que usaba este mismo
+// permiso se quitó el 2026-11-17: las solicitudes a los agentes viven en MessIAs.
 $tieneCotizador = false;
 if (!empty($_COOKIE['noEmpleadoL'])) {
     $noEmpCot = intval($_COOKIE['noEmpleadoL']);
@@ -543,14 +545,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         <span class="tab-badge"></span>
                                     </button>
                                 </li>
-                                <?php if ($tieneCotizador): ?>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabCotizaciones-tab" data-toggle="tab" data-target="#tabCotizaciones" type="button" role="tab" title="Cotizaciones" aria-label="Cotizaciones">
-                                        <i class="fas fa-file-invoice-dollar"></i><span class="tab-label"> Cotizaciones</span>
-                                        <span class="tab-badge"></span>
-                                    </button>
-                                </li>
-                                <?php endif; ?>
                                 <!--
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabExpediente-tab" data-toggle="tab" data-target="#tabExpediente" type="button" role="tab">
@@ -601,14 +595,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </button>
                                 </li>
                                 <?php endif; ?>
-                                <!-- <?php if ($tieneCotizador): ?>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="tabCotizador-tab" data-toggle="tab" data-target="#tabCotizador" type="button" role="tab">
-                                        <i class="fas fa-robot mr-1"></i> Cotizador IA
-                                        <span class="tab-badge"></span>
-                                    </button>
-                                </li>
-                                <?php endif; ?> -->
                                 <?php if ($tieneAlbum): ?>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="tabAlbum-tab" data-toggle="tab" data-target="#tabAlbum" type="button" role="tab" title="Fotos" aria-label="Fotos">
@@ -1266,16 +1252,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                     </div>
                                 </div>
                                 <?php endif; ?>
-                                
-                                <!-- ===== TAB: COTIZADOR IA =====
-                                <?php if ($tieneCotizador): ?>
-                                <div class="tab-pane fade" id="tabCotizador" role="tabpanel">
-                                    <div id="frameCotizador">
-                                        <iframe src="http://192.168.2.235/messIAs/" title="Cotizador IA"></iframe>
-                                    </div>
-                                </div>
-                                <?php endif; ?> -->
-                                
+
                                 <!-- ===== TAB: FOTOS (álbum del evento) =====
                                      Mismo muro que el de oktoberMESS. Todo por AJAX contra
                                      acciones_album.php; esta vista no abre la BD.
@@ -1475,46 +1452,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- ===== TAB: COTIZACIONES (embebido vía iframe a /agentesIA/) =====
-                                     Solicitudes de cotización que toma el agente B1 (MUSE). Todo vive
-                                     en el repo agentesIA; aquí solo van las sub-pestañas y los iframes.
-                                     $tieneCotizador (accesos divCotizadorIA) decide si se dibuja, y los
-                                     embeds lo vuelven a validar en su backend. Mismo patrón que Tickets:
-                                     scrolling="auto" por Safari, ver el comentario de #iframeTicketsNuevo.
-                                     Rutas RELATIVAS (../agentesIA/) a propósito: un iframe a la IP interna
-                                     de MESSIAS (http://192.168.2.x) queda en blanco en https (contenido
-                                     mixto), no llega desde fuera de la red y no comparte la sesión. -->
-                                <?php if ($tieneCotizador): ?>
-                                <div class="tab-pane fade" id="tabCotizaciones" role="tabpanel">
-                                    <ul class="nav nav-tabs" id="subTabsCotizaciones" role="tablist">
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="subTabCotNueva-tab" data-toggle="tab" data-target="#subTabCotNueva" type="button" role="tab">
-                                                <i class="fas fa-plus-circle mr-1"></i> Nueva solicitud
-                                            </button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="subTabCotMis-tab" data-toggle="tab" data-target="#subTabCotMis" type="button" role="tab">
-                                                <i class="fas fa-list mr-1"></i> Mis solicitudes
-                                            </button>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content pt-2" id="subTabsCotizacionesContent">
-                                        <div class="tab-pane fade show active" id="subTabCotNueva" role="tabpanel">
-                                            <iframe id="iframeCotNueva"
-                                                    data-src="../agentesIA/embed_nueva_solicitud.php"
-                                                    scrolling="auto" title="Nueva solicitud de cotización"
-                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
-                                        </div>
-                                        <div class="tab-pane fade" id="subTabCotMis" role="tabpanel">
-                                            <iframe id="iframeCotMis"
-                                                    data-src="../agentesIA/embed_mis_solicitudes.php"
-                                                    scrolling="auto" title="Mis solicitudes de cotización"
-                                                    style="width:100%; height: 78vh; border:0; background: var(--card-bg); border-radius: .5rem;"></iframe>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -2371,19 +2308,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 // Si ya estaba cargado, refresca la tabla recargando el iframe
                 var $f = $('#iframeTicketsMis');
                 if ($f.attr('src')) $f.attr('src', $f.attr('src'));
-            });
-
-            // Cotizaciones (agentesIA): mismo lazy-load que Tickets. "Mis solicitudes"
-            // se recarga al volver para que aparezca la que se acaba de levantar y el
-            // avance del agente (no hay correo: el aviso es solo en esa lista).
-            $('#tabCotizaciones-tab').on('shown.bs.tab', function() {
-                cargarIframeTickets($('#subTabsCotizacionesContent .tab-pane.active iframe'));
-            });
-            $('#subTabCotNueva-tab').on('shown.bs.tab', function() { cargarIframeTickets('#iframeCotNueva'); });
-            $('#subTabCotMis-tab').on('shown.bs.tab', function() {
-                var $f = $('#iframeCotMis');
-                if ($f.attr('src')) $f.attr('src', $f.attr('src'));
-                else cargarIframeTickets($f);
             });
 
             // NEST: lazy-load del iframe al mostrar la pestaña y al cambiar de sub-pestaña
