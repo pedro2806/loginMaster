@@ -48,11 +48,16 @@
             filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
             display: block;
         }
-        /* Logo de temporada (includes/temporada.php): ya trae sus colores, sin
-           el filtro que blanquea al de siempre. En celular la regla de abajo
-           le quita el filtro a los dos, y ahí se ve el de siempre (<picture>). */
+        /* Logo de una versión de evento (includes/tema.php, modalTemas.php):
+           ya trae sus colores, sin el filtro que blanquea al de siempre. Puede
+           tener cualquier proporción: no pasa de 133px de alto, la caja del de
+           siempre a 320px de ancho. En celular la regla de abajo le quita el
+           filtro a los dos, y ahí se ve el de siempre (<picture>). */
         .fb-logo-picture { display: block; }
-        .fb-logo-img--temporada {
+        .fb-logo-img--tema {
+            width: auto;
+            max-width: min(320px, 100%);
+            max-height: 133px;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
         .fb-tagline {

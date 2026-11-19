@@ -2022,20 +2022,95 @@ footer.sticky-footer .fb-footer-logo {
     padding-bottom: 0.5rem;
 }
 
-/* Logo sobre la tarjeta del usuario (inicio.php). El de siempre es azul: el
-   filtro lo pinta de blanco sobre la columna. */
-.logo-encabezado {
-    max-width: 200px;
-    width: 80%;
-    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+/* Logo sobre la tarjeta del usuario (inicio.php). Cuál sale lo decide
+   includes/tema.php y BI lo cambia desde el modal, así que puede tener
+   cualquier proporción: se acomoda en una caja y nunca la rebasa.
+   - Ancho: hasta 260px, y siempre 100px menos que la columna. El tope lo pone
+     el botón fijo del menú (encabezado.php, left: 10px, 38px de ancho): así la
+     orilla izquierda del logo centrado le deja ~8px de aire.
+   - Alto: hasta 83px, la caja del logo de siempre; el botón del menú está
+     centrado con ella (top: 38px).
+   Se espera con letras blancas y fondo transparente (va sobre la columna
+   azul); ya no lleva el filtro que blanqueaba al messbook_logo3.png.
+   .logo-tema-caja es el <button> que abre el modal (BI) o un <span>. */
+.logo-tema-caja {
+    display: inline-block;
+    max-width: min(260px, calc(100% - 100px));
+    line-height: 0;
 }
-
-/* El de temporada (includes/temporada.php) ya trae sus colores: sin el invert.
-   Su imagen tiene la proporción del de siempre, así que con las mismas medidas
-   ocupa lo mismo (200 × 83 px) y el botón del menú sigue centrado con él. */
-.logo-encabezado--temporada {
+.logo-encabezado {
+    max-width: 100%;
+    max-height: 83px;
+    width: auto;
+    height: auto;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
+
+/* Para BI el logo es un botón (modalTemas.php): sin el aspecto de botón, sólo
+   el cursor y un aro al pasar o enfocar con el teclado. */
+.logo-tema-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: transform .15s;
+}
+.logo-tema-btn:hover { transform: scale(1.03); }
+.logo-tema-btn:focus { outline: none; }
+.logo-tema-btn:focus-visible { box-shadow: 0 0 0 3px rgba(255,255,255,0.6); }
+
+/* Modal "Logos de messbook" (modalTemas.php, js/temas.js). */
+.tema-lista { max-height: 60vh; overflow-y: auto; }
+.tema-version__fechas { display: block; opacity: .8; }
+.tema-seccion {
+    margin: 1.25rem 0 .5rem;
+    padding-bottom: .25rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+}
+.tema-plegar { color: inherit; }
+.tema-plegar:hover { text-decoration: none; }
+.tema-plegar .fa-chevron-down { transition: transform .2s; }
+.tema-plegar:not(.collapsed) .fa-chevron-down { transform: rotate(180deg); }
+.tema-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    padding: .6rem 0;
+    border-bottom: 1px dashed rgba(0,0,0,.1);
+}
+.tema-fila__info { flex: 1 1 220px; min-width: 0; }
+.tema-fila__previas { display: flex; gap: .5rem; }
+.tema-fila__acciones { display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; }
+.tema-previa {
+    width: 150px;
+    height: 64px;
+    border-radius: .5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: 1px solid rgba(0,0,0,.12);
+}
+.tema-previa img { max-width: 100%; max-height: 100%; }
+.tema-previa--azul   { background: var(--header-gradient); }
+.tema-previa--claro  { background: #fff; }
+.tema-previa--oscuro { background: #121a2b; color: #e6edf7; }
+.tema-previa--favicon { width: 64px; }
+.tema-previa--blanquear img { filter: brightness(0) invert(1); }
+.tema-previa--siempre img,
+.tema-previa--siempre .tema-previa__icono { opacity: .55; }
+.tema-previa__icono { font-size: .8rem; text-align: center; color: #1f2937; }
+.tema-previa--oscuro .tema-previa__icono { color: #e6edf7; }
+
+/* Logos con versión por tema (tarjetas de Sistemas, mbTemaSistemaHtml en
+   includes/tema.php): el claro en el tema claro, el oscuro en el oscuro. */
+.logo-tema-claro  { display: block; }
+.logo-tema-oscuro { display: none; }
+body.theme-dark .logo-tema-claro  { display: none; }
+body.theme-dark .logo-tema-oscuro { display: block; }
 
 .fb-footer-links {
     color: rgba(255,255,255,0.8) !important;
