@@ -3,8 +3,9 @@
  * imagen.php — Guardar una imagen que subió alguien, como JPEG limpio.
  *
  * Copia de includes/imagen.php de oktoberMESS con el prefijo cambiado (okt → mb)
- * para que no choquen si algún día se cargan los dos. Lo usa el álbum de fotos
- * (acciones_album.php). Es el punto donde se decide qué queda escrito en el
+ * para que no choquen si algún día se cargan los dos. Lo usan el álbum de fotos
+ * (acciones_album.php) y los logos de messbook (acciones_temas.php, que guarda
+ * PNG con mbGuardarPngLimpio, sólo de aquí). Es el punto donde se decide qué queda escrito en el
  * disco del servidor: si cambia allá, cambiarlo aquí también.
  */
 
@@ -40,6 +41,32 @@ if (!function_exists('mbGuardarJpegLimpio')) {
         }
         $ok = imagejpeg($img, $destino, 82);
         imagedestroy($img);
+        return $ok;
+    }
+
+    /**
+     * Lo mismo para un LOGO: también se vuelve a pintar con GD (se tira lo
+     * escondido en el archivo), pero se guarda como PNG con su transparencia;
+     * el JPEG la perdería y el logo saldría sobre un cuadro blanco. Lo usan los
+     * logos de messbook (acciones_temas.php).
+     */
+    function mbGuardarPngLimpio(string $origen, string $destino, int $ladoMax = 1200): bool {
+        $datos = file_get_contents($origen);
+        $img   = $datos !== false ? @imagecreatefromstring($datos) : false;
+        if (!$img) return false;
+        if (!imageistruecolor($img)) imagepalettetotruecolor($img);
+
+        $w = imagesx($img); $h = imagesy($img);
+        $escala = min(1, $ladoMax / max($w, $h));
+        $nw = max(1, (int)round($w * $escala)); $nh = max(1, (int)round($h * $escala));
+        $lienzo = imagecreatetruecolor($nw, $nh);
+        imagealphablending($lienzo, false);
+        imagesavealpha($lienzo, true);
+        imagefill($lienzo, 0, 0, imagecolorallocatealpha($lienzo, 0, 0, 0, 127));
+        imagecopyresampled($lienzo, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+        imagedestroy($img);
+        $ok = imagepng($lienzo, $destino, 9);
+        imagedestroy($lienzo);
         return $ok;
     }
 

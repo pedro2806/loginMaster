@@ -14,11 +14,20 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 // llama), así que para liberarlo basta con poner true aquí.
 $mostrarMessbookID = false;
 
-// Logo de temporada sobre la tarjeta del usuario (Día de Muertos): hasta el 6
-// de noviembre de 2026 inclusive; después vuelve solo el de siempre
-// (includes/temporada.php, el mismo corte que el login).
-require_once __DIR__ . '/includes/temporada.php';
-$logoTemporada = mbHayLogoTemporada();
+// Logos (portal, pie, favicon y tarjetas de Sistemas): los de la versión de
+// evento activa, si no los de la predeterminada, si no los de código
+// (includes/tema.php). BI los cambia desde el logo de la columna
+// (modalTemas.php, $puedeTema). Reemplaza al corte de Día de Muertos que vivía
+// en includes/temporada.php.
+require_once __DIR__ . '/includes/tema.php';
+$logosTema = mbTemaLogos($conn);
+$puedeTema = false;
+try {
+    $puedeTema = mbTemaPuedeAdministrar($conn, (string)$_COOKIE['noEmpleadoL']);
+} catch (Throwable $e) {
+    // Sin el modal el logo sigue saliendo: no se tumba el inicio por esto.
+    error_log('inicio.php tema: ' . $e->getMessage());
+}
 
 // Acceso especial a la pestaña KPI's (tabla accesos_especiales, gestionada desde modalAccesosEspeciales.php).
 // El campo inf_adicional guarda el pk (contraseña) que se inyecta al iframe de KPIs.
@@ -329,7 +338,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Messbook - Inicio</title>
-    <link rel="icon" type="image/png" href="../loginMaster/img/fav.png">
+    <link rel="icon" type="image/png" href="<?php echo mbTemaSrc($logosTema, 'favicon'); ?>">
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
@@ -354,12 +363,18 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         <div class="col-xl-3 col-md-4">
                             <!-- El logo bajó aquí desde el encabezado que se quitó: encabeza
                                  la columna del usuario y deja despejada la zona de pestañas.
-                                 El de temporada sale mientras $logoTemporada (arriba). -->
+                                 Cuál sale lo decide includes/tema.php ($logosTema); a BI el
+                                 logo le abre "Logos de messbook" (modalTemas.php). -->
                             <div class="text-center pt-3 pb-2">
-                                <?php if ($logoTemporada): ?>
-                                <img src="../loginMaster/<?php echo MB_LOGO_TEMPORADA; ?>" alt="Messbook" class="logo-encabezado logo-encabezado--temporada">
+                                <?php if ($puedeTema): ?>
+                                <button type="button" class="logo-tema-caja logo-tema-btn" data-toggle="modal" data-target="#modalTemas"
+                                        title="Cambiar los logos de messbook" aria-label="Cambiar los logos de messbook">
+                                    <img src="<?php echo mbTemaSrc($logosTema, 'portal'); ?>" alt="Messbook" class="logo-encabezado">
+                                </button>
                                 <?php else: ?>
-                                <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook" class="logo-encabezado">
+                                <span class="logo-tema-caja">
+                                    <img src="<?php echo mbTemaSrc($logosTema, 'portal'); ?>" alt="Messbook" class="logo-encabezado">
+                                </span>
                                 <?php endif; ?>
                             </div>
                             <div class="profile-card text-center">
@@ -504,7 +519,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                      inicio_res) siguen usando el footer viejo, por eso su
                                      CSS sigue en loginMaster.css. -->
                                 <div class="perfil-footer text-center mt-4">
-                                    <img src="../loginMaster/img/B1_blanco.png" alt="Grupo Mess · Business Intelligence" class="fb-footer-logo">
+                                    <img src="<?php echo mbTemaSrc($logosTema, 'pie'); ?>" alt="Grupo Mess · Business Intelligence" class="fb-footer-logo">
                                     <div class="fb-footer-links">
                                         Business Intelligence | Messbook © <?php echo date("Y"); ?>
                                     </div>
@@ -626,7 +641,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="correo" id="correo" value="">
                                                         <input type="hidden" name="sistema" id="sistema" value="vacaciones">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="far fa-check-square fa-lg d-block mb-2"></i> Vacaciones
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divVacaciones'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -643,14 +658,12 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoCV" id="noEmpleadoCV" value="">
                                                         <input type="hidden" name="correoCV" id="correoCV" value="">
                                                         <!-- QRide es el branding de Control Vehicular; el logo
-                                                             vive en su propio repo. Misma altura que el de NEST
-                                                             (48px) y proporciones casi iguales, asi que la
-                                                             tarjeta conserva el tamano de las demas. El
-                                                             max-width evita que se desborde en la rejilla de 2
-                                                             columnas de movil. -->
+                                                             vive en su propio repo (MB_TEMA_DEFECTO en
+                                                             includes/tema.php). 48px de alto, como todas las
+                                                             tarjetas con logo; el max-width evita que se
+                                                             desborde en la rejilla de 2 columnas de movil. -->
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <img src="../ControlVehicular/img/QRide_grande.png" alt="Ctrl Vehicular"
-                                                                 class="d-block mx-auto mb-0" style="height:48px;width:auto;max-width:100%">
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divControlVehicular'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -667,7 +680,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoHR" id="noEmpleadoHR" value="">
                                                         <input type="hidden" name="correoHR" id="correoHR" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-clock fa-lg d-block mb-2"></i> Hrs Extra
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divHorasExtra'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -685,7 +698,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="correoI" id="correoI" value="">
                                                         <input type="hidden" name="sistema" id="sistema" value="incidencias">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-list fa-lg d-block mb-2"></i> Incidencias
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divIncidencias'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -702,7 +715,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoPla" id="noEmpleadoPla" value="">
                                                         <input type="hidden" name="correoPla" id="correoPla" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-calendar fa-lg d-block mb-2"></i> Planeación
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divPlaneacion'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -715,7 +728,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                 <div class="card-body text-center">
                                                     <div class="btn-group w-100" role="group">
                                                         <a href="https://messbook.com.mx/capacitacion" class="btn btn-outline-primary">
-                                                            <i class="fas fa-list fa-lg d-block mb-2"></i> Capacitación
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divCapacitacion'); ?>
                                                         </a>
                                                         <a href="Manual de Usuario Capacitacion.pdf" target="_blank" class="btn btn-outline-primary" style="flex:0 0 auto;">
                                                             <i class="fas fa-file-pdf fa-lg d-block mb-2"></i> Manual
@@ -735,7 +748,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoAC" id="noEmpleadoAC" value="">
                                                         <input type="hidden" name="correoAC" id="correoAC" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-box fa-lg d-block mb-2"></i> Activos
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divActivos'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -753,7 +766,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="correoPlaEnt" id="correoPlaEnt" value="">
                                                         <input type="hidden" name="rutaredireccion" id="campoNuevoValor">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-calendar fa-lg d-block mb-2"></i> Entradas Eq
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divEntradasEq'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -770,7 +783,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoPRACT" id="noEmpleadoPRACT" value="">
                                                         <input type="hidden" name="correoPRACT" id="correoPRACT" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-user-clock fa-lg d-block mb-2"></i> Practicantes
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divPracticantes'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -785,8 +798,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../Tickets/" class="btn btn-outline-primary btn-block">
-                                                        <img src="../Tickets/img/Tickets%20Messbook.png" alt="Tickets BI"
-                                                             class="d-block mx-auto mb-0" style="height:48px;width:auto;max-width:100%">
+                                                        <?php echo mbTemaSistemaHtml($logosTema, 'divTicketsBI'); ?>
                                                     </a>
                                                 </div>
                                             </div>
@@ -802,7 +814,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoGP" id="noEmpleadoGP" value="">
                                                         <input type="hidden" name="correoGP" id="correoGP" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-id-card-alt fa-lg d-block mb-2"></i> Gestión Personal
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divGestionPersonal'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -819,20 +831,24 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                         <input type="hidden" name="noEmpleadoSGC" id="noEmpleadoSGC" value="">
                                                         <input type="hidden" name="correoSGC" id="correoSGC" value="">
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-check fa-lg d-block mb-2"></i> Control SGC
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divControlSGC'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- COTIZADOR IA -->
+                                        <!-- COTIZADOR IA
+                                             messIAs es el branding del cotizador. Su repo vive en otro
+                                             servidor (192.168.2.235), así que los logos se copiaron a
+                                             img/messias/: el claro (texto azul) y el oscuro (texto
+                                             blanco), que se alternan según el tema. -->
                                         <?php if ($tieneCotizador): ?>
                                         <div class="col-md-3 mb-3" id="divCotizadorIA">
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
-                                                    <a href="http://192.168.2.235/messIAs/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-block">
-                                                        <i class="fas fa-robot fa-lg d-block mb-2"></i> Cotizador IA
+                                                    <a href="http://192.168.2.235/messIAs/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-block" title="Cotizador IA">
+                                                        <?php echo mbTemaSistemaHtml($logosTema, 'divCotizadorIA'); ?>
                                                     </a>
                                                 </div>
                                             </div>
@@ -848,7 +864,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <div class="card card-action shadow-sm">
                                                 <div class="card-body text-center">
                                                     <a href="../SIVAC/" class="btn btn-outline-primary btn-block">
-                                                        <img src="../SIVAC/img/NEST/nest-logo.png" alt="NEST" class="d-block mx-auto mb-0" style="height:48px;width:auto">
+                                                        <?php echo mbTemaSistemaHtml($logosTema, 'divNest'); ?>
                                                     </a>
                                                 </div>
                                             </div>
@@ -860,7 +876,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                                 <div class="card-body text-center">
                                                     <form id="formTrace" method="POST" action="../trace/index.php">                                                        
                                                         <button type="submit" class="btn btn-outline-primary btn-block">
-                                                            <i class="fas fa-map-marked-alt fa-lg d-block mb-2"></i> Trace
+                                                            <?php echo mbTemaSistemaHtml($logosTema, 'divTrace'); ?>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -1711,6 +1727,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <!-- Avisos: pop-up "NUEVO AVISO", ver aviso y crear/editar (js/avisos.js) -->
     <?php include 'modalAvisos.php'; ?>
 
+    <!-- Logos de messbook: versiones de evento, sólo BI ($puedeTema; js/temas.js) -->
+    <?php include 'modalTemas.php'; ?>
+
     <!-- Modal MessbookID (oculto hasta liberar: ver $mostrarMessbookID) -->
     <?php if ($mostrarMessbookID): ?>
     <div class="modal fade" id="modalMessbookID" tabindex="-1" role="dialog" aria-labelledby="modalMessbookIDLabel" aria-hidden="true">
@@ -2026,6 +2045,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
     <?php endif; ?>
     <script src="js/avisos.js?v=<?php echo filemtime(__DIR__ . '/js/avisos.js'); ?>"></script>
+    <?php if ($puedeTema): ?>
+    <script src="js/temas.js?v=<?php echo filemtime(__DIR__ . '/js/temas.js'); ?>"></script>
+    <?php endif; ?>
 
     <script>
         // Variables globales para calendarios (lazy-init en tabs)

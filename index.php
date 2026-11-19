@@ -175,8 +175,21 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
 }
 // ===== FIN BLOQUE RECUPERAR CONTRASEÑA =====
 
-// Logo de temporada (Día de Muertos), con el mismo corte que inicio.php.
-require_once __DIR__ . '/includes/temporada.php';
+// Logo del login y favicon: los de la versión de evento activa, si no los de la
+// predeterminada, si no los de código (includes/tema.php, lo mismo que
+// inicio.php). La conexión de arriba sólo existe al recuperar contraseña y se
+// cierra ahí, así que se abre una aquí. Si la BD no responde (mysqli lanza la
+// excepción antes del die() de conn.php), el login sale con los de siempre.
+require_once __DIR__ . '/includes/tema.php';
+$connTema = null;
+try {
+    include '../incidencias/conn.php';
+    $connTema = (isset($conn) && !$conn->connect_error) ? $conn : null;
+} catch (Throwable $e) {
+    error_log('index.php tema: ' . $e->getMessage());
+}
+$logosTema = mbTemaLogos($connTema);
+if ($connTema) $connTema->close();
 ?>
 <!DOCTYPE html>
 <html lang="sp">
@@ -189,7 +202,7 @@ require_once __DIR__ . '/includes/temporada.php';
 
     <title>Messbook</title>
 
-    <link rel="icon" type="image/png" href="../loginMaster/img/fav.png">
+    <link rel="icon" type="image/png" href="<?php echo mbTemaSrc($logosTema, 'favicon'); ?>">
 
     <!-- Custom fonts for this template-->
     <link href="../ControlVehicular/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">    
@@ -205,12 +218,13 @@ require_once __DIR__ . '/includes/temporada.php';
             <div class="fb-inner">
                 <!--IZQUIERDA: BRANDING-->
                 <div class="fb-left">
-                    <?php if (mbHayLogoTemporada()): ?>
-                    <!-- El de temporada trae letras blancas: en celular, donde el
-                         login es blanco, sigue el de siempre. Mide lo mismo que él. -->
+                    <?php if ($logosTema['login']['origen'] !== 'codigo'): ?>
+                    <!-- El de una versión (modalTemas.php) se espera con letras
+                         blancas: en celular, donde el login es blanco, sigue el
+                         de siempre. -->
                     <picture class="fb-logo-picture">
                         <source media="(max-width: 576px)" srcset="../loginMaster/img/messbook_logo3.png">
-                        <img src="../loginMaster/<?php echo MB_LOGO_TEMPORADA; ?>" alt="Messbook" class="fb-logo-img fb-logo-img--temporada">
+                        <img src="<?php echo mbTemaSrc($logosTema, 'login'); ?>" alt="Messbook" class="fb-logo-img fb-logo-img--tema">
                     </picture>
                     <?php else: ?>
                     <img src="../loginMaster/img/messbook_logo3.png" alt="Messbook" class="fb-logo-img">
