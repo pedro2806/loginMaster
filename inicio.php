@@ -1510,7 +1510,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                             <span class="text-muted">Teléfono</span>
                             <span id="modalDirTel" class="fw-semibold">—</span>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="modalDirCorreoFila">
                             <span class="text-muted">Correo</span>
                             <a id="modalDirCorreo" href="#" class="text-truncate" style="max-width:60%;">—</a>
                         </li>
@@ -4624,6 +4624,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
         // Agentes: la misma tarjeta que un empleado, sin paginación (son pocos)
         // ni botones de accesos a plantas. El clic abre el mismo modal de detalle.
+        // Su correo no se muestra (ni en la tarjeta ni en el modal) ni se busca.
         function pintarAgentes(lista) {
             if (!lista.length) {
                 $('#agentesGrid').html('<div class="col-12 empty-state">'
@@ -4635,7 +4636,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 var ini    = dirIniciales(e.nombre);
                 var col    = dirColor(e.nombre);
                 var area   = e.area ? dirEscape(e.area) + ' ' : '';
-                var correo = dirEscape(e.correo || '');
                 var avatar = e.foto
                     ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
                     : '<div class="dir-avatar" style="background:' + col + '"><i class="fas fa-robot"></i></div>';
@@ -4645,7 +4645,6 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     +     '<div class="dir-info">'
                     +       '<div class="dir-name">' + dirEscape(e.nombre || 'Sin nombre') + '</div>'
                     +       '<div class="dir-meta">' + area + DIR_AGENTE_ETIQUETA + '</div>'
-                    +       (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
                     +     '</div>'
                     +   '</div>'
                     + '</div>';
@@ -4657,8 +4656,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             pintarAgentes(!q ? agentesCache : agentesCache.filter(function (e) {
                 return (e.nombre || '').toLowerCase().indexOf(q) !== -1
                     || (e.area   || '').toLowerCase().indexOf(q) !== -1
-                    || (e.puesto || '').toLowerCase().indexOf(q) !== -1
-                    || (e.correo || '').toLowerCase().indexOf(q) !== -1;
+                    || (e.puesto || '').toLowerCase().indexOf(q) !== -1;
             }));
         });
 
@@ -5551,6 +5549,11 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             // Teléfono(s): viene ya formateado del backend ("4422908635 ext. 817 / 4423942739").
             $('#modalDirTel').text(emp.telefono || '—');
 
+            // A los agentes no se les muestra el correo (sólo a los empleados).
+            // Inline con !important: la fila es .d-flex, que le gana a .d-none.
+            var filaCorreo = document.getElementById('modalDirCorreoFila');
+            if (String(emp.es_agente) === '1') filaCorreo.style.setProperty('display', 'none', 'important');
+            else filaCorreo.style.removeProperty('display');
             if (emp.correo) {
                 $('#modalDirCorreo').text(emp.correo).attr('href', 'mailto:' + emp.correo);
             } else {
