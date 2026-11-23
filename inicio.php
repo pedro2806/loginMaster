@@ -1506,7 +1506,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                             <span class="text-muted">Nave</span>
                             <span id="modalDirNave" class="fw-semibold">—</span>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between">
+                        <li class="list-group-item d-flex justify-content-between" id="modalDirTelFila">
                             <span class="text-muted">Teléfono</span>
                             <span id="modalDirTel" class="fw-semibold">—</span>
                         </li>
@@ -4624,7 +4624,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
 
         // Agentes: la misma tarjeta que un empleado, sin paginación (son pocos)
         // ni botones de accesos a plantas. El clic abre el mismo modal de detalle.
-        // Su correo no se muestra (ni en la tarjeta ni en el modal) ni se busca.
+        // Su correo y su teléfono no se muestran (ni en la tarjeta ni en el modal)
+        // ni se buscan.
         function pintarAgentes(lista) {
             if (!lista.length) {
                 $('#agentesGrid').html('<div class="col-12 empty-state">'
@@ -5549,11 +5550,15 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
             // Teléfono(s): viene ya formateado del backend ("4422908635 ext. 817 / 4423942739").
             $('#modalDirTel').text(emp.telefono || '—');
 
-            // A los agentes no se les muestra el correo (sólo a los empleados).
-            // Inline con !important: la fila es .d-flex, que le gana a .d-none.
-            var filaCorreo = document.getElementById('modalDirCorreoFila');
-            if (String(emp.es_agente) === '1') filaCorreo.style.setProperty('display', 'none', 'important');
-            else filaCorreo.style.removeProperty('display');
+            // A los agentes no se les muestra ni el teléfono ni el correo (sólo a
+            // los empleados). Inline con !important: las filas son .d-flex, que
+            // le gana a .d-none.
+            var esAgente = String(emp.es_agente) === '1';
+            ['modalDirTelFila', 'modalDirCorreoFila'].forEach(function (id) {
+                var fila = document.getElementById(id);
+                if (esAgente) fila.style.setProperty('display', 'none', 'important');
+                else fila.style.removeProperty('display');
+            });
             if (emp.correo) {
                 $('#modalDirCorreo').text(emp.correo).attr('href', 'mailto:' + emp.correo);
             } else {
