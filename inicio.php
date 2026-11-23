@@ -2518,17 +2518,26 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             var calendarEl = document.getElementById('calendar');
             if (!calendarEl) return;
             var miNoEmp = parseInt(getCookie('noEmpleadoL'), 10) || 0;
+            // En móvil la pestaña no tiene alto fijo (crece con su contenido),
+            // así que '100%' no medía nada y la lista quedaba en 0px. Ahí va
+            // 'auto'; si cambia el ancho (girar el teléfono) se reajusta.
+            var sjMovil = window.matchMedia('(max-width: 768px)');
+            function sjAltura() { return sjMovil.matches ? 'auto' : '100%'; }
             calendarSalaJuntas = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'listWeek',
                 events: '../incidencias/SalaDeJuntas/acciones_calendarioGral.php?opcion=login',
                 editable: false,
                 locale: 'es',
+                // El paquete de idiomas de FullCalendar no se carga: estos
+                // textos salían en inglés ("today", "No events to display").
+                buttonText: { today: 'Hoy' },
+                noEventsText: 'No hay reservas esta semana',
                 // Antes: height 450 con contentHeight 4550. Metia 4550px de
                 // contenido en una caja de 450, asi que la agenda quedaba
                 // encerrada en su propio scroll y debajo sobraba la mitad de la
                 // tarjeta. Ahora llena la altura de su columna, igual que las
                 // demas pestañas (ver #tabAgenda en loginMaster.css).
-                height: '100%',
+                height: sjAltura(),
                 eventContent: function(info) {
                     var nombreEmpleado = info.event.title;
                     var descripcion = info.event.extendedProps.descripcion || 'Sin descripción';
@@ -2548,6 +2557,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 }
             });
             calendarSalaJuntas.render();
+
+            var sjCambio = function () { calendarSalaJuntas.setOption('height', sjAltura()); };
+            if (sjMovil.addEventListener) sjMovil.addEventListener('change', sjCambio);
+            else if (sjMovil.addListener) sjMovil.addListener(sjCambio);   // Safari < 14
         }
 
         // Cancela una reserva propia de Sala de Juntas (estatus -> 'Cancelada').
@@ -4605,6 +4618,10 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             });
         }
 
+        // Los agentes ya no tienen puesto en el catálogo: donde iría el puesto
+        // (tarjeta y modal de detalle) se pone esta etiqueta.
+        var DIR_AGENTE_ETIQUETA = '<span class="dir-agente-badge"><i class="fas fa-robot"></i> Agente IA</span>';
+
         // Agentes: la misma tarjeta que un empleado, sin paginación (son pocos)
         // ni botones de accesos a plantas. El clic abre el mismo modal de detalle.
         function pintarAgentes(lista) {
@@ -4617,8 +4634,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             $('#agentesGrid').html(lista.map(function (e) {
                 var ini    = dirIniciales(e.nombre);
                 var col    = dirColor(e.nombre);
-                var area   = dirEscape(e.area   || '—');
-                var puesto = dirEscape(e.puesto || '—');
+                var area   = e.area ? dirEscape(e.area) + ' ' : '';
                 var correo = dirEscape(e.correo || '');
                 var avatar = e.foto
                     ? '<div class="dir-avatar has-photo" style="background-image:url(\'' + dirEscape(e.foto) + '\'); background-color:' + col + '">' + ini + '</div>'
@@ -4627,9 +4643,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                     +   '<div class="directorio-card" data-noemp="' + dirEscape(e.noEmpleado) + '">'
                     +     avatar
                     +     '<div class="dir-info">'
-                    +       '<div class="dir-name">' + dirEscape(e.nombre || 'Sin nombre')
-                    +         ' <span class="dir-agente-badge"><i class="fas fa-robot"></i> Agente</span></div>'
-                    +       '<div class="dir-meta">' + area + ' - ' + puesto + '</div>'
+                    +       '<div class="dir-name">' + dirEscape(e.nombre || 'Sin nombre') + '</div>'
+                    +       '<div class="dir-meta">' + area + DIR_AGENTE_ETIQUETA + '</div>'
                     +       (correo ? '<span class="dir-mail">' + correo + '</span>' : '')
                     +     '</div>'
                     +   '</div>'
@@ -5524,7 +5539,11 @@ function gestionarAccesosYDocumentos(noEmpleado, nombre) {
                        .css({ 'background-color': col, 'background-image': 'none' });
             }
             $('#modalDirNombre').text(emp.nombre || '—');
-            $('#modalDirPuesto').text(emp.puesto || '—');
+            if (String(emp.es_agente) === '1') {
+                $('#modalDirPuesto').html(DIR_AGENTE_ETIQUETA);
+            } else {
+                $('#modalDirPuesto').text(emp.puesto || '—');
+            }
             $('#modalDirNoEmp').text(emp.noEmpleado || '—');
             $('#modalDirArea').text(emp.area || '—');
             $('#modalDirNave').text(emp.nave || '—');

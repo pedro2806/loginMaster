@@ -1061,10 +1061,11 @@ body.sidebar-hidden .nav-tabs-main {
     font-size: .85em;
 }
 
-/* Directorio → Agentes: etiqueta junto al nombre (cuentas tipo_usr = 'AGENTE') */
-.directorio-card .dir-agente-badge {
+/* Directorio → Agentes: etiqueta que va en lugar del puesto (cuentas
+   tipo_usr = 'AGENTE'; su puesto ya no existe en el catálogo). Sin el
+   .directorio-card delante para que también sirva en el modal de detalle. */
+.dir-agente-badge {
     display: inline-block;
-    margin-left: .25rem;
     padding: .05rem .5rem;
     border: 1px solid var(--accent);
     border-radius: 999px;
@@ -1623,6 +1624,50 @@ body.theme-dark .fc-col-header-cell {
        proposito: misma especificidad, gana la ultima. */
     #mainTabsContent {
         flex: 0 0 auto;
+    }
+
+    /* Sala de Juntas en móvil: con #mainTabsContent a la altura de su
+       contenido, el height:100% de la pestaña, la tarjeta y el calendario
+       no tenía contra qué medirse, y FullCalendar dejaba la lista en 0px
+       (no se veía ninguna reserva). Aquí todo crece con su contenido y el
+       calendario usa height:'auto' (ver initCalendarSalaJuntas). */
+    #tabAgenda,
+    #tabAgenda > .card,
+    #tabAgenda #calendar {
+        height: auto;
+    }
+
+    #tabAgenda > .card > .card-body {
+        padding: 0.75rem;
+    }
+
+    /* Encabezado: título arriba y "Registrar Lugar" a todo lo ancho debajo,
+       en vez de partir ambos en dos renglones. */
+    #tabAgenda > .card > .card-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.5rem;
+    }
+
+    /* Barra del calendario: el título a 1.75em empujaba "Hoy" y las flechas
+       a apilarse. Título más chico y botones compactos en un solo renglón. */
+    #tabAgenda .fc .fc-header-toolbar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    #tabAgenda .fc .fc-toolbar-title {
+        font-size: 1.1rem;
+    }
+
+    #tabAgenda .fc .fc-button {
+        padding: 0.25rem 0.55rem;
+        font-size: 0.85rem;
+    }
+
+    #tabAgenda .fc .fc-list-event td {
+        padding: 0.5rem 0.6rem;
     }
 }
 
