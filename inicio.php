@@ -2059,7 +2059,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         var misActivosData = [];
         var expedienteCargado = false;
         // Acumulador del estatus de cada vehículo para alimentar el semáforo del tab.
-        // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total} } }
+        // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total}, analisis: {ok, total} } }
+        // (analisis solo existe si b4 ya publicó el de la semana pasada; ver cargarResumenSemanalVeh).
         var vehiculosEstado = {};
 
         $(document).ready(function() {
@@ -3260,6 +3261,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         // 1) Obtiene los vehículos del usuario (getPlaca → ../incidencias/validaLoginMaster.php).
         // 2) Para cada vehículo consulta su documentación (obtenerDatosVehiculo → ../ControlVehicular/acciones_qr.php).
         // 3) Renderiza una card por vehículo con check verde / cruz roja por documento.
+        // 4) Pide el resumen semanal de la semana pasada (cargarResumenSemanalVeh).
         function cargarVehiculosDocs() {
             var $cont = $('#contenedorVehiculos');
             var noEmp = getCookie('noEmpleadoL') || '';
@@ -3349,6 +3351,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         $('#chkVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                         $('#mntVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                     });
+
+                    // Resumen semanal (sin lunes = la semana pasada). Es la carga inicial: alimenta el semáforo.
+                    cargarResumenSemanalVeh(idv, '', true);
                 });
                 vehiculosDocsCargados = true;
             }).fail(function() {
@@ -3430,10 +3435,207 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 +             '<div class="card-body p-0" id="mntVeh-' + idVeh + '">' + spinner + '</div>'
                 +           '</div>'
                 +         '</div>'
+                // Resumen semanal: números de la semana (QRide) + análisis publicado por el agente b4.
+                // La navegación (semVehNav) y el cuerpo (semVeh) los llena cargarResumenSemanalVeh().
+                // Va oculto: solo se muestra a quien tenga el acceso especial verResumenSemanal.
+                +         '<div class="col-12 px-1 mb-2 d-none" id="semVehCol-' + idVeh + '">'
+                +           '<div class="card">'
+                +             '<div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border); gap: .5rem;">'
+                +               '<h6 class="m-0 font-weight-bold small"><i class="fas fa-chart-line mr-2"></i>Resumen semanal — Análisis BI</h6>'
+                +               '<div class="d-flex align-items-center" id="semVehNav-' + idVeh + '"></div>'
+                +             '</div>'
+                +             '<div class="card-body p-0" id="semVeh-' + idVeh + '">' + spinner + '</div>'
+                +           '</div>'
+                +         '</div>'
                 +       '</div>'
                 +     '</div>'
                 +   '</div>'
                 + '</div>';
+        }
+
+        // ===== Tab Vehículo: resumen semanal (Análisis BI) =====
+        // ../ControlVehicular/acciones_resumen_semanal.php (obtenerResumenSemanal) devuelve:
+        //   datos    → los números de la semana, calculados por QRide (km Mess / personales con su regla única).
+        //   analisis → alertas y resumen que publica el agente b4; null mientras no lo publica.
+        // Los textos de b4 y de los usuarios llegan sin escapar: todo pasa por escapeHtml().
+        var semVehPeticion = {};   // idVeh → nº de la última petición (descarta respuestas viejas)
+        var semVehSemana   = {};   // idVeh → última semana cargada bien (para rehacer las flechas si falla otra)
+
+        // lunes: 'YYYY-MM-DD', o '' para la semana pasada. inicial: solo la carga de la pestaña
+        // alimenta el semáforo; navegar con las flechas no lo toca.
+        function cargarResumenSemanalVeh(idv, lunes, inicial) {
+            idv = parseInt(idv, 10) || 0;
+            if (!idv) return;
+            var $body = $('#semVeh-' + idv);
+            var $nav  = $('#semVehNav-' + idv);
+            var pet = semVehPeticion[idv] = (semVehPeticion[idv] || 0) + 1;
+            $nav.find('button').prop('disabled', true);
+            $body.html('<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i></div>');
+            syncCookieNoEmpleado();
+
+            var datos = { accion: 'obtenerResumenSemanal', id_vehiculo: idv };
+            if (lunes) datos.lunes = lunes;
+
+            $.ajax({
+                url: '../ControlVehicular/acciones_resumen_semanal.php',
+                type: 'POST', dataType: 'json', data: datos
+            }).done(function(resp) {
+                if (pet !== semVehPeticion[idv]) return;
+                // Sin el acceso especial verResumenSemanal el endpoint responde 'no_disponible'
+                // y el bloque no se muestra. Cualquier otra respuesta lo hace visible.
+                if (resp && resp.status === 'no_disponible') { $('#semVehCol-' + idv).remove(); return; }
+                $('#semVehCol-' + idv).removeClass('d-none');
+                if (!resp || resp.status !== 'success' || !resp.semana || !resp.datos) {
+                    $body.html('<p class="text-muted small mb-0 p-3">' + escapeHtml((resp && resp.message) || 'No se pudo cargar el resumen semanal') + '</p>');
+                    if (semVehSemana[idv]) $nav.html(renderNavResumenSemanal(idv, semVehSemana[idv]));
+                    return;
+                }
+                semVehSemana[idv] = resp.semana;
+                $nav.html(renderNavResumenSemanal(idv, resp.semana));
+                $body.html(renderResumenSemanal(resp.datos, resp.analisis));
+                if (inicial && resp.analisis) {
+                    vehiculosEstado[idv] = vehiculosEstado[idv] || {};
+                    vehiculosEstado[idv].analisis = { ok: resp.analisis.nivel === 'rojo' ? 0 : 1, total: 1 };
+                    actualizarSemaforoVehiculo();
+                }
+            }).fail(function() {
+                if (pet !== semVehPeticion[idv]) return;
+                // Si nunca se mostró, no se sabe si la persona tiene acceso: se queda oculto.
+                if ($('#semVehCol-' + idv).hasClass('d-none')) return;
+                $body.html('<p class="text-danger small mb-0 p-3">Error al obtener el resumen semanal</p>');
+                if (semVehSemana[idv]) $nav.html(renderNavResumenSemanal(idv, semVehSemana[idv]));
+            });
+        }
+
+        // "‹ Semana 44 · 26/10 – 01/11 en curso ›". › va deshabilitada en la semana en curso (siguiente = null).
+        function renderNavResumenSemanal(idv, s) {
+            var boton = function(lunes, icono, titulo) {
+                var ok = /^\d{4}-\d{2}-\d{2}$/.test(lunes || '');
+                return '<button type="button" class="btn btn-sm py-0 px-2 flex-shrink-0" title="' + titulo + '" aria-label="' + titulo + '" '
+                    +     'style="color: var(--text); background: transparent; border: 1px solid var(--border);"'
+                    +     (ok ? ' onclick="cargarResumenSemanalVeh(' + idv + ', \'' + lunes + '\', false)"' : ' disabled')
+                    + '><i class="fas ' + icono + '"></i></button>';
+            };
+            var etiqueta = 'Semana ' + (parseInt(s.numero, 10) || '—') + ' · ' + fechaSemVeh(s.lunes) + ' – ' + fechaSemVeh(s.domingo);
+            var enCurso = s.en_curso
+                ? ' <span class="badge badge-pill" style="color: var(--accent); border: 1px solid var(--accent);">en curso</span>'
+                : '';
+            return boton(s.anterior, 'fa-chevron-left', 'Semana anterior')
+                + '<span class="small font-weight-bold text-center mx-2" style="color: var(--text);">' + etiqueta + enCurso + '</span>'
+                + boton(s.siguiente, 'fa-chevron-right', 'Semana siguiente');
+        }
+
+        function renderResumenSemanal(d, analisis) {
+            var km       = d.km || {};
+            var conteo   = d.conteo || {};
+            var checkins = Array.isArray(d.checkins) ? d.checkins : [];
+            var cargas   = Array.isArray(d.cargas) ? d.cargas : [];
+            var html = '<div class="p-2 p-md-3">';
+
+            // Sin movimientos b4 no tiene nada que revisar: no se anuncia "Análisis pendiente".
+            if (!checkins.length && !cargas.length) {
+                html += '<p class="small mb-0 text-center py-2" style="color: var(--text-muted);">'
+                     +    '<i class="fas fa-car-side mr-2"></i>Sin movimientos en la semana</p>';
+                if (analisis) html += '<div class="mt-3">' + tituloSeccionSemVeh('fa-robot', 'Análisis') + renderAnalisisSemanal(analisis) + '</div>';
+                return html + '</div>';
+            }
+
+            // 1) Números. El km recorrido es km.odometro (suma de tramos válidos), no final − inicial.
+            var cifras = [
+                { label: 'Km recorridos', valor: numSemVeh(km.odometro) },
+                { label: 'Km Mess',       valor: numSemVeh(km.mess) },
+                { label: 'Km personales', valor: numSemVeh(km.personales) },
+                { label: '% uso Mess',    valor: (km.pct_mess === null || km.pct_mess === undefined) ? '—' : numSemVeh(km.pct_mess) + '%' },
+                { label: 'Check-ins',     valor: numSemVeh(conteo.checkins) },
+                { label: 'Cargas',        valor: numSemVeh(conteo.cargas) },
+                { label: 'Monto cargado', valor: montoSemVeh(conteo.monto_cargado) }
+            ];
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr)); gap: .5rem;">';
+            cifras.forEach(function(c) {
+                html += '<div class="rounded px-2 py-2" style="background: var(--card-soft); border: 1px solid var(--border); min-width: 0;">'
+                     +    '<div class="small text-truncate" style="color: var(--text-muted);">' + c.label + '</div>'
+                     +    '<div class="font-weight-bold" style="color: var(--text); font-size: 1.15rem; overflow-wrap: anywhere;">' + c.valor + '</div>'
+                     +  '</div>';
+            });
+            html += '</div>';
+            html += '<div class="small mt-2" style="color: var(--text-muted);"><i class="fas fa-tachometer-alt mr-1"></i>'
+                 +    'Odómetro ' + numSemVeh(km.inicial) + ' → ' + numSemVeh(km.final) + '</div>';
+
+            // 2) Cargas y 3) análisis: lado a lado en pantallas anchas, uno debajo del otro en celular.
+            var htmlCargas;
+            if (!cargas.length) {
+                htmlCargas = '<p class="small mb-0" style="color: var(--text-muted);">Sin cargas en la semana</p>';
+            } else {
+                htmlCargas = '<ul class="list-group list-group-flush">';
+                cargas.forEach(function(c) {
+                    htmlCargas += '<li class="list-group-item d-flex flex-wrap align-items-center justify-content-between px-2 py-2 small" style="gap: .25rem .75rem;">'
+                               +    '<span><i class="fas fa-gas-pump fa-fw mr-1" style="color: var(--text-muted);"></i>' + fechaSemVeh(c.fecha, !c.sin_hora) + '</span>'
+                               +    '<span class="text-nowrap">' + numSemVeh(c.km) + ' km · <strong>' + montoSemVeh(c.monto_cargado) + '</strong></span>'
+                               +  '</li>';
+                });
+                htmlCargas += '</ul>';
+            }
+            html += '<div class="mt-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: 1rem;">'
+                 +    '<div style="min-width: 0;">' + tituloSeccionSemVeh('fa-gas-pump', 'Cargas de la semana') + htmlCargas + '</div>'
+                 +    '<div style="min-width: 0;">' + tituloSeccionSemVeh('fa-robot', 'Análisis') + renderAnalisisSemanal(analisis) + '</div>'
+                 +  '</div>';
+            return html + '</div>';
+        }
+
+        // Alertas de b4: primero las rojas, luego las ámbar. Sin análisis publicado: "Análisis pendiente".
+        function renderAnalisisSemanal(a) {
+            if (!a) {
+                return '<p class="small mb-0" style="color: var(--text-muted);"><i class="fas fa-hourglass-half fa-fw mr-2"></i>Análisis pendiente</p>';
+            }
+            var alertas = Array.isArray(a.alertas) ? a.alertas : [];
+            var rojas = [], ambar = [];
+            alertas.forEach(function(al) {
+                if (!al || typeof al !== 'object') return;
+                (al.nivel === 'rojo' ? rojas : ambar).push(al);
+            });
+            var alerta = function(al, icono, color) {
+                return '<li class="d-flex align-items-start small mb-2">'
+                     +   '<i class="fas ' + icono + ' fa-fw mr-2 flex-shrink-0" style="color: ' + color + '; margin-top: .15rem;"></i>'
+                     +   '<span style="color: var(--text); overflow-wrap: anywhere; min-width: 0;">' + escapeHtml(al.texto) + '</span>'
+                     + '</li>';
+            };
+            var html = '';
+            if (!rojas.length && !ambar.length) {
+                html += '<p class="small mb-2" style="color: var(--text);"><i class="fas fa-check-circle fa-fw mr-2" style="color: var(--success);"></i>Sin incongruencias</p>';
+            } else {
+                html += '<ul class="list-unstyled mb-2">';
+                rojas.forEach(function(al) { html += alerta(al, 'fa-times-circle', 'var(--danger)'); });
+                ambar.forEach(function(al) { html += alerta(al, 'fa-exclamation-triangle', 'var(--warning)'); });
+                html += '</ul>';
+            }
+            if (a.resumen) {
+                html += '<p class="small mb-2" style="color: var(--text); white-space: pre-line; overflow-wrap: anywhere;">' + escapeHtml(a.resumen) + '</p>';
+            }
+            html += '<div class="small" style="color: var(--text-muted);">Publicado por ' + escapeHtml(a.autor || '—')
+                 +  ' el ' + fechaSemVeh(a.actualizado, true) + '</div>';
+            return html;
+        }
+
+        function tituloSeccionSemVeh(icono, texto) {
+            return '<div class="small font-weight-bold mb-2" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em;">'
+                 +   '<i class="fas ' + icono + ' mr-1"></i>' + texto + '</div>';
+        }
+
+        // 'YYYY-MM-DD[ HH:MM:SS]' → 'dd/mm' ('dd/mm hh:mm' con conHora). Se parte el texto en vez de usar
+        // Date() para no correr la fecha por zona horaria.
+        function fechaSemVeh(f, conHora) {
+            var m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(f || '');
+            if (!m) return '—';
+            return m[3] + '/' + m[2] + (conHora && m[4] ? ' ' + m[4] + ':' + m[5] : '');
+        }
+
+        function numSemVeh(n) {
+            if (n === null || n === undefined || n === '' || isNaN(n)) return '—';
+            return Number(n).toLocaleString('es-MX');
+        }
+
+        function montoSemVeh(n) {
+            return '$' + (Number(n) || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         // Renderiza solo la lista (sin envoltorio card) — la card y header se crean en renderCardVehiculo.
@@ -3601,6 +3803,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 var est = vehiculosEstado[idv];
                 if (est.docs) { totalAll += est.docs.total; okAll += est.docs.ok; }
                 if (est.vals) { totalAll += est.vals.total; okAll += est.vals.ok; }
+                // Análisis de b4 de la semana pasada (solo si ya lo publicó): alertas rojas = no OK.
+                if (est.analisis) { totalAll += est.analisis.total; okAll += est.analisis.ok; }
             });
 
             if (n === 0 || totalAll === 0) return; // dejar gris por defecto
