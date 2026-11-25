@@ -1197,6 +1197,9 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                                             <p class="mb-0">Cargando información de vehículo...</p>
                                         </div>
                                     </div>
+                                    <!-- Resumen mensual (Análisis BI) de todos los vehículos: lo llena
+                                         cargarResumenMensual(); oculto sin el acceso verResumenMensual. -->
+                                    <div id="resumenMensualVeh" class="d-none mb-3"></div>
                                 </div>
                                 <?php endif; ?>
 
@@ -2060,7 +2063,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         var expedienteCargado = false;
         // Acumulador del estatus de cada vehículo para alimentar el semáforo del tab.
         // Estructura: { idVeh: { docs: {ok, total}, vals: {ok, total}, analisis: {ok, total} } }
-        // (analisis solo existe si b4 ya publicó el del mes pasado; ver cargarResumenMensualVeh).
+        // (analisis solo existe si b4 ya publicó el del mes pasado; ver cargarResumenMensual).
         var vehiculosEstado = {};
 
         $(document).ready(function() {
@@ -3261,7 +3264,7 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
         // 1) Obtiene los vehículos del usuario (getPlaca → ../incidencias/validaLoginMaster.php).
         // 2) Para cada vehículo consulta su documentación (obtenerDatosVehiculo → ../ControlVehicular/acciones_qr.php).
         // 3) Renderiza una card por vehículo con check verde / cruz roja por documento.
-        // 4) Pide el resumen mensual del mes pasado (cargarResumenMensualVeh).
+        // 4) Pide el resumen mensual del mes pasado de todos los vehículos (cargarResumenMensual).
         function cargarVehiculosDocs() {
             var $cont = $('#contenedorVehiculos');
             var noEmp = getCookie('noEmpleadoL') || '';
@@ -3351,10 +3354,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         $('#chkVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                         $('#mntVeh-' + idv).html('<p class="text-danger small mb-0 p-3">Error</p>');
                     });
-
-                    // Resumen mensual (sin mes = el mes pasado). Es la carga inicial: alimenta el semáforo.
-                    cargarResumenMensualVeh(idv, '', true);
                 });
+
+                // Resumen mensual de todos los vehículos, en un solo bloque debajo de las tarjetas
+                // (sin mes = el mes pasado). Es la carga inicial: alimenta el semáforo.
+                cargarResumenMensual(resp.vehiculos.map(function(v){ return parseInt(v.id_vehiculo, 10) || 0; }), '', true);
                 vehiculosDocsCargados = true;
             }).fail(function() {
                 $cont.html('<div class="alert alert-danger">No se pudo obtener la información de vehículos.</div>');
@@ -3435,197 +3439,291 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                 +             '<div class="card-body p-0" id="mntVeh-' + idVeh + '">' + spinner + '</div>'
                 +           '</div>'
                 +         '</div>'
-                // Resumen mensual: números del mes (QRide) + análisis publicado por el agente b4.
-                // La navegación (mesVehNav) y el cuerpo (mesVeh) los llena cargarResumenMensualVeh().
-                // Va oculto: solo se muestra a quien tenga el acceso especial verResumenMensual.
-                +         '<div class="col-12 px-1 mb-2 d-none" id="mesVehCol-' + idVeh + '">'
-                +           '<div class="card">'
-                +             '<div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between" style="background: var(--card-soft); border-color: var(--border); gap: .5rem;">'
-                +               '<h6 class="m-0 font-weight-bold small"><i class="fas fa-chart-line mr-2"></i>Resumen mensual — Análisis BI</h6>'
-                +               '<div class="d-flex flex-wrap align-items-center justify-content-end" style="gap: .25rem;" id="mesVehNav-' + idVeh + '"></div>'
-                +             '</div>'
-                +             '<div class="card-body p-0" id="mesVeh-' + idVeh + '">' + spinner + '</div>'
-                +           '</div>'
-                +         '</div>'
                 +       '</div>'
                 +     '</div>'
                 +   '</div>'
                 + '</div>';
         }
 
-        // ===== Tab Vehículo: resumen mensual (Análisis BI) =====
-        // ../ControlVehicular/acciones_resumen_mensual.php (obtenerResumenMensual) devuelve:
-        //   datos       → los números del mes. Se guardan una sola vez, al inicio del mes siguiente
-        //                 (km Mess / personales con su regla única), y aquí solo se leen.
-        //   actualizado → cuándo se calcularon esos números; se muestra antes del mes consultado.
-        //   analisis    → alertas y resumen que publica el agente b4; null mientras no lo publica.
-        // Solo meses cerrados: el mes en curso no se muestra.
-        // Los textos de b4 y de los usuarios llegan sin escapar: todo pasa por escapeHtml().
-        var mesVehPeticion = {};   // idVeh → nº de la última petición (descarta respuestas viejas)
-        var mesVehUltimo   = {};   // idVeh → último {mes, actualizado} cargado bien (para rehacer el encabezado si falla otro)
-
+        // ===== Tab Vehículo: Resumen mensual (Análisis BI) =====
+        // Un solo bloque al final de la pestaña, debajo de las tarjetas (#resumenMensualVeh), con el
+        // diseño del mockup de b4 (25/11/2026): un botón por vehículo con su semáforo y, abajo, el
+        // detalle del vehículo elegido. Estilos: .rmv-* en css/loginMaster.css.
+        // ../ControlVehicular/acciones_resumen_mensual.php (obtenerResumenMensual, ids = los vehículos de
+        // la pestaña) devuelve por vehículo:
+        //   datos    → los números del mes, guardados una sola vez al inicio del mes siguiente.
+        //   analisis → alertas (título + detalle) y resumen que publica el agente b4; null si no ha publicado.
+        // Solo meses cerrados. Los textos de b4 y de los usuarios llegan sin escapar: todo pasa por escapeHtml().
+        var rmv = { ids: [], peticion: 0, mes: null, actualizado: null, vehiculos: [], sel: 0 };
         var MESES_VEH = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
                          'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        var DIAS_VEH  = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
+        // ids: los vehículos de la pestaña, en su orden (null = los mismos, al navegar entre meses).
         // mes: 'YYYY-MM', o '' para el mes pasado. inicial: solo la carga de la pestaña alimenta el
         // semáforo; navegar con las flechas no lo toca.
-        function cargarResumenMensualVeh(idv, mes, inicial) {
-            idv = parseInt(idv, 10) || 0;
-            if (!idv) return;
-            var $body = $('#mesVeh-' + idv);
-            var $nav  = $('#mesVehNav-' + idv);
-            var pet = mesVehPeticion[idv] = (mesVehPeticion[idv] || 0) + 1;
-            $nav.find('button').prop('disabled', true);
-            $body.html('<div class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i></div>');
+        function cargarResumenMensual(ids, mes, inicial) {
+            if (Array.isArray(ids)) rmv.ids = ids.filter(function(i) { return i > 0; });
+            var $cont = $('#resumenMensualVeh');
+            if (!rmv.ids.length || !$cont.length) return;
+            var pet = ++rmv.peticion;
+            $cont.find('.rmv-navbtn').prop('disabled', true);
+            $('#rmvCuerpo').html('<div class="text-center text-muted p-4"><i class="fas fa-spinner fa-spin"></i></div>');
             syncCookieNoEmpleado();
 
-            var datos = { accion: 'obtenerResumenMensual', id_vehiculo: idv };
+            var datos = { accion: 'obtenerResumenMensual', ids: rmv.ids.join(',') };
             if (mes) datos.mes = mes;
 
             $.ajax({
                 url: '../ControlVehicular/acciones_resumen_mensual.php',
                 type: 'POST', dataType: 'json', data: datos
             }).done(function(resp) {
-                if (pet !== mesVehPeticion[idv]) return;
-                // Sin el acceso especial verResumenMensual el endpoint responde 'no_disponible'
-                // y el bloque no se muestra. Cualquier otra respuesta lo hace visible.
-                if (resp && resp.status === 'no_disponible') { $('#mesVehCol-' + idv).remove(); return; }
-                $('#mesVehCol-' + idv).removeClass('d-none');
-                if (!resp || resp.status !== 'success' || !resp.mes || !resp.datos) {
-                    $body.html('<p class="text-muted small mb-0 p-3">' + escapeHtml((resp && resp.message) || 'No se pudo cargar el resumen mensual') + '</p>');
-                    if (mesVehUltimo[idv]) $nav.html(renderNavResumenMensual(idv, mesVehUltimo[idv].mes, mesVehUltimo[idv].actualizado));
+                if (pet !== rmv.peticion) return;
+                // Sin el acceso especial verResumenMensual el endpoint responde 'no_disponible' y el
+                // bloque no se muestra. Cualquier otra respuesta lo hace visible.
+                if (resp && resp.status === 'no_disponible') { $cont.remove(); return; }
+                $cont.removeClass('d-none');
+                if (!resp || resp.status !== 'success' || !resp.mes || !Array.isArray(resp.vehiculos)) {
+                    errorResumenMensual(escapeHtml((resp && resp.message) || 'No se pudo cargar el resumen mensual'));
                     return;
                 }
-                mesVehUltimo[idv] = { mes: resp.mes, actualizado: resp.actualizado };
-                $nav.html(renderNavResumenMensual(idv, resp.mes, resp.actualizado));
-                $body.html(renderResumenMensual(resp.datos, resp.analisis));
-                if (inicial && resp.analisis) {
-                    vehiculosEstado[idv] = vehiculosEstado[idv] || {};
-                    vehiculosEstado[idv].analisis = { ok: resp.analisis.nivel === 'rojo' ? 0 : 1, total: 1 };
+                rmv.mes = resp.mes;
+                rmv.actualizado = resp.actualizado;
+                rmv.vehiculos = resp.vehiculos;
+                // Al cambiar de mes se conserva el vehículo elegido. La primera vez se abre el primero
+                // con alertas rojas; si no hay, el primero con ámbar; si no, el primero.
+                if (!rmv.vehiculos.some(function(v) { return v.id_vehiculo === rmv.sel; })) {
+                    var conNivel = function(n) {
+                        return rmv.vehiculos.filter(function(v) { return v.analisis && v.analisis.nivel === n; })[0];
+                    };
+                    var elegido = conNivel('rojo') || conNivel('ambar') || rmv.vehiculos[0];
+                    rmv.sel = elegido ? elegido.id_vehiculo : 0;
+                }
+                $cont.html(renderResumenMensual());
+                if (inicial) {
+                    rmv.vehiculos.forEach(function(v) {
+                        if (!v.analisis) return;
+                        vehiculosEstado[v.id_vehiculo] = vehiculosEstado[v.id_vehiculo] || {};
+                        vehiculosEstado[v.id_vehiculo].analisis = { ok: v.analisis.nivel === 'rojo' ? 0 : 1, total: 1 };
+                    });
                     actualizarSemaforoVehiculo();
                 }
             }).fail(function() {
-                if (pet !== mesVehPeticion[idv]) return;
+                if (pet !== rmv.peticion) return;
                 // Si nunca se mostró, no se sabe si la persona tiene acceso: se queda oculto.
-                if ($('#mesVehCol-' + idv).hasClass('d-none')) return;
-                $body.html('<p class="text-danger small mb-0 p-3">Error al obtener el resumen mensual</p>');
-                if (mesVehUltimo[idv]) $nav.html(renderNavResumenMensual(idv, mesVehUltimo[idv].mes, mesVehUltimo[idv].actualizado));
+                if ($cont.hasClass('d-none')) return;
+                errorResumenMensual('Error al obtener el resumen mensual');
             });
         }
 
-        // "Actualizado el 01/11/2026  ‹ Octubre 2026 ›": la fecha de actualización va antes del mes que
-        // se consulta. › va deshabilitada en el mes pasado (siguiente = null: el mes en curso no se muestra).
-        function renderNavResumenMensual(idv, m, actualizado) {
-            var boton = function(mes, icono, titulo) {
-                var ok = /^\d{4}-\d{2}$/.test(mes || '');
-                return '<button type="button" class="btn btn-sm py-0 px-2 flex-shrink-0" title="' + titulo + '" aria-label="' + titulo + '" '
-                    +     'style="color: var(--text); background: transparent; border: 1px solid var(--border);"'
-                    +     (ok ? ' onclick="cargarResumenMensualVeh(' + idv + ', \'' + mes + '\', false)"' : ' disabled')
-                    + '><i class="fas ' + icono + '"></i></button>';
-            };
-            return '<span class="small mr-2" style="color: var(--text-muted);"><i class="fas fa-sync-alt mr-1"></i>Actualizado el '
-                +     fechaMesVeh(actualizado, false, true) + '</span>'
-                + '<span class="d-inline-flex align-items-center">'
-                +   boton(m.anterior, 'fa-chevron-left', 'Mes anterior')
-                +   '<span class="small font-weight-bold text-center mx-2" style="color: var(--text);">' + nombreMesVeh(m.mes) + '</span>'
-                +   boton(m.siguiente, 'fa-chevron-right', 'Mes siguiente')
-                + '</span>';
+        // Muestra el error sin perder el encabezado del último mes cargado (para poder navegar).
+        function errorResumenMensual(mensajeHtml) {
+            $('#resumenMensualVeh').html(rmv.mes ? renderResumenMensual() : marcoResumenMensual('', '', ''));
+            $('#rmvCuerpo').html('<p class="text-danger small mb-0 p-3">' + mensajeHtml + '</p>');
         }
 
-        function renderResumenMensual(d, analisis) {
+        function seleccionarVehiculoResumen(idv) {
+            rmv.sel = parseInt(idv, 10) || 0;
+            $('#resumenMensualVeh').html(renderResumenMensual());
+        }
+
+        function marcoResumenMensual(navHtml, selectorHtml, cuerpoHtml) {
+            return '<div class="rmv">'
+                +   '<div class="rmv-head">'
+                +     '<h6 class="m-0 font-weight-bold"><i class="fas fa-chart-line mr-2"></i>Resumen mensual — Análisis BI</h6>'
+                +     '<div class="rmv-nav">' + navHtml + '</div>'
+                +   '</div>'
+                +   selectorHtml
+                +   '<div id="rmvCuerpo">' + cuerpoHtml + '</div>'
+                + '</div>';
+        }
+
+        function renderResumenMensual() {
+            var m = rmv.mes;
+            var boton = function(mes, icono, titulo) {
+                var ok = /^\d{4}-\d{2}$/.test(mes || '');
+                return '<button type="button" class="rmv-navbtn" title="' + titulo + '" aria-label="' + titulo + '"'
+                    + (ok ? ' onclick="cargarResumenMensual(null, \'' + mes + '\', false)"' : ' disabled')
+                    + '><i class="fas ' + icono + '"></i></button>';
+            };
+            // La fecha de actualización va antes del mes que se consulta. › se deshabilita en el mes
+            // pasado (siguiente = null: el mes en curso no se muestra).
+            var nav = '<span class="rmv-act"><i class="fas fa-sync-alt mr-1"></i>Actualizado el '
+                +     fechaVeh(rmv.actualizado, { anio: true }) + '</span>'
+                + '<span class="rmv-navmes">'
+                +   boton(m.anterior, 'fa-chevron-left', 'Mes anterior')
+                +   '<span class="rmv-mes">' + nombreMesVeh(m.mes) + '</span>'
+                +   boton(m.siguiente, 'fa-chevron-right', 'Mes siguiente')
+                + '</span>';
+
+            // Un botón por vehículo con su semáforo: rojo / ámbar / verde según el análisis de b4;
+            // gris sin análisis publicado o sin movimientos.
+            var selector = '';
+            if (rmv.vehiculos.length) {
+                selector = '<div class="rmv-switch" role="group" aria-label="Vehículos">';
+                rmv.vehiculos.forEach(function(v) {
+                    var e = estadoVehiculoResumen(v);
+                    var d = v.datos || {};
+                    selector += '<button type="button" class="rmv-vbtn" aria-pressed="' + (v.id_vehiculo === rmv.sel ? 'true' : 'false') + '"'
+                        +       ' onclick="seleccionarVehiculoResumen(' + (parseInt(v.id_vehiculo, 10) || 0) + ')">'
+                        +   '<span class="rmv-vbtn-p"><span class="rmv-dot ' + e.clase + '"></span>'
+                        +     escapeHtml(d.placa || '') + (d.modelo ? ' · ' + escapeHtml(d.modelo) : '') + '</span>'
+                        +   '<span class="rmv-vbtn-m">' + e.texto + '</span>'
+                        + '</button>';
+                });
+                selector += '</div>';
+            }
+
+            var v = rmv.vehiculos.filter(function(x) { return x.id_vehiculo === rmv.sel; })[0];
+            var cuerpo = v ? renderVehiculoResumen(v) : '<p class="rmv-nota p-3 mb-0">Sin vehículos para mostrar.</p>';
+            return marcoResumenMensual(nav, selector, cuerpo);
+        }
+
+        function estadoVehiculoResumen(v) {
+            var a = v.analisis;
+            var c = (v.datos && v.datos.conteo) || {};
+            if (a) {
+                var alertas = Array.isArray(a.alertas) ? a.alertas : [];
+                var rojas = alertas.filter(function(x) { return x && x.nivel === 'rojo'; }).length;
+                var ambar = alertas.filter(function(x) { return x && x.nivel === 'ambar'; }).length;
+                var partes = [];
+                if (rojas) partes.push(rojas + (rojas === 1 ? ' roja' : ' rojas'));
+                if (ambar) partes.push(ambar + ' ámbar');
+                var clase = a.nivel === 'rojo' ? 'rmv-rojo' : (a.nivel === 'ambar' ? 'rmv-ambar' : 'rmv-verde');
+                return { clase: clase, texto: partes.length ? partes.join(' · ') : 'Sin incongruencias' };
+            }
+            if (!c.checkins && !c.cargas) return { clase: '', texto: 'Sin movimientos' };
+            return { clase: '', texto: 'Análisis pendiente' };
+        }
+
+        function renderVehiculoResumen(v) {
+            var d        = v.datos || {};
             var km       = d.km || {};
             var conteo   = d.conteo || {};
             var checkins = Array.isArray(d.checkins) ? d.checkins : [];
             var cargas   = Array.isArray(d.cargas) ? d.cargas : [];
-            var html = '<div class="p-2 p-md-3">';
 
             // Sin movimientos b4 no tiene nada que revisar: no se anuncia "Análisis pendiente".
             if (!checkins.length && !cargas.length) {
-                html += '<p class="small mb-0 text-center py-2" style="color: var(--text-muted);">'
-                     +    '<i class="fas fa-car-side mr-2"></i>Sin movimientos en el mes</p>';
-                if (analisis) html += '<div class="mt-3">' + tituloSeccionMesVeh('fa-robot', 'Análisis') + renderAnalisisMensual(analisis) + '</div>';
-                return html + '</div>';
+                return '<div class="rmv-sec pb-3"><p class="rmv-nota mb-0"><i class="fas fa-car-side mr-2"></i>Sin movimientos en el mes.</p></div>'
+                    + (v.analisis ? seccionAlertasResumen(v.analisis) : '');
             }
 
-            // 1) Números. El km recorrido es km.odometro (suma de tramos válidos), no final − inicial.
-            var cifras = [
-                { label: 'Km recorridos', valor: numMesVeh(km.odometro) },
-                { label: 'Km Mess',       valor: numMesVeh(km.mess) },
-                { label: 'Km personales', valor: numMesVeh(km.personales) },
-                { label: '% uso Mess',    valor: (km.pct_mess === null || km.pct_mess === undefined) ? '—' : numMesVeh(km.pct_mess) + '%' },
-                { label: 'Check-ins',     valor: numMesVeh(conteo.checkins) },
-                { label: 'Cargas',        valor: numMesVeh(conteo.cargas) },
-                { label: 'Monto cargado', valor: montoMesVeh(conteo.monto_cargado) }
+            var conKm = checkins.filter(function(c) { return c && c.km > 0; });
+            var ultimo = conKm.length ? conKm[conKm.length - 1] : null;
+            var personas = {};
+            checkins.forEach(function(c) { personas[(c.usuario && c.usuario.id_usuario) || 0] = true; });
+            var nPersonas = Object.keys(personas).length;
+            var gasto = Number(conteo.monto_cargado) || 0;
+            var sinDato = function(n) { return n === null || n === undefined; };
+
+            // 1) Indicadores. El km recorrido es km.odometro (suma de tramos válidos), no final − inicial.
+            var kpis = [
+                { lab: 'Km inicial', val: numVeh(km.inicial),
+                  det: sinDato(km.inicial) ? 'Sin check-ins antes del mes'
+                     : 'Último check-in antes del mes' + (km.inicial_fecha ? ' · ' + fechaVeh(km.inicial_fecha, { dia: true, hora: true }) : '') },
+                { lab: 'Km final', val: numVeh(km.final),
+                  det: ultimo ? 'Último check-in del mes · ' + fechaVeh(ultimo.fecha, { dia: true, hora: true }) : 'Sin check-ins con km en el mes' },
+                { lab: 'Km recorridos', val: numVeh(km.odometro) + ' <small>km</small>', det: 'Suma de tramos = Mess + personal' },
+                { lab: '% uso Mess', val: sinDato(km.pct_mess) ? '—' : numVeh(km.pct_mess) + '%', det: 'Km Mess ÷ km recorridos' },
+                { lab: 'Km Mess', val: numVeh(km.mess) + ' <small>km</small>', det: 'Tramos sin un día completo sin check-ins' },
+                { lab: 'Km personales', val: numVeh(km.personales) + ' <small>km</small>', det: 'Tramos con al menos un día completo sin check-ins' },
+                { lab: 'Check-ins', val: numVeh(conteo.checkins),
+                  det: checkins.length
+                     ? 'De ' + nPersonas + (nPersonas === 1 ? ' persona' : ' personas') + ' · '
+                       + fechaVeh(checkins[0].fecha) + ' – ' + fechaVeh(checkins[checkins.length - 1].fecha)
+                     : 'Sin check-ins en el mes' },
+                { lab: 'Cargas', val: numVeh(conteo.cargas) + ' · ' + montoVeh(gasto),
+                  det: (km.mess > 0 && gasto > 0) ? montoVeh(gasto / km.mess) + ' por km Mess'
+                     : (cargas.length ? 'Sin km Mess para calcular $ por km' : 'Sin cargas en el mes') }
             ];
-            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr)); gap: .5rem;">';
-            cifras.forEach(function(c) {
-                html += '<div class="rounded px-2 py-2" style="background: var(--card-soft); border: 1px solid var(--border); min-width: 0;">'
-                     +    '<div class="small text-truncate" style="color: var(--text-muted);">' + c.label + '</div>'
-                     +    '<div class="font-weight-bold" style="color: var(--text); font-size: 1.15rem; overflow-wrap: anywhere;">' + c.valor + '</div>'
-                     +  '</div>';
+            var html = '<div class="rmv-kpis">';
+            kpis.forEach(function(k) {
+                html += '<div class="rmv-kpi"><div class="rmv-kpi-lab">' + k.lab + '</div>'
+                     +    '<div class="rmv-kpi-val">' + k.val + '</div>'
+                     +    '<div class="rmv-kpi-det">' + k.det + '</div></div>';
             });
             html += '</div>';
-            html += '<div class="small mt-2" style="color: var(--text-muted);"><i class="fas fa-tachometer-alt mr-1"></i>'
-                 +    'Odómetro ' + numMesVeh(km.inicial) + ' → ' + numMesVeh(km.final) + '</div>';
 
-            // 2) Cargas y 3) análisis: lado a lado en pantallas anchas, uno debajo del otro en celular.
-            var htmlCargas;
+            // 2) Barra Mess / personal (Mess + personal = km recorridos, siempre).
+            if (km.odometro > 0) {
+                var pm = Math.round(km.mess / km.odometro * 100);
+                html += '<div class="rmv-split"><div class="rmv-bar" aria-hidden="true"><i style="width: ' + pm + '%;"></i></div>'
+                     +  '<div class="rmv-barleg"><span><b>' + numVeh(km.mess) + ' km</b> Mess (' + pm + '%)</span>'
+                     +  '<span><b>' + numVeh(km.personales) + ' km</b> personal (' + (100 - pm) + '%)</span></div></div>';
+            }
+
+            // 3) Incongruencias que publicó b4.
+            html += seccionAlertasResumen(v.analisis);
+
+            // 4) Cargas del mes.
+            html += '<div class="rmv-sec"><h6><i class="fas fa-gas-pump mr-2"></i>Cargas del mes</h6>';
             if (!cargas.length) {
-                htmlCargas = '<p class="small mb-0" style="color: var(--text-muted);">Sin cargas en el mes</p>';
+                html += '<p class="rmv-nota">Sin cargas en el mes.</p>';
             } else {
-                htmlCargas = '<ul class="list-group list-group-flush">';
+                html += '<div class="rmv-scroll"><table class="rmv-tabla"><thead><tr>'
+                     +    '<th>Fecha</th><th class="rmv-num">Km</th><th class="rmv-num">Monto</th><th class="rmv-num">Saldo antes → después</th>'
+                     +  '</tr></thead><tbody>';
                 cargas.forEach(function(c) {
-                    htmlCargas += '<li class="list-group-item d-flex flex-wrap align-items-center justify-content-between px-2 py-2 small" style="gap: .25rem .75rem;">'
-                               +    '<span><i class="fas fa-gas-pump fa-fw mr-1" style="color: var(--text-muted);"></i>' + fechaMesVeh(c.fecha, !c.sin_hora) + '</span>'
-                               +    '<span class="text-nowrap">' + numMesVeh(c.km) + ' km · <strong>' + montoMesVeh(c.monto_cargado) + '</strong></span>'
-                               +  '</li>';
+                    html += '<tr><td data-l="Fecha">' + fechaVeh(c.fecha, { dia: true, hora: !c.sin_hora }) + '</td>'
+                         +  '<td data-l="Km" class="rmv-num">' + numVeh(c.km) + '</td>'
+                         +  '<td data-l="Monto" class="rmv-num">' + montoVeh(c.monto_cargado) + '</td>'
+                         +  '<td data-l="Saldo" class="rmv-num">' + montoVeh(c.saldo_antes) + ' → ' + montoVeh(c.saldo_despues) + '</td></tr>';
                 });
-                htmlCargas += '</ul>';
+                html += '</tbody></table></div>';
             }
-            html += '<div class="mt-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: 1rem;">'
-                 +    '<div style="min-width: 0;">' + tituloSeccionMesVeh('fa-gas-pump', 'Cargas del mes') + htmlCargas + '</div>'
-                 +    '<div style="min-width: 0;">' + tituloSeccionMesVeh('fa-robot', 'Análisis') + renderAnalisisMensual(analisis) + '</div>'
-                 +  '</div>';
-            return html + '</div>';
-        }
+            html += '</div>';
 
-        // Alertas de b4: primero las rojas, luego las ámbar. Sin análisis publicado: "Análisis pendiente".
-        function renderAnalisisMensual(a) {
-            if (!a) {
-                return '<p class="small mb-0" style="color: var(--text-muted);"><i class="fas fa-hourglass-half fa-fw mr-2"></i>Análisis pendiente</p>';
+            // 5) Check-ins del mes, plegados: en un mes son decenas.
+            if (checkins.length) {
+                html += '<div class="rmv-sec pb-3"><details><summary><i class="fas fa-map-marker-alt"></i>Check-ins del mes (' + checkins.length + ')</summary>'
+                     +  '<div class="rmv-scroll mt-2"><table class="rmv-tabla"><thead><tr>'
+                     +    '<th>Fecha</th><th class="rmv-num">Km</th><th class="rmv-num">Tramo</th><th>Uso</th><th>Visita</th><th>Foto</th>'
+                     +  '</tr></thead><tbody>';
+                checkins.forEach(function(c) {
+                    var uso = c.km_personal > 0 ? '<span class="rmv-personal">Personal</span>' : (c.km_mess > 0 ? 'Mess' : '—');
+                    var visita = (c.regreso_sede ? 'Regreso a la sede' + (c.visita ? ' · ' : '') : '') + escapeHtml(c.visita || '');
+                    html += '<tr><td data-l="Fecha">' + fechaVeh(c.fecha, { dia: true, hora: true }) + '</td>'
+                         +  '<td data-l="Km" class="rmv-num">' + numVeh(c.km) + '</td>'
+                         +  '<td data-l="Tramo" class="rmv-num">' + (sinDato(c.km_tramo) ? '—' : numVeh(c.km_tramo)) + '</td>'
+                         +  '<td data-l="Uso">' + uso + '</td>'
+                         +  '<td data-l="Visita">' + (visita || '—') + '</td>'
+                         +  '<td data-l="Foto">' + (c.tiene_foto ? '<i class="fas fa-camera" title="Con foto del odómetro"></i>' : '—') + '</td></tr>';
+                });
+                html += '</tbody></table></div></details></div>';
             }
-            var alertas = Array.isArray(a.alertas) ? a.alertas : [];
-            var rojas = [], ambar = [];
-            alertas.forEach(function(al) {
-                if (!al || typeof al !== 'object') return;
-                (al.nivel === 'rojo' ? rojas : ambar).push(al);
-            });
-            var alerta = function(al, icono, color) {
-                return '<li class="d-flex align-items-start small mb-2">'
-                     +   '<i class="fas ' + icono + ' fa-fw mr-2 flex-shrink-0" style="color: ' + color + '; margin-top: .15rem;"></i>'
-                     +   '<span style="color: var(--text); overflow-wrap: anywhere; min-width: 0;">' + escapeHtml(al.texto) + '</span>'
-                     + '</li>';
-            };
-            var html = '';
-            if (!rojas.length && !ambar.length) {
-                html += '<p class="small mb-2" style="color: var(--text);"><i class="fas fa-check-circle fa-fw mr-2" style="color: var(--success);"></i>Sin incongruencias</p>';
-            } else {
-                html += '<ul class="list-unstyled mb-2">';
-                rojas.forEach(function(al) { html += alerta(al, 'fa-times-circle', 'var(--danger)'); });
-                ambar.forEach(function(al) { html += alerta(al, 'fa-exclamation-triangle', 'var(--warning)'); });
-                html += '</ul>';
-            }
-            if (a.resumen) {
-                html += '<p class="small mb-2" style="color: var(--text); white-space: pre-line; overflow-wrap: anywhere;">' + escapeHtml(a.resumen) + '</p>';
-            }
-            html += '<div class="small" style="color: var(--text-muted);">Publicado por ' + escapeHtml(a.autor || '—')
-                 +  ' el ' + fechaMesVeh(a.publicado, true, true) + '</div>';
             return html;
         }
 
-        function tituloSeccionMesVeh(icono, texto) {
-            return '<div class="small font-weight-bold mb-2" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em;">'
-                 +   '<i class="fas ' + icono + ' mr-1"></i>' + texto + '</div>';
+        // Alertas de b4: primero las rojas, luego las ámbar; cada una con su título (texto) y, si lo
+        // trae, su detalle. Sin análisis publicado: "Análisis pendiente".
+        function seccionAlertasResumen(a) {
+            var html = '<div class="rmv-sec"><h6><i class="fas fa-robot mr-2"></i>Incongruencias del mes</h6>';
+            if (!a) {
+                return html + '<p class="rmv-nota"><i class="fas fa-hourglass-half mr-2"></i>Análisis pendiente: b4 todavía no publica el análisis de este mes.</p></div>';
+            }
+            var alertas = Array.isArray(a.alertas) ? a.alertas.filter(function(x) { return x && typeof x === 'object'; }) : [];
+            var orden = alertas.filter(function(x) { return x.nivel === 'rojo'; })
+                .concat(alertas.filter(function(x) { return x.nivel !== 'rojo'; }));
+            var tarjeta = function(clase, icono, tituloHtml, detalleHtml, etiqueta) {
+                return '<div class="rmv-alerta ' + clase + '"><i class="fas ' + icono + ' rmv-alerta-ic"></i>'
+                    +   '<div class="rmv-alerta-txt"><div class="rmv-alerta-t">' + tituloHtml + '</div>'
+                    +     (detalleHtml ? '<div class="rmv-alerta-d">' + detalleHtml + '</div>' : '') + '</div>'
+                    +   '<span class="rmv-pill ' + clase + '">' + etiqueta + '</span>'
+                    + '</div>';
+            };
+            if (!orden.length) html += tarjeta('rmv-verde', 'fa-check-circle', 'Sin incongruencias', '', 'Sin alerta');
+            orden.forEach(function(al) {
+                var rojo = al.nivel === 'rojo';
+                html += tarjeta(rojo ? 'rmv-rojo' : 'rmv-ambar', rojo ? 'fa-times-circle' : 'fa-exclamation-triangle',
+                                escapeHtml(al.texto), escapeHtml(al.detalle || ''), rojo ? 'Rojo' : 'Ámbar');
+            });
+            if (a.resumen) {
+                html += '<p class="rmv-nota" style="white-space: pre-line;">' + escapeHtml(a.resumen) + '</p>';
+            }
+            html += '<p class="rmv-nota small">Publicado por ' + escapeHtml(a.autor || '—')
+                 +  ' el ' + fechaVeh(a.publicado, { anio: true, hora: true }) + '</p>';
+            return html + '</div>';
         }
 
         // 'YYYY-MM' → 'Octubre 2026'.
@@ -3636,20 +3734,25 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
             return nombre.charAt(0).toUpperCase() + nombre.slice(1) + ' ' + m[1];
         }
 
-        // 'YYYY-MM-DD[ HH:MM:SS]' → 'dd/mm' (+ '/aaaa' con conAnio, + ' hh:mm' con conHora). Se parte el
-        // texto en vez de usar Date() para no correr la fecha por zona horaria.
-        function fechaMesVeh(f, conHora, conAnio) {
+        // 'YYYY-MM-DD[ HH:MM:SS]' → 'dd/mm'. Opciones: dia ('vie 31/10'), anio ('31/10/2026'),
+        // hora ('31/10 16:35'). Se parte el texto en vez de pasarlo a Date() para no correr la fecha
+        // por zona horaria; el día de la semana sale de una fecha local armada con sus partes.
+        function fechaVeh(f, op) {
+            op = op || {};
             var m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(f || '');
             if (!m) return '—';
-            return m[3] + '/' + m[2] + (conAnio ? '/' + m[1] : '') + (conHora && m[4] ? ' ' + m[4] + ':' + m[5] : '');
+            var txt = m[3] + '/' + m[2] + (op.anio ? '/' + m[1] : '');
+            if (op.dia) txt = DIAS_VEH[new Date(+m[1], +m[2] - 1, +m[3]).getDay()] + ' ' + txt;
+            if (op.hora && m[4]) txt += ' ' + m[4] + ':' + m[5];
+            return txt;
         }
 
-        function numMesVeh(n) {
+        function numVeh(n) {
             if (n === null || n === undefined || n === '' || isNaN(n)) return '—';
             return Number(n).toLocaleString('es-MX');
         }
 
-        function montoMesVeh(n) {
+        function montoVeh(n) {
             return '$' + (Number(n) || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
