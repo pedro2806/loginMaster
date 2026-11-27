@@ -175,9 +175,9 @@ $mail->AltBody = "Hola,\n\nTu contraseña de recuperación es: $passwordRecupera
 }
 // ===== FIN BLOQUE RECUPERAR CONTRASEÑA =====
 
-// Logo del login y favicon: los de la versión de evento activa, si no los de la
-// predeterminada, si no los de código (includes/tema.php, lo mismo que
-// inicio.php). La conexión de arriba sólo existe al recuperar contraseña y se
+// Logo del login, favicon y fondo (si la versión cambia la marca): los de la
+// versión de evento activa, si no los de la predeterminada, si no los de
+// código (includes/tema.php, lo mismo que inicio.php). La conexión de arriba sólo existe al recuperar contraseña y se
 // cierra ahí, así que se abre una aquí. Si la BD no responde (mysqli lanza la
 // excepción antes del die() de conn.php), el login sale con los de siempre.
 require_once __DIR__ . '/includes/tema.php';
@@ -189,6 +189,7 @@ try {
     error_log('index.php tema: ' . $e->getMessage());
 }
 $logosTema = mbTemaLogos($connTema);
+$coloresTema = mbTemaColores($connTema);
 if ($connTema) $connTema->close();
 ?>
 <!DOCTYPE html>
@@ -211,6 +212,8 @@ if ($connTema) $connTema->close();
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css">
     
     <link href="css/login.css?v=<?php echo filemtime(__DIR__ . '/css/login.css'); ?>" rel="stylesheet">
+    <?php // Fondo de computadora con la marca de la versión activa (vacío si no la cambia; en celular sigue blanco). ?>
+    <?php echo mbTemaColoresCss($coloresTema, 'login'); ?>
 </head>
 <body>
     <div class="fb-container">

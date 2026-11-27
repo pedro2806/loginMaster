@@ -14,7 +14,15 @@
     --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
     --tab-active: #1c83f1;
     --tab-inactive: #e9ecef;
-    --header-gradient: linear-gradient(180deg, #074480 0%, #0a1c61 100%);
+    /* Marca: la columna, las pestañas y el pie. Igual en los dos temas. Las puede
+       cambiar BI desde "Logos y colores de messbook" (includes/tema.php, MB_TEMA_COLORES):
+       entonces inicio.php imprime después de esta hoja un <style id="tema-colores">.
+       --marca-3 y --marca-4 son tonos intermedios (botón de KPIs, encabezado de avisos). */
+    --marca-1: #074480;
+    --marca-2: #0a1c61;
+    --marca-3: #143d73;
+    --marca-4: #0d3170;
+    --header-gradient: linear-gradient(180deg, var(--marca-1) 0%, var(--marca-2) 100%);
 }
 
 body.theme-dark {
@@ -1730,9 +1738,9 @@ body.theme-dark .fc-col-header-cell {
 }
 
 .kpis-boton {
-    background: #143d73;
+    background: var(--marca-3);
     color: #fff;
-    border: 1px solid #143d73;
+    border: 1px solid var(--marca-3);
     border-radius: 0.375rem;
     font-size: 0.78rem;
     padding: 0.4rem 0.75rem;
@@ -1741,7 +1749,7 @@ body.theme-dark .fc-col-header-cell {
 }
 
 .kpis-boton:hover {
-    background: #0a1c61;
+    background: var(--marca-2);
     color: #fff;
 }
 
@@ -1936,7 +1944,7 @@ body.theme-dark .fc-col-header-cell {
 
 footer.sticky-footer,
 .sticky-footer {
-    background: linear-gradient(0deg, #074480 0%, #0a1c61 100%) !important;
+    background: linear-gradient(0deg, var(--marca-1) 0%, var(--marca-2) 100%) !important;
     color: #fff !important;
     margin: 0 !important;
     padding: 1rem 0 !important;
@@ -2021,8 +2029,8 @@ html, body {
 /* FOOTER con degradado invertido para unirse al sidebar */
 footer.sticky-footer,
 .sticky-footer {
-    background: linear-gradient(180deg, #0a1c61 0%, #074480 100%) !important;
-    background-image: linear-gradient(180deg, #0a1c61 0%, #074480 100%) !important;
+    background: linear-gradient(180deg, var(--marca-2) 0%, var(--marca-1) 100%) !important;
+    background-image: linear-gradient(180deg, var(--marca-2) 0%, var(--marca-1) 100%) !important;
     border-top: none !important;
     padding: 12px 0 8px !important;
     margin: 0 !important;
@@ -2037,7 +2045,7 @@ html, body {
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #074480 !important;
+    background: var(--marca-1) !important;
 }
 
 footer.sticky-footer .fb-footer-logo {
@@ -2105,7 +2113,7 @@ footer.sticky-footer .fb-footer-logo {
 .logo-tema-btn:focus { outline: none; }
 .logo-tema-btn:focus-visible { box-shadow: 0 0 0 3px rgba(255,255,255,0.6); }
 
-/* Modal "Logos de messbook" (modalTemas.php, js/temas.js). */
+/* Modal "Logos y colores de messbook" (modalTemas.php, js/temas.js). */
 .tema-lista { max-height: 60vh; overflow-y: auto; }
 .tema-version__fechas { display: block; opacity: .8; }
 .tema-seccion {
@@ -2149,6 +2157,69 @@ footer.sticky-footer .fb-footer-logo {
 .tema-previa--siempre .tema-previa__icono { opacity: .55; }
 .tema-previa__icono { font-size: .8rem; text-align: center; color: #1f2937; }
 .tema-previa--oscuro .tema-previa__icono { color: #e6edf7; }
+
+/* Sección "Colores" del modal (js/temas.js). Las muestras y la vista previa
+   llevan sus colores en línea: son los que se están escogiendo. */
+.tema-color__muestras { display: flex; gap: .5rem; }
+.tema-color__muestra {
+    width: 118px;
+    height: 58px;
+    border-radius: .5rem;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 4px 8px;
+    font-size: .75rem;
+    line-height: 1.15;
+    text-align: left;
+    cursor: pointer;
+}
+.tema-color__muestra small { opacity: .85; }
+.tema-color__muestra span { font-family: SFMono-Regular, Consolas, monospace; font-weight: 700; }
+.tema-color__muestra:disabled { cursor: default; opacity: .55; }
+.tema-color__muestra.is-editando { box-shadow: 0 0 0 3px var(--accent); }
+.tema-color__editor {
+    flex: 1 0 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: .75rem;
+    border-radius: .5rem;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+}
+.tema-color__campos { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.tema-color__campos [data-hex] { width: 7.5rem; font-family: SFMono-Regular, Consolas, monospace; }
+.tema-color__rgb { display: flex; gap: .35rem; }
+.tema-color__rgb input { width: 4.4rem; }
+.tema-color__nativo { width: 170px; height: 120px; padding: 0; border: 0; background: none; cursor: pointer; }
+.tema-cprev-par {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+.tema-cprev { border-radius: .5rem; padding: .6rem .6rem .75rem; color: #fff; min-width: 0; }
+.tema-cprev__etiqueta { font-size: .75rem; margin-bottom: .4rem; opacity: .9; }
+.tema-cprev__tabs { display: flex; gap: .25rem; }
+.tema-cprev__tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 1.6rem;
+    border-radius: .35rem .35rem 0 0;
+    font-size: .75rem;
+}
+.tema-cprev__tab--off { background: rgba(255, 255, 255, .15); color: #fff; }
+.tema-cprev__card { border: 1px solid; border-radius: 0 .4rem .4rem .4rem; overflow: hidden; font-size: .8rem; }
+.tema-cprev__head { padding: .35rem .6rem; border-bottom: 1px solid; font-weight: 700; }
+.tema-cprev__body { padding: .5rem .6rem; }
+.tema-cprev__acciones { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .4rem; }
+.tema-cprev__btn { color: #fff; border-radius: .3rem; padding: .15rem .6rem; font-size: .75rem; }
 
 /* Logos con versión por tema (tarjetas de Sistemas, mbTemaSistemaHtml en
    includes/tema.php): el claro en el tema claro, el oscuro en el oscuro. */
@@ -2987,7 +3058,7 @@ body.album-sin-scroll { overflow: hidden; }
     justify-content: space-between;
     gap: 1rem;
     padding: .8rem 1.25rem;
-    background: linear-gradient(180deg, #0d3170 0%, #0a1c61 100%);
+    background: linear-gradient(180deg, var(--marca-4) 0%, var(--marca-2) 100%);
     color: #fff;
     font-size: 1.1rem;
     letter-spacing: .02em;

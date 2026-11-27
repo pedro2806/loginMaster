@@ -14,13 +14,14 @@ $esAdmin = isset($_COOKIE['noEmpleadoL']) && in_array($_COOKIE['noEmpleadoL'], $
 // llama), así que para liberarlo basta con poner true aquí.
 $mostrarMessbookID = false;
 
-// Logos (portal, pie, favicon y tarjetas de Sistemas): los de la versión de
-// evento activa, si no los de la predeterminada, si no los de código
+// Logos (portal, pie, favicon y tarjetas de Sistemas) y colores del tema: los
+// de la versión de evento activa, si no los de la predeterminada, si no los de código
 // (includes/tema.php). BI los cambia desde el logo de la columna
 // (modalTemas.php, $puedeTema). Reemplaza al corte de Día de Muertos que vivía
 // en includes/temporada.php.
 require_once __DIR__ . '/includes/tema.php';
 $logosTema = mbTemaLogos($conn);
+$coloresTema = mbTemaColores($conn);
 $puedeTema = false;
 try {
     $puedeTema = mbTemaPuedeAdministrar($conn, (string)$_COOKIE['noEmpleadoL']);
@@ -343,6 +344,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
     <link href="css/loginMaster.css?v=<?php echo filemtime(__DIR__ . '/css/loginMaster.css'); ?>" rel="stylesheet">
+    <?php // Colores de la versión activa: sólo las variables que no son las de código (vacío si ninguna). ?>
+    <?php echo mbTemaColoresCss($coloresTema, 'portal'); ?>
     <link href="css/modales.css" rel="stylesheet">
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
   
@@ -364,11 +367,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                             <!-- El logo bajó aquí desde el encabezado que se quitó: encabeza
                                  la columna del usuario y deja despejada la zona de pestañas.
                                  Cuál sale lo decide includes/tema.php ($logosTema); a BI el
-                                 logo le abre "Logos de messbook" (modalTemas.php). -->
+                                 logo le abre "Logos y colores de messbook" (modalTemas.php). -->
                             <div class="text-center pt-3 pb-2">
                                 <?php if ($puedeTema): ?>
                                 <button type="button" class="logo-tema-caja logo-tema-btn" data-toggle="modal" data-target="#modalTemas"
-                                        title="Cambiar los logos de messbook" aria-label="Cambiar los logos de messbook">
+                                        title="Cambiar los logos y colores de messbook" aria-label="Cambiar los logos y colores de messbook">
                                     <img src="<?php echo mbTemaSrc($logosTema, 'portal'); ?>" alt="Messbook" class="logo-encabezado">
                                 </button>
                                 <?php else: ?>
@@ -528,8 +531,8 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
                         </div>
 
                         <!-- ========== CONTENIDO CON TABS ========== -->
-                        <div class="col-xl-9 col-md-8 d-flex flex-column" Style="padding-left: 0px !important; background: linear-gradient(180deg, #074480 0%, #0a1c61 100%) !important;">
-                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: #074480 !important;">
+                        <div class="col-xl-9 col-md-8 d-flex flex-column" Style="padding-left: 0px !important; background: linear-gradient(180deg, var(--marca-1) 0%, var(--marca-2) 100%) !important;">
+                            <ul class="nav nav-tabs nav-tabs-main" id="mainTabs" role="tablist" style="background-color: var(--marca-1) !important;">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="tabPersonal-tab" data-toggle="tab" data-target="#tabPersonal" type="button" role="tab" title="Mi Espacio" aria-label="Mi Espacio">
                                     <i class="fas fa-user-cog"></i><span class="tab-label"> Mi Espacio</span>
@@ -2049,6 +2052,11 @@ if ($passwordEsDefault && empty($_SESSION['avisoPwdMostrado'])) {
     <?php endif; ?>
     <script src="js/avisos.js?v=<?php echo filemtime(__DIR__ . '/js/avisos.js'); ?>"></script>
     <?php if ($puedeTema): ?>
+    <!-- Rueda de color de "Colores" (modalTemas.php). Versión fija con su hash: si
+         el CDN no responde, js/temas.js usa el selector de color del navegador. -->
+    <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.min.js"
+            integrity="sha384-oZxUObEswsFY+jlvIkPj4iWF3WW1I6vMNyzoakb3v99l1DtAoF/VyBTrNKtSCVoa"
+            crossorigin="anonymous"></script>
     <script src="js/temas.js?v=<?php echo filemtime(__DIR__ . '/js/temas.js'); ?>"></script>
     <?php endif; ?>
 

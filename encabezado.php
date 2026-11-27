@@ -14,7 +14,10 @@
         top: 38px;
         left: 10px;
         z-index: 1040;
+        /* La marca (--marca-1 de loginMaster.css, la que cambia BI en "Logos y
+           colores") al 85 %. La primera línea queda para navegadores sin color-mix. */
         background: rgba(7, 68, 128, 0.85) !important;
+        background: color-mix(in srgb, var(--marca-1, #074480) 85%, transparent) !important;
         border: none !important;
         color: #fff;
         width: 38px;
@@ -29,7 +32,7 @@
     }
 
     #toggleSidebarBtn:hover {
-        background: rgba(7, 68, 128, 1) !important;
+        background: var(--marca-1, #074480) !important;
     }
 
     #toggleSidebarBtn i {

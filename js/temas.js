@@ -8,8 +8,15 @@
  * siempre", el que sale si la versión no lo cambia (el de la predeterminada o
  * el de código). "Guardar" manda todo junto a acciones_temas.php.
  *
+ * COLORES (sección "Colores"): una fila por color del catálogo
+ * (MB_TEMA_COLORES). Al dar clic en la muestra se abre una rueda (iro.js; sin
+ * la librería, el selector del navegador) con campos HEX y RGB. Arriba, una
+ * vista previa clara y oscura y los avisos de poco contraste (avisan, no
+ * bloquean). Se guarda el juego completo de colores de la versión.
+ *
  * El modal lo abre el logo de la columna de inicio.php. Los cambios se ven al
- * recargar la página: los logos los pinta el servidor (includes/tema.php).
+ * recargar la página: los logos y colores los pinta el servidor
+ * (includes/tema.php).
  */
 (function () {
     'use strict';
@@ -24,7 +31,11 @@
         pend: {},                      // lugar → { claro: File, oscuro: File }
         quitar: {}, quitarOscuro: {},  // lugar → true
         urls: [],                      // objectURL de las vistas previas, para soltarlos
-        sucio: false
+        sucio: false,
+        hayColores: true,              // false: falta el SQL de colores
+        col: {},                       // colores de esta versión: clave → { claro, oscuro|null }
+        editor: null,                  // { clave, cual } del color abierto en la rueda
+        picker: null                   // la rueda de iro.js abierta
     };
 
     // ── Utilidades ───────────────────────────────────────────────────────
@@ -108,8 +119,9 @@
     function cargar(idElegir) {
         return pedir('listar').then(function (r) {
             if (!r.success) { $t('tem_lista').innerHTML = '<div class="text-danger small p-2">' + esc(r.message) + '</div>'; return; }
-            estado.versiones = r.versiones || [];
-            estado.defecto   = r.defecto || {};
+            estado.versiones  = r.versiones || [];
+            estado.defecto    = r.defecto || {};
+            estado.hayColores = r.hayColores !== false;
             var elegir = null;
             estado.versiones.forEach(function (v) { if (v.id === idElegir) elegir = v; });
             elegirVersion(elegir || predeterminada());
@@ -122,6 +134,11 @@
         estado.actual = v;                 // null = nueva
         estado.pend = {}; estado.quitar = {}; estado.quitarOscuro = {};
         estado.sucio = false;
+        estado.col = {};
+        Object.keys((v && v.colores) || {}).forEach(function (k) {
+            estado.col[k] = { claro: v.colores[k].claro, oscuro: v.colores[k].oscuro || null };
+        });
+        estado.editor = null; estado.picker = null;
 
         var pred = !!(v && v.predeterminada);
         $t('tem_id').value     = v ? v.id : '';
@@ -135,6 +152,7 @@
 
         pintarLista();
         pintarFilas();
+        pintarColores();
     }
 
     function pintarFilas() {
@@ -256,6 +274,310 @@
 
     $('#tem_nombre, #tem_desde, #tem_hasta').on('input change', function () { estado.sucio = true; });
 
+    // ── Colores ──────────────────────────────────────────────────────────
+    var HEX = /^#[0-9a-f]{6}$/i;
+
+    /** Sólo '#rrggbb': lo único que se mete en un style. */
+    function hex(v) { return HEX.test(v || '') ? String(v).toLowerCase() : '#000000'; }
+
+    /** Igual que mbTemaMezclar (includes/tema.php): peso = cuánto de b. */
+    function mezclar(a, b, peso) {
+        var r = '#';
+        for (var i = 1; i < 7; i += 2) {
+            var x = parseInt(a.substr(i, 2), 16), y = parseInt(b.substr(i, 2), 16);
+            r += ('0' + Math.round(x + (y - x) * peso).toString(16)).slice(-2);
+        }
+        return r;
+    }
+
+    /** Igual que mbTemaAcentoOscuro: el claro, 30 % hacia blanco. */
+    function acentoOscuro(claro) { return mezclar(claro, '#ffffff', 0.30); }
+
+    function catColor(clave) {
+        return CAT.colores.filter(function (c) { return c.clave === clave; })[0];
+    }
+
+    /** Lo que sale si esta versión no cambia el color: la predeterminada o código (como mbTemaColores). */
+    function colorSiempre(clave) {
+        var c = catColor(clave), pred = predeterminada();
+        var esPred = estado.actual && estado.actual.predeterminada;
+        var p = !esPred && pred && pred.colores ? pred.colores[clave] : null;
+        if (!p) return { claro: c.claro, oscuro: c.oscuro };
+        var osc = c.oscuro === null ? null : (p.oscuro || (clave === 'acento' ? acentoOscuro(p.claro) : c.oscuro));
+        return { claro: p.claro, oscuro: osc };
+    }
+
+    /**
+     * Lo que se verá con esta versión: { claro, oscuro, marca, oscuroPropio }.
+     * Sin oscuro propio, el acento se aclara solo y los demás quedan como siempre.
+     */
+    function colorEfectivo(clave) {
+        var c = catColor(clave), mio = estado.col[clave], siempre = colorSiempre(clave);
+        if (!mio) return { claro: siempre.claro, oscuro: siempre.oscuro, marca: 'siempre', oscuroPropio: false };
+        var orig = estado.actual && estado.actual.colores ? estado.actual.colores[clave] : null;
+        var nuevo = !orig || orig.claro !== mio.claro || (orig.oscuro || null) !== (mio.oscuro || null);
+        var osc = c.oscuro === null ? null : (mio.oscuro || (clave === 'acento' ? acentoOscuro(mio.claro) : siempre.oscuro));
+        return { claro: mio.claro, oscuro: osc, marca: nuevo ? 'nuevo' : 'version', oscuroPropio: !!mio.oscuro };
+    }
+
+    /** El color de una clave en un tema ('claro' u 'oscuro'); la marca es la misma en los dos. */
+    function colorEn(clave, tema) {
+        var e = colorEfectivo(clave);
+        return hex(tema === 'oscuro' && e.oscuro ? e.oscuro : e.claro);
+    }
+
+    function luminancia(h) {
+        var c = [1, 3, 5].map(function (i) {
+            var v = parseInt(h.substr(i, 2), 16) / 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    }
+
+    /** Contraste WCAG entre dos colores (1 a 21). */
+    function contraste(a, b) {
+        var x = luminancia(a), y = luminancia(b);
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    }
+
+    /** Texto legible sobre una muestra. */
+    function textoSobre(h) { return luminancia(h) > 0.35 ? '#1f2937' : '#ffffff'; }
+
+    // [frente, fondo, mínimo, qué es, sólo en este tema]. '#ffffff' = el texto
+    // blanco que va encima. Con los colores de código ninguno avisa.
+    var PARES = [
+        ['texto', 'tarjeta', 4.5, 'Texto sobre el fondo de las tarjetas'],
+        ['texto', 'tarjeta_suave', 4.5, 'Texto sobre los encabezados de tarjeta'],
+        ['texto_sec', 'tarjeta', 3, 'Texto secundario sobre el fondo de las tarjetas'],
+        ['acento', 'tarjeta', 3, 'Links (acento) sobre el fondo de las tarjetas'],
+        ['#ffffff', 'acento', 3, 'Texto blanco de los botones sobre el acento', 'claro'],
+        ['#ffffff', 'marca1', 4.5, 'Texto blanco sobre la columna (arriba)', 'claro'],
+        ['#ffffff', 'marca2', 4.5, 'Texto blanco sobre la columna (abajo)', 'claro']
+    ];
+
+    /** Los pares con poco contraste: [{ texto, valor, minimo }]. */
+    function avisosContraste() {
+        var avisos = [];
+        ['claro', 'oscuro'].forEach(function (tema) {
+            PARES.forEach(function (p) {
+                if (p[4] && p[4] !== tema) return;
+                var frente = p[0].charAt(0) === '#' ? p[0] : colorEn(p[0], tema);
+                var valor = contraste(frente, colorEn(p[1], tema));
+                if (valor < p[2]) {
+                    avisos.push({ texto: p[3] + (p[4] ? '' : ' (tema ' + tema + ')'), valor: valor, minimo: p[2] });
+                }
+            });
+        });
+        return avisos;
+    }
+
+    function previaColoresHtml(tema) {
+        var v = function (k) { return colorEn(k, tema); };
+        var ac = v('acento');
+        return '<div class="tema-cprev" style="background:linear-gradient(180deg,' + v('marca1') + ' 0%,' + v('marca2') + ' 100%)">'
+             + '<div class="tema-cprev__etiqueta">Tema ' + tema + ' · <i class="fas fa-user-circle"></i> Nombre del usuario</div>'
+             + '<div class="tema-cprev__tabs">'
+             +   '<span class="tema-cprev__tab" style="background:' + v('tarjeta') + ';color:' + ac + '"><i class="fas fa-user"></i></span>'
+             +   '<span class="tema-cprev__tab tema-cprev__tab--off"><i class="fas fa-th-large"></i></span>'
+             +   '<span class="tema-cprev__tab tema-cprev__tab--off"><i class="fas fa-calendar-alt"></i></span>'
+             + '</div>'
+             + '<div class="tema-cprev__card" style="background:' + v('tarjeta') + ';border-color:' + v('borde') + ';color:' + v('texto') + '">'
+             +   '<div class="tema-cprev__head" style="background:' + v('tarjeta_suave') + ';border-color:' + v('borde') + '"><i class="fas fa-bell"></i> Notificaciones</div>'
+             +   '<div class="tema-cprev__body">Texto normal de una tarjeta.'
+             +     '<small class="d-block" style="color:' + v('texto_sec') + '">27/11 · texto secundario</small>'
+             +     '<div class="tema-cprev__acciones"><span style="color:' + ac + ';text-decoration:underline">Un link</span>'
+             +     '<span class="tema-cprev__btn" style="background:' + ac + '">Botón</span></div>'
+             +   '</div>'
+             + '</div></div>';
+    }
+
+    function muestraHtml(c, cual, e) {
+        var mio = estado.col[c.clave];
+        var valor = hex(cual === 'oscuro' ? e.oscuro : e.claro);
+        var titulo = cual === 'claro'
+            ? (c.oscuro === null ? 'Los dos temas' : 'Tema claro')
+            : (e.oscuroPropio ? 'Tema oscuro' : (mio && c.clave === 'acento' ? 'Oscuro (automático)' : 'Oscuro (como siempre)'));
+        var activa = cual === 'claro' || e.oscuroPropio;
+        var editando = estado.editor && estado.editor.clave === c.clave && estado.editor.cual === cual;
+        return '<button type="button" class="tema-color__muestra' + (editando ? ' is-editando' : '') + '" data-cual="' + cual + '"'
+             + (activa ? '' : ' disabled') + ' style="background:' + valor + ';color:' + textoSobre(valor) + '"'
+             + ' title="' + (activa ? 'Cambiar' : 'Marca la casilla para escoger otro') + '">'
+             + '<small>' + titulo + '</small><span>' + valor + '</span></button>';
+    }
+
+    function filaColorHtml(c) {
+        var e = colorEfectivo(c.clave), mio = estado.col[c.clave];
+        var html = '<div class="tema-fila tema-color" data-clave="' + esc(c.clave) + '">'
+                 + '<div class="tema-fila__info"><strong>' + esc(c.nombre) + '</strong> <span class="tema-color__marca">' + MARCA[e.marca] + '</span>'
+                 + '<small class="text-muted d-block">' + esc(c.ayuda) + '</small></div>'
+                 + '<div class="tema-color__muestras">' + muestraHtml(c, 'claro', e)
+                 + (c.oscuro !== null ? muestraHtml(c, 'oscuro', e) : '') + '</div>'
+                 + '<div class="tema-fila__acciones">';
+        if (c.oscuro !== null) {
+            html += '<div class="custom-control custom-checkbox small">'
+                  + '<input type="checkbox" class="custom-control-input" id="tem_osc_' + esc(c.clave) + '" data-oscuro' + (e.oscuroPropio ? ' checked' : '') + '>'
+                  + '<label class="custom-control-label" for="tem_osc_' + esc(c.clave) + '">Otro color para el tema oscuro</label></div>';
+        }
+        html += '<button type="button" class="btn btn-sm btn-link text-danger p-0" data-quitar-color' + (mio ? '' : ' hidden') + '>Quitar (como siempre)</button>'
+              + '</div>';
+        if (estado.editor && estado.editor.clave === c.clave) html += '<div class="tema-color__editor"></div>';
+        return html + '</div>';
+    }
+
+    /** Vista previa, avisos de contraste y cuántos colores cambia la versión. */
+    function pintarResumenColores() {
+        $t('tem_colPrevia').innerHTML = previaColoresHtml('claro') + previaColoresHtml('oscuro');
+        var avisos = avisosContraste();
+        $t('tem_colAvisos').innerHTML = avisos.length
+            ? '<div class="alert alert-warning small py-2"><strong><i class="fas fa-exclamation-triangle mr-1"></i>Poco contraste:</strong> puede costar leerlo.<ul class="mb-0 pl-3">'
+              + avisos.map(function (a) {
+                    return '<li>' + esc(a.texto) + ': ' + a.valor.toFixed(1) + ':1 (mínimo ' + a.minimo + ':1)</li>';
+                }).join('') + '</ul></div>'
+            : '';
+        var n = Object.keys(estado.col).length;
+        $t('tem_colCuenta').hidden = !n;
+        $t('tem_colCuenta').textContent = n + (n === 1 ? ' cambiado' : ' cambiados');
+    }
+
+    /** Todas las filas (al elegir versión, quitar, abrir o cerrar la rueda). */
+    function pintarColores() {
+        $t('tem_colSinTabla').hidden = estado.hayColores;
+        $t('tem_colCuerpo').hidden = !estado.hayColores;
+        if (!estado.hayColores) { $t('tem_colCuenta').hidden = true; return; }
+        $t('tem_colLista').innerHTML = CAT.colores.map(filaColorHtml).join('');
+        pintarResumenColores();
+        if (estado.editor) montarEditor();
+        else estado.picker = null;
+    }
+
+    /** Sólo las muestras y la marca de una fila: mientras se arrastra la rueda no se rehace la fila. */
+    function refrescarColor(clave) {
+        var fila = document.querySelector('#tem_colLista .tema-color[data-clave="' + clave + '"]');
+        if (!fila) return;
+        var c = catColor(clave), e = colorEfectivo(clave);
+        fila.querySelector('.tema-color__marca').innerHTML = MARCA[e.marca];
+        fila.querySelector('.tema-color__muestras').innerHTML = muestraHtml(c, 'claro', e) + (c.oscuro !== null ? muestraHtml(c, 'oscuro', e) : '');
+        fila.querySelector('[data-quitar-color]').hidden = !estado.col[clave];
+        pintarResumenColores();
+    }
+
+    function abrirEditor(clave, cual) {
+        estado.editor = { clave: clave, cual: cual };
+        pintarColores();
+    }
+
+    function cerrarEditor() {
+        estado.editor = null;
+        pintarColores();
+    }
+
+    /** La rueda (o el selector del navegador) con HEX y RGB, en la fila del color abierto. */
+    function montarEditor() {
+        var ed = estado.editor;
+        var cont = document.querySelector('#tem_colLista .tema-color[data-clave="' + ed.clave + '"] .tema-color__editor');
+        if (!cont) return;
+        var e = colorEfectivo(ed.clave);
+        var valor = hex(ed.cual === 'oscuro' ? e.oscuro : e.claro);
+        cont.innerHTML = '<div class="tema-color__rueda"></div>'
+            + '<div class="tema-color__campos">'
+            +   '<div class="small font-weight-bold">' + esc(catColor(ed.clave).nombre) + (ed.cual === 'oscuro' ? ' · tema oscuro' : '') + '</div>'
+            +   '<label class="small mb-0">HEX<input type="text" class="form-control form-control-sm" data-hex maxlength="7" spellcheck="false"></label>'
+            +   '<div class="tema-color__rgb">'
+            +     ['r', 'g', 'b'].map(function (k) {
+                      return '<label class="small mb-0">' + k.toUpperCase()
+                           + '<input type="number" class="form-control form-control-sm" min="0" max="255" step="1" data-rgb="' + k + '"></label>';
+                  }).join('')
+            +   '</div>'
+            +   '<button type="button" class="btn btn-sm btn-primary" data-cerrar-editor><i class="fas fa-check mr-1"></i>Listo</button>'
+            + '</div>';
+        var rueda = cont.querySelector('.tema-color__rueda');
+        if (window.iro && iro.ColorPicker) {
+            estado.picker = new iro.ColorPicker(rueda, {
+                width: 170, color: valor, borderWidth: 1, borderColor: '#ced4da',
+                layout: [{ component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' } }]
+            });
+            estado.picker.on('input:change', function (color) { ponerColor(color.hexString, 'rueda'); });
+        } else {
+            // Sin iro.js (el CDN no respondió): el selector del navegador.
+            estado.picker = null;
+            rueda.innerHTML = '<input type="color" class="tema-color__nativo" value="' + valor + '" aria-label="Escoger color">';
+        }
+        llenarCampos(valor, '');
+    }
+
+    function llenarCampos(valor, menos) {
+        var cont = document.querySelector('#tem_colLista .tema-color__editor');
+        if (!cont) return;
+        if (menos !== 'hex') cont.querySelector('[data-hex]').value = valor;
+        if (menos !== 'rgb') {
+            ['r', 'g', 'b'].forEach(function (k, i) {
+                cont.querySelector('[data-rgb="' + k + '"]').value = parseInt(valor.substr(1 + i * 2, 2), 16);
+            });
+        }
+        var nativo = cont.querySelector('.tema-color__nativo');
+        if (nativo && menos !== 'nativo') nativo.value = valor;
+    }
+
+    /** Un color nuevo para el que está abierto. origen: 'rueda', 'hex', 'rgb' o 'nativo' (ése no se reescribe). */
+    function ponerColor(valor, origen) {
+        var ed = estado.editor;
+        if (!ed || !HEX.test(valor || '')) return;
+        valor = valor.toLowerCase();
+        var e = colorEfectivo(ed.clave);
+        var mio = estado.col[ed.clave] || (estado.col[ed.clave] = { claro: e.claro, oscuro: null });
+        if (ed.cual === 'oscuro') mio.oscuro = valor; else mio.claro = valor;
+        estado.sucio = true;
+        if (origen !== 'rueda' && estado.picker) estado.picker.color.hexString = valor;
+        llenarCampos(valor, origen);
+        refrescarColor(ed.clave);
+    }
+
+    $('#tem_colLista').on('click', '.tema-color__muestra', function () {
+        var clave = $(this).closest('.tema-color').data('clave');
+        var cual = this.getAttribute('data-cual');
+        if (estado.editor && estado.editor.clave === clave && estado.editor.cual === cual) cerrarEditor();
+        else abrirEditor(clave, cual);
+    });
+    $('#tem_colLista').on('click', '[data-cerrar-editor]', cerrarEditor);
+    $('#tem_colLista').on('input', '[data-hex]', function () {
+        var v = this.value.trim();
+        if (v.charAt(0) !== '#') v = '#' + v;
+        if (HEX.test(v)) ponerColor(v, 'hex');
+    });
+    $('#tem_colLista').on('input', '[data-rgb]', function () {
+        var cont = $(this).closest('.tema-color__editor')[0], v = '#', ok = true;
+        ['r', 'g', 'b'].forEach(function (k) {
+            var n = parseInt(cont.querySelector('[data-rgb="' + k + '"]').value, 10);
+            if (isNaN(n) || n < 0 || n > 255) ok = false;
+            else v += ('0' + n.toString(16)).slice(-2);
+        });
+        if (ok) ponerColor(v, 'rgb');
+    });
+    $('#tem_colLista').on('input', '.tema-color__nativo', function () { ponerColor(this.value, 'nativo'); });
+    $('#tem_colLista').on('change', '[data-oscuro]', function () {
+        var clave = $(this).closest('.tema-color').data('clave');
+        var e = colorEfectivo(clave);
+        if (this.checked) {
+            // Arranca con el oscuro que se ve hoy y se abre la rueda en él.
+            var mio = estado.col[clave] || (estado.col[clave] = { claro: e.claro, oscuro: null });
+            mio.oscuro = hex(e.oscuro);
+            estado.sucio = true;
+            abrirEditor(clave, 'oscuro');
+        } else if (estado.col[clave]) {
+            estado.col[clave].oscuro = null;
+            estado.sucio = true;
+            if (estado.editor && estado.editor.clave === clave && estado.editor.cual === 'oscuro') estado.editor = null;
+            pintarColores();
+        }
+    });
+    $('#tem_colLista').on('click', '[data-quitar-color]', function () {
+        var clave = $(this).closest('.tema-color').data('clave');
+        delete estado.col[clave];
+        estado.sucio = true;
+        if (estado.editor && estado.editor.clave === clave) estado.editor = null;
+        pintarColores();
+    });
+
     // ── Cambiar de versión, nueva, guardar, borrar ───────────────────────
     function siDescarta() {
         if (!estado.sucio) return Promise.resolve(true);
@@ -283,6 +605,19 @@
 
     $t('tem_guardar').addEventListener('click', function () {
         var btn = this;
+        // Poco contraste: se avisa, pero la decisión es de BI.
+        var avisos = estado.hayColores ? avisosContraste() : [];
+        if (!avisos.length) { guardar(btn); return; }
+        Swal.fire({
+            icon: 'warning', title: 'Hay colores con poco contraste',
+            html: 'Puede costar leer:<ul class="text-left small mt-2 mb-0">'
+                + avisos.map(function (a) { return '<li>' + esc(a.texto) + ' (' + a.valor.toFixed(1) + ':1)</li>'; }).join('')
+                + '</ul>',
+            showCancelButton: true, confirmButtonText: 'Guardar de todos modos', cancelButtonText: 'Seguir editando'
+        }).then(function (s) { if (s.isConfirmed) guardar(btn); });
+    });
+
+    function guardar(btn) {
         var fd = new FormData();
         fd.append('id_tema', $t('tem_id').value || '0');
         fd.append('nombre', $t('tem_nombre').value);
@@ -295,6 +630,8 @@
         });
         Object.keys(estado.quitar).forEach(function (lugar) { fd.append('quitar[]', lugar); });
         Object.keys(estado.quitarOscuro).forEach(function (lugar) { fd.append('quitar_oscuro[]', lugar); });
+        // Los colores van completos: lo que no esté vuelve al de siempre.
+        if (estado.hayColores) fd.append('colores', JSON.stringify(estado.col));
 
         btn.disabled = true;
         pedir('guardar', fd).then(function (r) {
@@ -304,20 +641,20 @@
             cargar(r.id);
             Swal.fire({
                 icon: 'success', title: 'Guardado',
-                text: seVe ? 'Recarga la página para ver los logos nuevos.'
-                           : 'Los logos salen solos cuando empiece la versión.',
+                text: seVe ? 'Recarga la página para ver los logos y colores nuevos.'
+                           : 'Los logos y colores salen solos cuando empiece la versión.',
                 showCancelButton: seVe, confirmButtonText: seVe ? 'Recargar ahora' : 'Aceptar', cancelButtonText: 'Después'
             }).then(function (s) { if (seVe && s.isConfirmed) location.reload(); });
         }).catch(function () { error(); })
           .then(function () { btn.disabled = false; });
-    });
+    }
 
     $t('tem_borrar').addEventListener('click', function () {
         var v = estado.actual;
         if (!v || v.predeterminada) return;
         Swal.fire({
             icon: 'warning', title: '¿Borrar "' + v.nombre + '"?',
-            text: 'Se borran también sus logos. Lo que no esté en otra versión vuelve a salir como siempre.',
+            text: 'Se borran también sus logos y colores. Lo que no esté en otra versión vuelve a salir como siempre.',
             showCancelButton: true, confirmButtonText: 'Borrar', cancelButtonText: 'Cancelar', confirmButtonColor: '#dc3545'
         }).then(function (s) {
             if (!s.isConfirmed) return;
