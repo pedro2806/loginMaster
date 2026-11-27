@@ -1,9 +1,12 @@
 <?php
 /**
- * acciones_temas.php — Endpoint JSON de los logos de messbook (modalTemas.php).
+ * acciones_temas.php — Endpoint JSON de los logos y colores de messbook
+ * (modalTemas.php).
  *
- * Las versiones de evento de los logos (includes/tema.php): listar, guardar
- * (datos y logos en un solo envío) y borrar. TODAS las acciones son sólo para
+ * Las versiones de evento de los logos y colores (includes/tema.php): listar,
+ * guardar (datos, logos y colores en un solo envío) y borrar. Los colores sólo
+ * se aceptan como '#rrggbb' (mbTemaColorValido): es lo que inicio.php e
+ * index.php imprimen dentro de un <style>, así que nada más puede colarse. TODAS las acciones son sólo para
  * BI (mbTemaPuedeAdministrar); inicio.php no incluye el modal para nadie más,
  * pero el permiso se vuelve a revisar aquí en cada petición.
  *
@@ -112,6 +115,75 @@ function tmBorrarArchivos(array $rutas): void {
     }
 }
 
+/**
+ * ¿Ya existe la tabla de colores (sql/2026-11-27_temas_colores.sql)? Sin ella
+ * los logos siguen funcionando y la sección de colores del modal lo avisa.
+ */
+function tmHayColores(mysqli $conn): bool {
+    static $hay = null;
+    if ($hay === null) {
+        try {
+            $conn->query('SELECT 1 FROM mess_rrhh.messbook_tema_colores LIMIT 1');
+            $hay = true;
+        } catch (Throwable $e) {
+            $hay = false;
+        }
+    }
+    return $hay;
+}
+
+/** Los colores de una versión: clave → ['claro', 'oscuro']. [] sin la tabla. */
+function tmColoresDe(mysqli $conn, int $id): array {
+    if (!tmHayColores($conn)) return [];
+    $colores = [];
+    $stmt = $conn->prepare('SELECT clave, claro, oscuro FROM mess_rrhh.messbook_tema_colores WHERE id_tema = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($c = $res->fetch_assoc()) {
+        if (!isset(MB_TEMA_COLORES[$c['clave']]) || !mbTemaColorValido($c['claro'])) continue;
+        $colores[(string)$c['clave']] = [
+            'claro'  => strtolower($c['claro']),
+            'oscuro' => mbTemaColorValido($c['oscuro']) ? strtolower($c['oscuro']) : null,
+        ];
+    }
+    $stmt->close();
+    return $colores;
+}
+
+/**
+ * Los colores que mandó el modal para la versión: el juego completo, como
+ * JSON {clave: {claro, oscuro|null}}. Lo que no viene se quita (vuelve al de
+ * siempre). null si no mandó el campo: entonces los colores no se tocan. Si
+ * algo no sirve, responde el error y termina.
+ */
+function tmColoresPedidos(): ?array {
+    if (!isset($_POST['colores'])) return null;
+    $datos = json_decode((string)$_POST['colores'], true);
+    if (!is_array($datos)) tmResponder(false, 'No entendimos los colores. Recarga la página e inténtalo de nuevo.');
+    $colores = [];
+    foreach ($datos as $clave => $c) {
+        if (!isset(MB_TEMA_COLORES[$clave]) || !is_array($c)) {
+            tmResponder(false, 'Hay un color que no existe. Recarga la página e inténtalo de nuevo.');
+        }
+        $nombre = MB_TEMA_COLORES[$clave][0];
+        $claro  = $c['claro'] ?? null;
+        $oscuro = $c['oscuro'] ?? null;
+        if ($claro === null || $claro === '') {
+            tmResponder(false, $nombre . ': escoge el color del tema claro; el oscuro sólo lo acompaña.');
+        }
+        if (!mbTemaColorValido($claro)) tmResponder(false, $nombre . ': no es un color válido.');
+        if ($oscuro !== null && $oscuro !== '') {
+            if (MB_TEMA_COLORES[$clave][3] === null) tmResponder(false, $nombre . ' va igual en los dos temas: no lleva color oscuro.');
+            if (!mbTemaColorValido($oscuro)) tmResponder(false, $nombre . ' (tema oscuro): no es un color válido.');
+        } else {
+            $oscuro = null;
+        }
+        $colores[$clave] = ['claro' => strtolower($claro), 'oscuro' => $oscuro === null ? null : strtolower($oscuro)];
+    }
+    return $colores;
+}
+
 /** Una versión, con sus logos por lugar. null si no existe. */
 function tmVersion(mysqli $conn, int $id): ?array {
     $stmt = $conn->prepare('SELECT id_tema, nombre, predeterminada, desde, hasta FROM mess_rrhh.messbook_temas WHERE id_tema = ? AND visible = 1 LIMIT 1');
@@ -129,6 +201,7 @@ function tmVersion(mysqli $conn, int $id): ?array {
         $t['logos'][(string)$l['lugar']] = ['archivo' => (string)$l['archivo'], 'oscuro' => $l['archivo_oscuro']];
     }
     $stmt->close();
+    $t['colores'] = tmColoresDe($conn, $id);
     return $t;
 }
 
@@ -157,7 +230,7 @@ try {
     tmFallo('No pudimos conectar con el servidor. Inténtalo de nuevo en un momento.', $e);
 }
 if (!$puede) {
-    tmResponder(false, 'Sólo el equipo de BI puede cambiar los logos.');
+    tmResponder(false, 'Sólo el equipo de BI puede cambiar los logos y colores.');
 }
 
 $accion = (string)($_POST['accion'] ?? '');
@@ -185,13 +258,18 @@ if ($accion === 'listar') {
                 'hasta'          => tmLocal($t['hasta']),
                 'estado'         => $estado,
                 'logos'          => $t['logos'],
+                'colores'        => $t['colores'],
             ];
         }
         $defecto = [];
         foreach (MB_TEMA_DEFECTO as $lugar => [$claro, $oscuro]) {
             $defecto[$lugar] = ['archivo' => $claro, 'oscuro' => $oscuro];
         }
-        tmResponder(true, '', ['versiones' => $versiones, 'defecto' => $defecto]);
+        tmResponder(true, '', [
+            'versiones'   => $versiones,
+            'defecto'     => $defecto,
+            'hayColores'  => tmHayColores($conn),   // false: falta correr sql/2026-11-27_temas_colores.sql
+        ]);
     } catch (Throwable $e) {
         tmFallo('No pudimos cargar las versiones. ¿Ya se corrió el SQL de temas?', $e);
     }
@@ -199,10 +277,11 @@ if ($accion === 'listar') {
 
 
 // ── guardar ──────────────────────────────────────────────────────────────────
-// Crear o editar una versión y sus logos en un solo envío: nombre, desde y
-// hasta (la predeterminada no lleva fechas ni cambia de nombre), logo[<lugar>]
-// y oscuro[<lugar>] con las imágenes nuevas, quitar[] (el lugar vuelve al de
-// siempre) y quitar_oscuro[] (sólo la versión oscura).
+// Crear o editar una versión, sus logos y sus colores en un solo envío:
+// nombre, desde y hasta (la predeterminada no lleva fechas ni cambia de
+// nombre), logo[<lugar>] y oscuro[<lugar>] con las imágenes nuevas, quitar[]
+// (el lugar vuelve al de siempre), quitar_oscuro[] (sólo la versión oscura) y
+// colores (JSON con el juego completo de colores de la versión).
 if ($accion === 'guardar') {
     $id = (int)($_POST['id_tema'] ?? 0);
 
@@ -234,6 +313,12 @@ if ($accion === 'guardar') {
         $oscuro = strncmp($lugar, 'sis:', 4) === 0 ? tmArchivo('oscuro', $lugar) : null;
         if ($claro || $oscuro) $nuevos[$lugar] = ['claro' => $claro, 'oscuro' => $oscuro];
     }
+    // Colores: el juego completo de la versión (null = no se tocan).
+    $colores = tmColoresPedidos();
+    if ($colores !== null && !tmHayColores($conn)) {
+        tmResponder(false, 'Los colores todavía no se pueden guardar: falta correr sql/2026-11-27_temas_colores.sql.');
+    }
+
     $logosActuales = $actual ? $actual['logos'] : [];
     foreach ($nuevos as $lugar => $n) {
         $quedaClaro = $n['claro'] || (isset($logosActuales[$lugar]) && !in_array($lugar, $quitar, true));
@@ -318,6 +403,22 @@ if ($accion === 'guardar') {
             $stmt->close();
         }
 
+        // Colores: se reemplaza el juego completo; lo que no vino vuelve al de siempre.
+        if ($colores !== null) {
+            $stmt = $conn->prepare('DELETE FROM mess_rrhh.messbook_tema_colores WHERE id_tema = ?');
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+            if ($colores) {
+                $stmt = $conn->prepare('INSERT INTO mess_rrhh.messbook_tema_colores (id_tema, clave, claro, oscuro) VALUES (?, ?, ?, ?)');
+                foreach ($colores as $clave => $c) {
+                    $stmt->bind_param('isss', $id, $clave, $c['claro'], $c['oscuro']);
+                    $stmt->execute();
+                }
+                $stmt->close();
+            }
+        }
+
         $conn->commit();
     } catch (Throwable $e) {
         try { $conn->rollback(); } catch (Throwable $e2) {}
@@ -333,7 +434,7 @@ if ($accion === 'guardar') {
 
 // ── borrar ───────────────────────────────────────────────────────────────────
 // Cualquier versión menos la predeterminada, con sus logos (los del disco
-// también, salvo los de img/).
+// también, salvo los de img/). Sus colores los borra la BD (ON DELETE CASCADE).
 if ($accion === 'borrar') {
     $id = (int)($_POST['id_tema'] ?? 0);
     try {
